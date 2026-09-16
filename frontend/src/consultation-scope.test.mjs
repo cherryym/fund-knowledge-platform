@@ -6,12 +6,21 @@ import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import Module, { createRequire } from "node:module";
+import { createHook } from "node:async_hooks";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build, stop as stopCompiler } from "esbuild";
 import { qwen, bge, profiles, selection, frozenSelection, retrievalKey } from "./retrievalProfiles.test-fixtures.mjs";
 
 const require = createRequire(import.meta.url);
+const tracedResources = new Map();
+const resourceTrace = process.env.FKB_TEST_RESOURCE_TRACE === "1" ? createHook({
+  init(id, type, _trigger, resource) {
+    if (["Timeout", "MESSAGEPORT", "WORKER"].includes(type)) tracedResources.set(id,
+      { type, reference: new WeakRef(resource), stack: new Error("fixture resource").stack });
+  },
+  destroy(id) { tracedResources.delete(id); },
+}).enable() : undefined;
 const { JSDOM } = require("jsdom");
 const dom = new JSDOM('<!doctype html><div id="root"></div>', {
   url: "http://consultation.test/",
@@ -229,7 +238,7 @@ afterEach(async (t) => {
     assert.equal(body.require_model, true, "the composer must not silently request extractive-only answers");
   }
 });
-after(() => {
+after(async () => {
   try {
     ScrollTrigger.disable();
     gsap.ticker.sleep();
@@ -239,6 +248,17 @@ after(() => {
     // all assertions; do not force process exit or mask an unfinished test.
     stopCompiler();
   }
+  await new Promise(resolve => setImmediate(resolve));
+  resourceTrace?.disable();
+  if (resourceTrace) console.error("FIXTURE_RESOURCES", JSON.stringify({
+    active: process.getActiveResourcesInfo(),
+    handles: process._getActiveHandles().map(handle => ({type:handle.constructor?.name,
+      referenced: handle.hasRef?.() ?? handle._handle?.hasRef?.(), fd:handle.fd})),
+    traced: [...tracedResources.values()].flatMap(row => {
+    const resource = row.reference.deref();
+    return resource && !resource._destroyed && resource.hasRef?.() ? [{type:row.type,
+      delay:resource._idleTimeout, stack:row.stack}] : [];
+  })}));
 });
 after(async () => {
   if (process.env.CONSULTATION_PERF_REPORT) await writeFile(process.env.CONSULTATION_PERF_REPORT,

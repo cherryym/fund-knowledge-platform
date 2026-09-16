@@ -1,0 +1,358 @@
+/* Decorative light field only. Knowledge, source text and graph data stay opaque and separate. */
+[data-ambient-shell] {
+  position: relative;
+  isolation: isolate;
+  background: #f9fbff;
+}
+[data-ambient-shell] > .main-shell {
+  position: relative;
+  z-index: 1;
+}
+.ambient-effects {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none !important;
+  contain: strict;
+  background: #f9fbff;
+  visibility: hidden;
+}
+.ambient-effects[data-ambient-ready="true"] {
+  visibility: visible;
+}
+.ambient-effects *,
+.ambient-trail-layer,
+.ambient-trail-layer * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+.ambient-starfield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+.ambient-aurora {
+  position: absolute;
+  width: 78vw;
+  height: 76vh;
+  max-width: 1180px;
+  max-height: 880px;
+  border-radius: 48%;
+  filter: blur(36px);
+  will-change: transform, opacity;
+  opacity: 0.88;
+}
+.ambient-aurora-one {
+  left: -14%;
+  top: -26%;
+  background: radial-gradient(
+    ellipse at 42% 44%,
+    #73b7ff66 0%,
+    #abcfff30 40%,
+    #b9d9ff00 72%
+  );
+}
+.ambient-aurora-two {
+  right: -20%;
+  top: 2%;
+  background: radial-gradient(
+    ellipse at 50% 48%,
+    #ad90f85c 0%,
+    #bea4fa24 45%,
+    #deccff00 72%
+  );
+}
+.ambient-aurora-three {
+  left: 9%;
+  bottom: -35%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    #73dbd957 0%,
+    #92d6ff26 44%,
+    #b3eeec00 74%
+  );
+}
+[data-ambient-shell]
+  :is(
+    .resource-table,
+    .plain-table,
+    .resource-overview,
+    .wiki-workbench,
+    .wiki-reading-body,
+    .document-paper,
+    .document-scroll,
+    .document-workbench,
+    .conversation-main,
+    .conversation-history,
+    .question-composer,
+    .settings-section,
+    .models-connection-detail
+  ) {
+  background-color: #fff;
+}
+[data-ambient-shell]
+  :is(.content-block, .segment-render, .block-text-editor, .ProseMirror) {
+  color: var(--ink, #263b57);
+}
+.ambient-trail-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  overflow: hidden;
+  contain: strict;
+}
+.ambient-trail-dot {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    #719ffde6 0 20%,
+    #819af986 30%,
+    #c1b4ff00 73%
+  );
+  will-change: transform, opacity;
+}
+.ambient-trail-dot:nth-child(3n + 2) {
+  background: radial-gradient(
+    circle,
+    #a18afae0 0 20%,
+    #b39afa88 30%,
+    #e2c9ff00 73%
+  );
+}
+.ambient-trail-dot:nth-child(3n) {
+  background: radial-gradient(
+    circle,
+    #53c8dce0 0 20%,
+    #7bd7e886 30%,
+    #b6edf900 73%
+  );
+}
+[data-ambient-card] {
+  position: relative;
+  isolation: isolate;
+}
+.ambient-card-edge,
+.ambient-card-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+.ambient-card-edge {
+  z-index: 1;
+  padding: 1.3px;
+  overflow: hidden;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  opacity: 0.84;
+}
+.ambient-card-edge-light {
+  position: absolute;
+  left: -70%;
+  top: -70%;
+  width: 240%;
+  height: 240%;
+  background: conic-gradient(
+    from 25deg,
+    transparent 0deg 225deg,
+    #51a2ec0a 250deg,
+    #5895f8a6 280deg,
+    #ac86edb3 314deg,
+    #67cfde80 338deg,
+    transparent 360deg
+  );
+  transform-origin: center;
+  will-change: transform;
+}
+.ambient-card-sheen {
+  z-index: -1;
+  overflow: hidden;
+}
+.ambient-card-sheen::before {
+  content: "";
+  position: absolute;
+  left: -170px;
+  top: -170px;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(
+    circle at 45% 42%,
+    #6ccae942 0%,
+    #949df738 28%,
+    #bd8cec22 46%,
+    transparent 69%
+  );
+  transform: translate3d(
+    var(--ambient-spot-x, 0px),
+    var(--ambient-spot-y, 0px),
+    0
+  );
+  opacity: var(--ambient-spot-opacity, 0);
+  will-change: transform, opacity;
+}
+[data-ambient-title-active] {
+  color: var(--ink, #13264c);
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  [data-ambient-title-active] {
+    background-image: linear-gradient(108deg, #13264c 0%, #193762 34%, #315faa 46%, #624793 51%, #245e81 56%, #193762 66%, #13264c 100%);
+    background-size: 240% 100%;
+    background-position: var(--ambient-title-position, 0%) 50%;
+    background-repeat: no-repeat;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
+[data-ambient-magnetic] > svg:not(.spin) {
+  translate: var(--ambient-magnet-x, 0px) var(--ambient-magnet-y, 0px);
+}
+[data-ambient-magnetic] {
+  box-shadow: 0 3px 16px #447be333;
+}
+.ambient-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  min-height: 30px;
+  padding: 3px 8px;
+  border: 1px solid #dce6f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #5277ae;
+  font-size: 11px;
+  pointer-events: auto;
+  position: relative;
+}
+.ambient-controls > label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+.ambient-controls select {
+  font-size: 11px !important;
+  min-height: 25px !important;
+  padding: 2px 17px 2px 4px !important;
+  border: 0 !important;
+  background-color: transparent !important;
+  color: #4b648a !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+.ambient-controls small {
+  font-size: 9px;
+  color: #8a78a5;
+  white-space: nowrap;
+}
+.ambient-controls:focus-within {
+  outline: 2px solid #759de8;
+  outline-offset: 2px;
+}
+.ambient-controls-fallback {
+  position: fixed;
+  right: 14px;
+  bottom: 12px;
+  z-index: 30;
+}
+[data-ambient-level="quiet"] .ambient-starfield {
+  opacity: 0;
+}
+.ambient-effects[data-ambient-level="quiet"] .ambient-aurora {
+  opacity: 0.22;
+  will-change: auto;
+}
+[data-ambient-shell][data-ambient-running="false"] .ambient-card-edge {
+  opacity: 0.32;
+}
+[data-ambient-shell][data-ambient-quality="economy"] .ambient-card-edge {
+  opacity: 0.5;
+}
+@media (max-width: 820px) {
+  .ambient-aurora {
+    width: 120vw;
+    height: 65vh;
+    filter: blur(28px);
+  }
+  .ambient-aurora-one {
+    left: -32%;
+    top: -15%;
+  }
+  .ambient-aurora-two {
+    right: -46%;
+    top: 20%;
+  }
+  .ambient-aurora-three {
+    left: -13%;
+    bottom: -28%;
+  }
+  .ambient-controls {
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    justify-content: center;
+    gap: 0;
+  }
+  .ambient-controls-label,
+  .ambient-controls small {
+    display: none;
+  }
+  .ambient-controls > label {
+    position: absolute;
+    inset: 0;
+  }
+  .ambient-controls select {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100%;
+    opacity: 0;
+    padding: 0 !important;
+    cursor: pointer;
+  }
+  .ambient-card-edge {
+    padding: 1px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-starfield,
+  .ambient-trail-layer,
+  .ambient-card-edge,
+  .ambient-card-sheen {
+    display: none !important;
+  }
+  .ambient-aurora {
+    opacity: 0.18 !important;
+    will-change: auto !important;
+  }
+  [data-ambient-title-active] {
+    background-image: none !important;
+    color: var(--ink, #13264c) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-ambient-magnetic] > svg {
+    translate: none !important;
+  }
+  .ambient-controls * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

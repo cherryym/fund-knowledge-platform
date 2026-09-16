@@ -1,0 +1,10 @@
+.retrieval-profile-picker { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem 1rem; padding: .85rem 0; min-width: 0; }
+.retrieval-profile-picker label { display: flex; align-items: center; gap: .55rem; min-width: 0; font-size: .875rem; color: #33445e; }
+.retrieval-profile-picker select { min-width: 12rem; max-width: 100%; padding: .55rem .7rem; border: 1px solid #d7dfeb; border-radius: 8px; background: white; color: #172942; font: inherit; }
+.retrieval-profile-picker button { font-size: .875rem; }
+.retrieval-profile-description { font-size: .875rem; color: #64748b; }
+.retrieval-profile-picker.compact { padding: 0; gap: .5rem; }
+.retrieval-profile-picker.compact select { min-width: 10rem; max-width: 17rem; padding: .4rem .55rem; }
+.retrieval-profile-picker.compact label { gap: .4rem; }
+.retrieval-scheme-used { color: #64748b; font-size: .875rem; }
+@media (max-width: 700px) { .retrieval-profile-picker label { flex-wrap: wrap; width: 100%; } .retrieval-profile-picker select { min-width: 0; flex: 1; } .retrieval-profile-picker.compact { width: 100%; } }

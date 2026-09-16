@@ -1,0 +1,69 @@
+/* Finite, scoped motion only. Input/prose surfaces retain their existing styling. */
+[data-kb-motion="page"],
+[data-kb-motion="overview"] {
+  backface-visibility: hidden;
+}
+[data-kb-motion="overview"] {
+  transform-origin: right top;
+}
+[data-kb-motion-level="quiet"] .kb-motion-exit {
+  display: none !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .modal[data-kb-modal="opening"]::backdrop {
+    animation: kb-backdrop-in 0.36s ease-out both;
+  }
+  .modal[data-kb-modal="closing"]::backdrop {
+    animation: kb-backdrop-out 0.3s ease-in both;
+  }
+  #root .main-nav button,
+  #root .settings-link {
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
+  #root .resource-table tbody tr {
+    transition: background-color 0.18s ease;
+  }
+  #root .primary:active:not(:disabled),
+  .modal .primary:active:not(:disabled) {
+    translate: 0 1px;
+  }
+}
+@keyframes kb-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes kb-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.modal[data-kb-modal="closing"] {
+  pointer-events: none;
+}
+.kb-motion-exit,
+.kb-motion-exit * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-motion-exit {
+    display: none !important;
+  }
+  .modal[data-kb-modal]::backdrop {
+    animation: none !important;
+  }
+  #root .main-nav button,
+  #root .settings-link,
+  #root .resource-table tbody tr {
+    transition: none !important;
+  }
+}

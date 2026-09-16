@@ -1,0 +1,37 @@
+# 本地演示，不是生产认证。只绑定127.0.0.1，不带模型密钥或真实资料。
+services:
+  api:
+    build:
+      context: .
+      dockerfile: deploy/api.Dockerfile
+    environment:
+      FKB_APP_ENV: development
+      FKB_AUTH_MODE: demo
+      FKB_STORAGE_DIR: /app/data
+      FKB_DATABASE_URL: sqlite:////app/data/fund_kb.sqlite3
+      FKB_RETRIEVAL_MODE: wiki
+      FKB_LLM_PROVIDER: http
+      FKB_WIKI_QUERY_STRATEGY: universal
+      FKB_ALLOWED_ORIGINS: '["http://127.0.0.1:5178","http://localhost:5178"]'
+      FKB_PROVIDER_MASTER_KEY: ${FKB_PROVIDER_MASTER_KEY:-}
+    volumes:
+      - app-data:/app/data
+    ports:
+      - "127.0.0.1:8765:8765"
+    healthcheck:
+      test: ["CMD", "/app/backend/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/v1/health', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 20s
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5178:8080"
+volumes:
+  app-data:

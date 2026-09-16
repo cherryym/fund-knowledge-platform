@@ -1,0 +1,8 @@
+.document-heading-effects { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; contain:strict; background:#fafcff; }
+.document-heading-effects * { pointer-events:none!important; user-select:none; }
+.document-heading-effects canvas { position:absolute; inset:0; width:100%; height:100%; opacity:.8; }
+.heading-aurora { position:absolute; top:-95%; width:70%; height:300%; border-radius:50%; pointer-events:none; }
+.heading-aurora-blue { left:-12%; background:radial-gradient(ellipse at center,#83bcff42, #b6d7ff15 48%,transparent 72%); }
+.heading-aurora-violet { right:-8%; background:radial-gradient(ellipse at center,#b59ae834, #d4c5f312 48%,transparent 72%); }
+.document-heading-effects[data-motion-level="quiet"] { display:none; }
+@media (prefers-reduced-motion: reduce) { .document-heading-effects { display:none; } }

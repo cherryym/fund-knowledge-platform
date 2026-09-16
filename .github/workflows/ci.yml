@@ -1,0 +1,71 @@
+name: 持续集成
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  release-check:
+    name: 发布边界检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check-public-release.py
+      - run: git diff --check
+  backend:
+    name: 后端与MCP
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --extra test --extra semantic --extra local-models --project backend
+      - run: |
+          uv venv integrations/fundkb_mcp/.venv --python 3.12
+          uv pip install --python integrations/fundkb_mcp/.venv/bin/python -r integrations/fundkb_mcp/requirements-test.txt
+      - run: backend/.venv/bin/python -m pytest backend/tests -o addopts='' -q
+      - run: integrations/fundkb_mcp/.venv/bin/python -B -m pytest integrations/fundkb_mcp/tests -o addopts='' -q
+  frontend:
+    name: 前端测试与构建
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:sites
+  containers:
+    name: Compose构建与启动
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+      - run: docker compose up --build -d --wait --wait-timeout 120
+      - run: |
+          curl --fail --retry 12 --retry-delay 2 http://127.0.0.1:8765/api/v1/health
+          curl --fail http://127.0.0.1:5178/
+          curl --fail http://127.0.0.1:5178/api/v1/health
+      - if: failure()
+        run: docker compose logs --tail=100
+      - if: always()
+        run: docker compose down

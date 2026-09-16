@@ -1,0 +1,37 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/prepare-sites-build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/*.test.mjs",
+    "preview": "vite preview",
+    "test:sites": "node --test tests/sites-worker.test.mjs"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@lobehub/icons-static-svg": "1.95.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@tiptap/markdown": "3.31.3",
+    "@tiptap/react": "^3.0.0",
+    "@tiptap/starter-kit": "^3.0.0",
+    "@vitejs/plugin-react": "5.0.4",
+    "d3-force": "3.0.0",
+    "gsap": "^3.13.0",
+    "markdown-it": "14.1.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "vite": "6.4.2"
+  },
+  "devDependencies": {
+    "@types/d3-force": "3.0.10",
+    "@types/markdown-it": "14.1.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "jsdom": "26.1.0",
+    "typescript": "^5.9.0"
+  }
+}

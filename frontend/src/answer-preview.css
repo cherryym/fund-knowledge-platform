@@ -1,0 +1,7 @@
+/* Temporary public paragraphs; final-answer formatting and actions stay separate. */
+.answer-preview { margin: 16px 0; padding: 16px 20px; border: 1px solid #d9e3f2; border-left: 3px solid #6688bf; border-radius: 10px; background: #f8faff; }
+.answer-preview .answer-preview-notice { margin: 0 0 12px; color: #49658e; font-size: .875rem; font-weight: 600; }
+.answer-preview-text { min-width: 0; overflow-wrap: anywhere; line-height: 1.8; }
+.answer-preview-text > :first-child { margin-top: 0; }
+.answer-preview-text table { display: block; max-width: 100%; overflow-x: auto; }
+.answer-preview small { display: block; margin-top: 14px; color: #64748b; line-height: 1.6; font-size: .875rem; }

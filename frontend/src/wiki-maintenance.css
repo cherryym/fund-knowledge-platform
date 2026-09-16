@@ -1,0 +1,24 @@
+.wiki-maintenance { display: flex; flex-direction: column; gap: 20px; font-size: 1rem; }
+.wiki-maint-tabs, .wiki-maint-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.wiki-maint-tabs { border-bottom: 1px solid var(--line, #e2e7ef); padding-bottom: 12px; }
+.wiki-maint-tabs button[aria-pressed="true"] { color: var(--primary, #2458cc); background: #edf3ff; }
+.wiki-maint-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.wiki-maint-grid section { min-width: 0; }
+.wiki-maint-grid h3 { margin: 0; font-size: 1.125rem; }
+.wiki-maint-grid p { line-height: 1.7; overflow-wrap: anywhere; }
+.wiki-maint-grid textarea, .wiki-maint-grid select, .wiki-maint-grid input { width: 100%; max-width: 100%; }
+.wiki-maint-propose { border-left: 1px solid var(--line, #e2e7ef); padding-left: 24px; }
+.wiki-maint-proposals { display: flex; flex-direction: column; gap: 18px; }
+.wiki-maint-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.wiki-maint-list button { width: 100%; display: flex; align-items: flex-start; flex-direction: column; gap: 8px; text-align: left;
+  white-space: normal; padding: 16px; background: #fff; border: 1px solid var(--line, #e2e7ef); border-radius: 10px; }
+.wiki-maint-list .selected { border-color: #4877d8; background: #f6f9ff; }
+.wiki-maint-list strong, .wiki-maint-list small { overflow-wrap: anywhere; }
+.wiki-maint-list span, .wiki-maint-list small, .wiki-maint-state { font-size: .875rem; }
+.wiki-maint-source-change { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wiki-compilation-controls { margin-block: 16px; }
+.wiki-compilation-spec { margin-top: 10px; padding: 14px; background: #f6f8fc; border-radius: 8px; }
+.wiki-compilation-spec summary { cursor: pointer; font-size: .875rem; }
+.wiki-compilation-spec li { margin: 8px 0; line-height: 1.7; }
+@media (max-width: 800px) { .wiki-maint-grid { grid-template-columns: minmax(0, 1fr); }
+  .wiki-maint-propose { border-left: 0; border-top: 1px solid var(--line, #e2e7ef); padding: 20px 0 0; } }

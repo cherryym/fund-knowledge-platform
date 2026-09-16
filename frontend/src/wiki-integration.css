@@ -1,0 +1,11 @@
+.source-metadata-form{max-width:850px;margin:0 auto;padding:5px 10px 20px}
+.source-metadata-fields{padding:0;margin:0;border:0;min-width:0}
+.main-nav{min-height:0;overflow-y:auto;flex-shrink:1}
+.sidebar-bottom{flex-shrink:0}
+.answer-model-source{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#71819a;margin-left:auto;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.response-heading>.badge{margin-left:0}
+.wiki-inline-link{color:#2e62bc;text-decoration:underline;text-decoration-color:#b6caeb;text-underline-offset:3px;cursor:pointer;border-radius:3px}
+.wiki-inline-link:hover{background:#edf3ff;text-decoration-color:#2e62bc}
+.wiki-inline-link:focus-visible{outline:2px solid #83a6e9;outline-offset:3px}
+.ProseMirror .wiki-inline-link{cursor:text}
+@media(max-width:760px){.source-metadata-form{padding:5px}.answer-model-source{max-width:125px}}

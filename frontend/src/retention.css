@@ -1,0 +1,33 @@
+.retention-panel { max-width: 850px; padding: 22px; background: #fff; border: 1px solid #e0e6ec; border-radius: 12px; color: #263446; line-height: 1.65; }
+.retention-panel h2, .retention-panel h3 { margin: 0; font-size: 18px; line-height: 1.5; }
+.retention-panel p { margin: 8px 0 14px; }
+.retention-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.retention-heading button { flex-shrink: 0; }
+.retention-note { padding: 12px 14px; border-radius: 8px; background: #f3f6fa; color: #43536a; font-size: 13px; }
+.retention-status { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 0; color: #785416; }
+.retention-status.is-approved { color: #226247; }
+.retention-permissions, .retention-meta { font-size: 12px; color: #536377; }
+.retention-panel fieldset { margin: 14px 0; padding: 14px 16px; border: 1px solid #e0e6ec; border-radius: 8px; min-width: 0; }
+.retention-panel legend { padding: 0 6px; font-size: 13px; font-weight: 600; }
+.retention-panel fieldset p, .retention-field span { font-size: 12px; color: #536377; }
+.retention-panel fieldset:disabled { background: #f8f9fb; }
+.retention-field { display: grid; gap: 7px; margin-bottom: 14px; font-size: 13px; }
+.retention-field input[type=number] { max-width: 132px; }
+.retention-field textarea { resize: vertical; width: 100%; min-height: 70px; }
+.retention-panel input[type=number], .retention-panel input[type=datetime-local], .retention-panel textarea { padding: 8px 10px; border: 1px solid #cbd4df; border-radius: 6px; color: inherit; background: #fff; font: inherit; box-sizing: border-box; }
+.retention-choice { display: flex; align-items: baseline; gap: 8px; margin: 8px 0; font-size: 13px; }
+.retention-choice input { accent-color: #356cd1; }
+.retention-roles { display: flex; flex-wrap: wrap; gap: 0 20px; margin-bottom: 14px; }
+.retention-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.retention-actions span { color: #536377; font-size: 12px; }
+.retention-panel button { min-height: 34px; padding: 6px 12px; border: 1px solid #cbd4df; border-radius: 6px; background: #fff; color: #344a66; cursor: pointer; font: inherit; font-size: 13px; }
+.retention-panel button.primary { background: #356cd1; border-color: #356cd1; color: #fff; }
+.retention-panel button:disabled { opacity: .55; cursor: not-allowed; }
+.retention-panel :focus-visible { outline: 2px solid #356cd1; outline-offset: 3px; }
+.retention-error { color: #ab3434; background: #fff5f4; padding: 10px 12px; border-radius: 6px; }
+.retention-success { color: #226247; background: #f0f8f2; padding: 10px 12px; border-radius: 6px; }
+.retention-dates { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 12px 0; font-size: 13px; }
+.retention-dates dt { color: #536377; font-size: 12px; }
+.retention-dates dd { margin: 3px 0 0; }
+.retention-preflight ul { padding-left: 20px; font-size: 13px; }
+@media (max-width: 600px) { .retention-panel { padding: 16px; } .retention-heading { flex-wrap: wrap; gap: 8px; } .retention-panel fieldset { padding: 10px; } }

@@ -1,0 +1,5 @@
+# Official SDK maintenance line; tested protocol version 2025-11-25.
+# Keep the sidecar independent of the application's Python environment.
+mcp==1.28.0
+httpx==0.28.1
+jsonschema==4.26.0

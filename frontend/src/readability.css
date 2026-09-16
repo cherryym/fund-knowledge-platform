@@ -1,0 +1,33 @@
+/* Critical small UI copy stays readable on the light financial workspace. */
+input::placeholder,
+textarea::placeholder,
+.page-heading p,
+.tabs > button,
+.resource-name p,
+.resource-table th,
+.breadcrumbs,
+.sidebar-caption,
+.resource-overview dt,
+.list-footer,
+.global-search,
+.related-link small,
+.brand span,
+.tag-chip,
+.composer-note {
+  color: #64748b;
+}
+.notice {
+  color: #536b8e;
+}
+.badge {
+  color: #64748b;
+}
+.badge.green {
+  color: #23774e;
+}
+.badge.amber {
+  color: #966019;
+}
+.tabs > button.active {
+  color: var(--blue);
+}

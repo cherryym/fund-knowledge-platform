@@ -1,0 +1,97 @@
+.star-graph { --star-ink: #243d5a; --star-muted: #7b8ca2; min-width: 0; color: var(--star-ink); }
+.star-toolbar, .star-tools, .star-legend, .star-view-tools, .star-settings-heading { display: flex; align-items: center; gap: 8px; }
+.star-toolbar { justify-content: space-between; flex-wrap: wrap; padding-bottom: 10px; }
+.star-toolbar strong { display: block; font-size: 14px; letter-spacing: .03em; }
+.star-toolbar small { color: var(--star-muted); font-size: 11px; }
+.star-tools { flex-wrap: wrap; }
+.star-tools button, .star-view-tools button, .star-settings button { font-size: 11px; padding: 6px 9px; border-color: #dae5f0; background: #ffffffeb; }
+.star-tools svg, .star-view-tools svg { width: 15px; height: 15px; }
+.star-legend { flex-wrap: wrap; gap: 8px 16px; font-size: 11px; padding: 0 0 12px; color: #6a7e96; }
+.star-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.star-legend i, .star-list-select i { width: 7px; height: 7px; display: inline-block; border-radius: 50%; flex: 0 0 7px; }
+.star-legend .star-phase { margin-left: auto; font-size: 10px; color: #8697a8; }
+.star-stage { position: relative; overflow: hidden; border: 1px solid #e0e9f3; border-radius: 12px;
+  height: var(--star-stage-height, clamp(680px, 78dvh, 1100px));
+  background: radial-gradient(ellipse at 46% 42%, #edf4fc 0, #f8fbff 50%, #fff 90%); isolation: isolate; }
+.star-surface { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; cursor: grab; }
+.star-surface.is-dragging { cursor: grabbing; }
+.star-canvas-stack { position: relative; height: 100%; }
+.star-height-resize { min-height: 30px; display: flex; align-items: center; justify-content: center; gap: 9px;
+  cursor: ns-resize; touch-action: none; user-select: none; color: #617993; font-size: 12px; border-radius: 6px; }
+.star-height-grip { width: 36px; height: 5px; border-top: 1px solid #9bacbf; border-bottom: 1px solid #9bacbf; }
+.star-height-resize:hover, .star-height-resize:focus-visible { background: #edf3fc; color: #315b92; }
+.star-height-resize:focus-visible { outline: 2px solid #4d74b3; outline-offset: 1px; }
+.star-stage[data-height-resizing="true"] + .star-height-resize { background: #e4edfb; color: #315b92; }
+.star-canvas-labels { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.star-canvas:focus-visible { outline: 2px solid #466ec4; outline-offset: -3px; }
+.star-backend-note { margin: -4px 0 10px; color: #687f9a; font-size: 11px; }
+.star-dust { fill: #8aa4c1; opacity: .33; pointer-events: none; }
+.star-node { cursor: pointer; pointer-events: none; }
+.star-dot { stroke: none; pointer-events: all; }
+.star-halo { stroke: none; pointer-events: none; }
+.star-label { fill: #344e6b; font: 12px "PingFang SC", "Microsoft YaHei", sans-serif; paint-order: stroke; stroke: #f9fcff; stroke-width: 3px;
+  stroke-linejoin: round; user-select: none; pointer-events: none; }
+.star-node.is-selected .star-label { font-weight: 600; fill: #163852; }
+.star-surface.is-navigating .star-label { opacity: 0; }
+.star-label { transition: opacity .1s ease-out; }
+.star-graph[data-star-level="quiet"] .star-label { transition: none; }
+@media (prefers-reduced-motion: reduce) { .star-label { transition: none; } }
+.star-edge-layer { pointer-events: none; }
+.star-view-tools { position: absolute; right: 12px; top: 12px; padding: 3px; background: #ffffffc9; border: 1px solid #e1eaf4; border-radius: 8px; }
+.star-view-tools button { border: 0; padding: 5px 7px; background: transparent; }
+.star-stage-caption { position: absolute; bottom: 12px; left: 16px; right: 16px; text-align: center; font-size: 10px; color: #8a9bb0; pointer-events: none; }
+.star-note { font-size: 11px; color: #788da3; line-height: 1.8; }
+.star-settings-drawer { position: absolute; top: 10px; right: 10px; bottom: 10px; width: min(355px, calc(100% - 20px));
+  max-height: calc(100dvh - 115px); z-index: 5; border: 1px solid #dce7f2; border-radius: 10px; background: #fbfdff;
+  box-shadow: -10px 8px 28px #294c7922; overflow: hidden; }
+.star-settings { height: 100%; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 15px; }
+.star-settings-heading { justify-content: space-between; }
+.star-settings-heading button { white-space: nowrap; padding: 5px; font-size: 10px; }
+.star-settings-heading button svg { width: 14px; height: 14px; }
+.star-settings h3 { font-size: 13px; margin: 0; }
+.star-settings > p { color: #7b8da5; font-size: 11px; margin: 8px 0 12px; }
+.star-color-mode { display: inline-flex; gap: 4px; padding: 3px; border-radius: 7px; background: #eaf0f8; }
+.star-color-mode button { border: 0; background: transparent; }
+.star-color-mode button[aria-pressed="true"] { background: white; color: #315f9c; box-shadow: 0 1px 4px #41618c13; }
+.star-color-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.star-color-field { display: flex; flex-direction: column; gap: 5px; font-size: 11px; min-width: 0; }
+.star-color-field > div { display: flex; gap: 5px; align-items: center; }
+.star-color-field input[type="color"] { width: 30px; height: 28px; padding: 2px; border: 1px solid #d7e3f0; border-radius: 5px; cursor: pointer; background: white; }
+.star-color-field input[type="text"] { width: 82px; min-width: 0; font: 11px ui-monospace, monospace; padding: 5px; border: 1px solid #dae5f0; border-radius: 4px; background: #fff; }
+.star-color-field > small { color: #a44638; font-size: 10px; }
+.star-single-color { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; border-top: 1px solid #e4ebf4; padding-top: 12px; }
+.star-single-color > label { font-size: 11px; display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.star-settings select { font-size: 11px; border: 1px solid #d9e4ef; padding: 6px 8px; border-radius: 5px; background: white; color: #48617f; max-width: 100%; }
+.star-label-mode { display: flex; align-items: center; gap: 10px; font-size: 11px; margin: 14px 0; flex-wrap: wrap; }
+.star-physics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
+.star-physics label { min-width: 0; font-size: 11px; color: #5e7793; }
+.star-physics label > span { display: flex; align-items: center; justify-content: space-between; }
+.star-physics output { color: #8296ae; font-size: 10px; }
+.star-physics input { width: 100%; accent-color: #5c7cb1; }
+.star-node-directory { border-top: 1px solid #e6edf5; margin-top: 14px; padding-top: 7px; }
+.star-node-directory summary { cursor: pointer; color: #617993; font-size: 11px; padding: 6px 0; }
+.star-node-directory > input { width: 100%; padding: 7px 10px; border: 1px solid #e0e9f3; border-radius: 5px; font-size: 11px; margin: 7px 0 10px; background: #fcfdff; }
+.star-node-directory ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 9px; list-style: none; margin: 0; padding: 0; max-height: 210px; overflow: auto; }
+.star-node-directory li { display: flex; align-items: center; min-width: 0; border-radius: 5px; }
+.star-node-directory li.active { background: #edf3fc; }
+.star-node-directory li button { border: 0; background: transparent; padding: 6px; font-size: 11px; min-width: 0; }
+.star-node-directory .star-list-select { flex: 1; justify-content: flex-start; gap: 6px; }
+.star-list-select span { overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.star-list-select small { margin-left: auto; color: #93a1b4; font-size: 9px; }
+.star-list-open svg { width: 13px; height: 13px; }
+.star-node-directory > p { font-size: 11px; color: #8295a9; }
+.star-graph button:focus-visible, .star-graph input:focus-visible, .star-graph select:focus-visible,
+.star-graph summary:focus-visible { outline: 2px solid #4d74b3; outline-offset: 3px; }
+@media (max-width: 900px) {
+  .star-color-grid, .star-physics, .star-node-directory ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .star-tools button { font-size: 10px; padding: 5px 7px; }
+  .star-color-grid, .star-physics { gap: 10px; }
+  .star-node-directory ul { grid-template-columns: minmax(0, 1fr); }
+  .star-settings { padding: 12px; }
+  .star-settings-drawer { left: 8px; right: 8px; top: 8px; bottom: 8px; width: auto; }
+  .star-stage { height: var(--star-stage-height, clamp(440px, 70dvh, 680px)); }
+  .star-stage-caption { font-size: 9px; bottom: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .star-graph * { transition-duration: 0s; animation-duration: 0s; } }

@@ -1,0 +1,92 @@
+.retrieval-panel {
+  min-width: 0;
+  max-width: 1080px;
+  padding: 20px;
+  border: 1px solid var(--border, #e8ecf3);
+  border-radius: 12px;
+  background: #fff;
+  color: #35435b;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.retrieval-panel h2,
+.retrieval-panel h3,
+.retrieval-panel h4 { margin: 0; color: var(--ink, #172641); }
+.retrieval-panel h2 { font-size: 18px; }
+.retrieval-panel h3 { margin: 14px 0 10px; font-size: 14px; }
+.retrieval-panel h4 { font-size: 14px; font-weight: 600; }
+.retrieval-panel p { margin: 8px 0; }
+.retrieval-heading,
+.retrieval-hit-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.retrieval-heading > div,
+.retrieval-hit-heading > div { min-width: 0; }
+.retrieval-heading > button,
+.retrieval-hit-heading > button { flex-shrink: 0; }
+.retrieval-heading p,
+.retrieval-meta { color: #59697d; font-size: 12px; }
+.retrieval-row,
+.retrieval-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.retrieval-row { font-size: 12px; }
+.retrieval-config,
+.retrieval-metrics { display: grid; gap: 12px; margin: 14px 0; }
+.retrieval-config { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.retrieval-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.retrieval-config > div,
+.retrieval-metrics > div { min-width: 0; }
+.retrieval-panel dt { color: #59697d; font-size: 12px; }
+.retrieval-panel dd { margin: 3px 0 0; }
+.retrieval-metrics > div { padding: 10px 12px; border: 1px solid #e8ecf3; border-radius: 7px; background: #f8faff; }
+.retrieval-metrics dd { color: #263d60; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.retrieval-section { margin-top: 18px; padding-top: 2px; border-top: 1px solid var(--border, #e8ecf3); }
+.retrieval-job { margin-top: 14px; }
+.retrieval-job-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.retrieval-job-metrics dd { font-size: 16px; }
+.retrieval-panel code { font-size: 11px; overflow-wrap: anywhere; }
+.retrieval-failure { color: #a03232; }
+.retrieval-empty { padding: 12px; border-radius: 7px; background: #f7f9fc; color: #59697d; }
+.retrieval-panel .notice { margin: 10px 0; padding: 10px 12px; font-size: 12px; }
+.retrieval-panel .notice > div,
+.retrieval-panel .error-box > div { min-width: 0; }
+.retrieval-panel .error-box { margin: 10px 0; font-size: 13px; }
+.retrieval-notes { margin: 0; padding-left: 18px; }
+.retrieval-search-form { display: grid; gap: 6px; margin-top: 12px; }
+.retrieval-search-form > label { font-weight: 600; }
+.retrieval-search-input { display: flex; align-items: stretch; gap: 8px; }
+.retrieval-search-input input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e3;
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.retrieval-search-input input::placeholder { color: #6c7a8e; }
+.retrieval-panel button { min-height: 34px; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+.retrieval-panel button:disabled { opacity: .55; cursor: not-allowed; }
+.retrieval-panel :focus-visible { outline: 2px solid var(--blue, #315fd4); outline-offset: 3px; }
+.retrieval-hits { margin: 12px 0 0; padding: 0; list-style: none; }
+.retrieval-hits > li { padding: 12px 0; border-top: 1px solid #e8ecf3; }
+.retrieval-hits .retrieval-row { margin-top: 8px; }
+.retrieval-hits details { margin-top: 8px; }
+.retrieval-hits summary { width: fit-content; cursor: pointer; }
+.retrieval-hits details p { margin: 4px 0; }
+
+@media (max-width: 800px) {
+  .retrieval-config { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .retrieval-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .retrieval-panel { padding: 14px; }
+  .retrieval-heading,
+  .retrieval-hit-heading { flex-wrap: wrap; gap: 8px; }
+  .retrieval-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .retrieval-search-input { flex-wrap: wrap; }
+  .retrieval-search-input input { flex-basis: 100%; }
+}

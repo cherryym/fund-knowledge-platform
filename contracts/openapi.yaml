@@ -1,0 +1,947 @@
+openapi: 3.1.1
+info:
+  title: 基金运营知识与答疑平台
+  version: 2.0.0
+  description: |
+    开发接口契约，非已部署服务。单机构、多空间，Cookie会话。
+    变更请求还须同源Origin和CSRF校验。POST/PATCH/PUT/DELETE均要求Idempotency-Key，
+    除只读search、auth退出和上传分片的特定幂等协议。所有对象及依赖实行服务端鉴权。
+    未单列的401/403/404/409/412/413/415/422/423/428/429/503使用Error。
+    更新需If-Match时，GET响应ETag等于对象revision（HTTP双引号整数）。
+servers:
+  - url: /api/v1
+security:
+  - cookieAuth: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      security: []
+      responses:
+        '200': {description: 就绪状态，不暴露基础设施, content: {application/json: {schema: {type: object, required: [status], properties: {status: {enum: [ready, degraded]}}}}}}
+  /auth/login:
+    get:
+      operationId: beginLogin
+      security: []
+      responses:
+        '302': {description: 后端生成state/nonce/PKCE并跳转到机构OIDC}
+  /auth/callback:
+    get:
+      operationId: finishLogin
+      security: []
+      parameters:
+        - {name: code, in: query, required: true, schema: {type: string}}
+        - {name: state, in: query, required: true, schema: {type: string}}
+      responses:
+        '302': {description: 校验OIDC后设置安全Cookie并跳转固定内部首页}
+        default: {$ref: '#/components/responses/Error'}
+  /auth/logout:
+    post:
+      operationId: logout
+      security: &writeAuth [{cookieAuth: [], csrf: []}]
+      responses:
+        '204': {description: 会话撤销并清除Cookie}
+        default: {$ref: '#/components/responses/Error'}
+  /me:
+    get:
+      operationId: getMe
+      responses:
+        '200': {description: 当前用户与CSRF同步令牌, content: {application/json: {schema: {$ref: '#/components/schemas/Me'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /spaces:
+    get:
+      operationId: listSpaces
+      responses:
+        '200': {description: 当前用户可见空间，最多100个, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Space'}}}}}
+    post:
+      operationId: createSpace
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/NameInput'}}}}
+      responses:
+        '201': {description: 创建空间，需要部署级管理员许可, content: {application/json: {schema: {$ref: '#/components/schemas/Space'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /spaces/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    patch:
+      operationId: updateSpace
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/NameInput'}}}}
+      responses:
+        '200': {description: 新空间版本, content: {application/json: {schema: {$ref: '#/components/schemas/Space'}}}}
+        default: {$ref: '#/components/responses/Error'}
+    delete:
+      operationId: deleteEmptySpace
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      responses:
+        '204': {description: 仅无资源/会话/问题单的空空间可删除；不级联删除资料}
+        default: {$ref: '#/components/responses/Error'}
+  /spaces/{id}/members:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: listMembers
+      responses:
+        '200': {description: 成员与角色；ETag为空间revision, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/MemberSet'}}}}
+        default: {$ref: '#/components/responses/Error'}
+    put:
+      operationId: replaceMembers
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/MemberSet'}}}}
+      responses:
+        '200': {description: 全量替换，禁止移除最后一个管理员；空间revision递增, content: {application/json: {schema: {$ref: '#/components/schemas/MemberSet'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /resources:
+    get:
+      operationId: listResources
+      parameters:
+        - {name: space_id, in: query, required: true, schema: {type: string, format: uuid}}
+        - {name: kind, in: query, schema: {enum: [document, knowledge, template]}}
+        - {name: trash, in: query, schema: {type: boolean, default: false}}
+        - {name: q, in: query, schema: {type: string}}
+        - {name: category, in: query, schema: {type: string}}
+        - {name: tag, in: query, schema: {type: string}}
+        - {$ref: '#/components/parameters/Cursor'}
+        - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200': {description: 授权资源列表, content: {application/json: {schema: {$ref: '#/components/schemas/ResourceList'}}}}
+        default: {$ref: '#/components/responses/Error'}
+    post:
+      operationId: createResource
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ResourceCreate'}}}}
+      responses:
+        '201': {$ref: '#/components/responses/Resource'}
+        default: {$ref: '#/components/responses/Error'}
+  /resources/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getResource
+      responses:
+        '200': {$ref: '#/components/responses/Resource'}
+        default: {$ref: '#/components/responses/Error'}
+    patch:
+      operationId: updateResourceMetadata
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ResourcePatch'}}}}
+      responses:
+        '200': {$ref: '#/components/responses/Resource'}
+        default: {$ref: '#/components/responses/Error'}
+    delete:
+      operationId: trashResource
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      responses:
+        '204': {description: 逻辑删除并立即取消正常可见性，后台异步清理投影}
+        default: {$ref: '#/components/responses/Error'}
+  /resources/{id}/restore:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: restoreResource
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      responses:
+        '200': {$ref: '#/components/responses/Resource'}
+        default: {$ref: '#/components/responses/Error'}
+  /resources/{id}/purge:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: requestPurge
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ReasonInput'}}}}
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /resources/{id}/permissions:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getPermissions
+      responses:
+        '200': {description: 当前策略，ETag为资源revision, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Permissions'}}}}
+        default: {$ref: '#/components/responses/Error'}
+    put:
+      operationId: setPermissions
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Permissions'}}}}
+      responses:
+        '200': {$ref: '#/components/responses/Resource'}
+        default: {$ref: '#/components/responses/Error'}
+  /resources/{id}/versions:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: listVersions
+      parameters: [{$ref: '#/components/parameters/Cursor'}, {$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {description: 按version_no降序返回授权版本, content: {application/json: {schema: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/Version'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+    post:
+      operationId: createDraftVersion
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DraftCreate'}}}}
+      responses:
+        '201': {$ref: '#/components/responses/Version'}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getVersion
+      responses:
+        '200': {$ref: '#/components/responses/Version'}
+        default: {$ref: '#/components/responses/Error'}
+    patch:
+      operationId: editDraftVersion
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ContentWrite'}}}}
+      responses:
+        '200': {$ref: '#/components/responses/Version'}
+        default: {$ref: '#/components/responses/Error'}
+    delete:
+      operationId: discardDraft
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      responses:
+        '204': {description: 仅允许丢弃无依赖且无运行任务的DRAFT}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}/content:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: readVersionContent
+      parameters:
+        - {name: representation, in: query, required: true, schema: {enum: [source, preview, markdown, html]}}
+        - {name: download, in: query, schema: {type: boolean, default: false}}
+        - {name: Range, in: header, schema: {type: string}}
+      responses:
+        '200': {description: 鉴权后的原件/预览/渲染内容；代理输出，不返回永久对象URL, content: {application/octet-stream: {schema: {type: string, format: binary}}, application/pdf: {schema: {type: string, format: binary}}, text/html: {schema: {type: string}}, text/markdown: {schema: {type: string}}}}
+        '206': {description: Range部分内容, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}/submit:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: submitVersion
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                review_scope: {enum: [formal, reference], default: formal, description: reference仅提交待核验Wiki供复核，不授予正式批准或发布资格}
+      responses:
+        '200': {$ref: '#/components/responses/Version'}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}/reviews:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: listVersionReviews
+      responses:
+        '200': {description: 该版本的复核决定, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Review'}}}}}
+        default: {$ref: '#/components/responses/Error'}
+    post:
+      operationId: reviewVersion
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ReviewInput'}}}}
+      responses:
+        '201': {description: 作者不能自审；一次终局审核，改变意见需新版本, content: {application/json: {schema: {$ref: '#/components/schemas/Review'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}/publish:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: publishVersion
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}/compile:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: compileKnowledgeDraft
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CompileInput'}}}}
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /versions/{id}/relations:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getRelations
+      responses:
+        '200': {description: 当前可访问的关系，ETag为version revision, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Relation'}}}}}
+        default: {$ref: '#/components/responses/Error'}
+    put:
+      operationId: replaceDraftRelations
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Relation'}}}}}
+      responses:
+        '200': {$ref: '#/components/responses/Version'}
+        default: {$ref: '#/components/responses/Error'}
+  /uploads:
+    post:
+      operationId: createUpload
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/UploadInput'}}}}
+      responses:
+        '201': {$ref: '#/components/responses/Upload'}
+        default: {$ref: '#/components/responses/Error'}
+  /uploads/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getUpload
+      responses:
+        '200': {$ref: '#/components/responses/Upload'}
+        default: {$ref: '#/components/responses/Error'}
+    delete:
+      operationId: cancelUpload
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      responses:
+        '204': {description: 取消未封闭会话；封闭后需取消后台任务}
+        default: {$ref: '#/components/responses/Error'}
+  /uploads/{id}/parts/{part_no}:
+    parameters:
+      - {$ref: '#/components/parameters/Id'}
+      - {name: part_no, in: path, required: true, schema: {type: integer, minimum: 1, maximum: 13}}
+    put:
+      operationId: uploadPart
+      security: *writeAuth
+      requestBody: {required: true, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+      responses:
+        '200': {description: 以upload_id/part_no/hash幂等, content: {application/json: {schema: {$ref: '#/components/schemas/Part'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /uploads/{id}/complete:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: completeUpload
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/UploadComplete'}}}}
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /jobs:
+    get:
+      operationId: listJobs
+      parameters: [{$ref: '#/components/parameters/Cursor'}, {$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {description: 仅本人或授权管理任务, content: {application/json: {schema: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/Job'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /jobs/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getJob
+      responses:
+        '200': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /jobs/{id}/retry:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: retryJob
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /jobs/{id}/cancel:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: cancelJob
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /jobs/{id}/artifact:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: downloadExport
+      responses:
+        '200': {description: 完成的导出；重新核对每项来源权限, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /search:
+    post:
+      operationId: searchKnowledge
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SearchInput'}}}}
+      responses:
+        '200': {description: 已过滤的来源/知识块，可按证据ID跳转, content: {application/json: {schema: {$ref: '#/components/schemas/SearchResult'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /threads:
+    get:
+      operationId: listThreads
+      parameters: [{$ref: '#/components/parameters/Cursor'}, {$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {description: 本人未删除会话, content: {application/json: {schema: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/Thread'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+    post:
+      operationId: createThread
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, additionalProperties: false, required: [space_id, title], properties: {space_id: {type: string, format: uuid}, title: {type: string, minLength: 1, maxLength: 300}}}}}}
+      responses:
+        '201': {description: 新会话, content: {application/json: {schema: {$ref: '#/components/schemas/Thread'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /threads/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getThread
+      parameters: [{$ref: '#/components/parameters/Cursor'}, {$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {description: 会话和分页runs；历史结果重验授权与有效性, content: {application/json: {schema: {type: object, required: [thread, items, next_cursor], properties: {thread: {$ref: '#/components/schemas/Thread'}, items: {type: array, items: {$ref: '#/components/schemas/Run'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+    delete:
+      operationId: deleteThread
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      responses:
+        '204': {description: 删除用户会话视图，后台依保留策略处理内容；不删除审计义务}
+        default: {$ref: '#/components/responses/Error'}
+  /threads/{id}/runs:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: askOrContinue
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RunInput'}}}}
+      responses:
+        '202': {$ref: '#/components/responses/Run'}
+        default: {$ref: '#/components/responses/Error'}
+  /runs/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getRun
+      responses:
+        '200': {$ref: '#/components/responses/Run'}
+        default: {$ref: '#/components/responses/Error'}
+  /runs/{id}/events:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getRunProgress
+      parameters: [{name: Last-Event-ID, in: header, schema: {type: string}}]
+      responses:
+        '200': {description: 有界SSE进度快照progress_version=1，含当前阶段及精简模型计时；公开正文预览逐次核验当前来源且标记pending，完整答案与全部引用诊断只由getRun取得, content: {text/event-stream: {schema: {type: string}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /runs/{id}/feedback:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    post:
+      operationId: submitFeedback
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, additionalProperties: false, required: [kind, comment], properties: {kind: {enum: [HELPFUL, WRONG, MISSING, OUTDATED, OTHER]}, comment: {type: string, maxLength: 5000}}}}}}
+      responses:
+        '201': {description: 已记录；错误类反馈生成或关联内部问题单, content: {application/json: {schema: {type: object, required: [id, case_id], properties: {id: {type: string, format: uuid}, case_id: {type: [string, 'null'], format: uuid}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /cases:
+    get:
+      operationId: listCases
+      parameters: [{$ref: '#/components/parameters/Cursor'}, {$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {description: 本人或被授权处理的问题单, content: {application/json: {schema: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/Case'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+    post:
+      operationId: createExpertCase
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CaseInput'}}}}
+      responses:
+        '201': {description: 创建内部问题单，不向外部联系人发送消息, content: {application/json: {schema: {$ref: '#/components/schemas/Case'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /cases/{id}:
+    parameters: [{$ref: '#/components/parameters/Id'}]
+    get:
+      operationId: getCase
+      responses:
+        '200': {description: 问题单；ETag为revision, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Case'}}}}
+        default: {$ref: '#/components/responses/Error'}
+    patch:
+      operationId: resolveOrAssignCase
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, additionalProperties: false, minProperties: 1, properties: {assignee_id: {type: [string, 'null'], format: uuid}, state: {enum: [OPEN, ASSIGNED, RESOLVED, CLOSED]}, resolution: {type: string}}}}}}
+      responses:
+        '200': {description: 专家意见更新，不覆盖原回答；可通过创建知识草稿沉淀, content: {application/json: {schema: {$ref: '#/components/schemas/Case'}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /exports:
+    post:
+      operationId: exportKnowledge
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, additionalProperties: false, required: [version_ids, format], properties: {version_ids: {type: array, minItems: 1, maxItems: 100, items: {type: string, format: uuid}}, format: {enum: [markdown, json]}}}}}}
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        default: {$ref: '#/components/responses/Error'}
+  /review-queue:
+    get:
+      operationId: getReviewQueue
+      parameters: [{$ref: '#/components/parameters/Cursor'}, {$ref: '#/components/parameters/Limit'}]
+      responses:
+        '200': {description: 有审核/发布角色可访问的候选版本, content: {application/json: {schema: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/Version'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /audit-events:
+    get:
+      operationId: queryAudit
+      parameters:
+        - {name: object_id, in: query, schema: {type: string, format: uuid}}
+        - {$ref: '#/components/parameters/Cursor'}
+        - {$ref: '#/components/parameters/Limit'}
+      responses:
+        '200': {description: 授权的事件元数据，不返回敏感正文, content: {application/json: {schema: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/AuditEvent'}}, next_cursor: {type: [string, 'null']}}}}}}
+        default: {$ref: '#/components/responses/Error'}
+  /settings/model-policy:
+    get:
+      operationId: getModelPolicy
+      responses:
+        '200': {description: 不含密钥的策略，ETag为revision, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/ModelPolicy'}}}}
+        default: {$ref: '#/components/responses/Error'}
+    put:
+      operationId: setModelPolicy
+      security: *writeAuth
+      parameters: [{$ref: '#/components/parameters/Idempotency'}, {$ref: '#/components/parameters/IfMatch'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ModelPolicy'}}}}
+      responses:
+        '200': {description: 仅部署级管理员，模型需在允许清单，策略变化需评测记录, content: {application/json: {schema: {$ref: '#/components/schemas/ModelPolicy'}}}}
+        default: {$ref: '#/components/responses/Error'}
+components:
+  securitySchemes:
+    cookieAuth: {type: apiKey, in: cookie, name: kb_session}
+    csrf: {type: apiKey, in: header, name: X-CSRF-Token}
+  parameters:
+    Id: {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    IfMatch: {name: If-Match, in: header, required: true, schema: {type: string}, description: 双引号包围的revision，例如 "7"；缺失428，冲突412}
+    Idempotency: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 8, maxLength: 128}}
+    Cursor: {name: cursor, in: query, schema: {type: string}}
+    Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+  headers:
+    ETag: {description: 双引号整数revision, schema: {type: string}}
+  responses:
+    Error: {description: 业务或权限错误，参考workflows.md通用错误表, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+    Resource: {description: 资源记录, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Resource'}}}}
+    Version: {description: 内容版本, headers: {ETag: {$ref: '#/components/headers/ETag'}}, content: {application/json: {schema: {$ref: '#/components/schemas/Version'}}}}
+    Job: {description: 后台任务, content: {application/json: {schema: {$ref: '#/components/schemas/Job'}}}}
+    Upload: {description: 上传会话, content: {application/json: {schema: {$ref: '#/components/schemas/Upload'}}}}
+    Run: {description: 咨询运行记录；COMPLETED且仍有证据读取权可返回答案，来源更新时invalidated=true并标为历史；删除或撤权时answer=null, content: {application/json: {schema: {$ref: '#/components/schemas/Run'}}}}
+  schemas:
+    Error:
+      type: object
+      required: [code, message, trace_id, details]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        trace_id: {type: string}
+        details: {type: object, additionalProperties: true}
+    NameInput: {type: object, additionalProperties: false, required: [name], properties: {name: {type: string, minLength: 1, maxLength: 200}}}
+    ReasonInput: {type: object, additionalProperties: false, required: [reason], properties: {reason: {type: string, minLength: 1, maxLength: 2000}}}
+    Space: {type: object, required: [id, name, revision], properties: {id: {type: string, format: uuid}, name: {type: string}, revision: {type: integer}}}
+    Me:
+      type: object
+      required: [id, display_name, csrf_token, spaces]
+      properties:
+        id: {type: string, format: uuid}
+        display_name: {type: string}
+        csrf_token: {type: string}
+        spaces: {type: array, items: {$ref: '#/components/schemas/Space'}}
+    MemberSet:
+      type: array
+      maxItems: 500
+      items:
+        type: object
+        additionalProperties: false
+        required: [user_id, roles]
+        properties:
+          user_id: {type: string, format: uuid}
+          roles: {type: array, minItems: 1, uniqueItems: true, items: {enum: [reader, editor, reviewer, publisher, admin]}}
+    ResourceCreate:
+      type: object
+      additionalProperties: false
+      required: [space_id, kind, name]
+      properties:
+        space_id: {type: string, format: uuid}
+        kind: {enum: [document, knowledge, template]}
+        name: {type: string, minLength: 1, maxLength: 300}
+        category: {type: string, maxLength: 200}
+        tags: {type: array, maxItems: 30, uniqueItems: true, items: {type: string, maxLength: 50}}
+    ResourcePatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 300}
+        category: {type: string, maxLength: 200}
+        tags: {type: array, maxItems: 30, uniqueItems: true, items: {type: string, maxLength: 50}}
+        suspended: {type: boolean, description: 仅publisher可改；恢复前重验有效性及依赖}
+    Resource:
+      type: object
+      required: [id, space_id, kind, name, category, tags, owner_id, revision, access_epoch, restricted, classification, suspended, deleted_at, active_release_id, active_version_id]
+      properties:
+        id: {type: string, format: uuid}
+        space_id: {type: string, format: uuid}
+        kind: {enum: [document, knowledge, template]}
+        name: {type: string}
+        category: {type: string}
+        tags: {type: array, items: {type: string}}
+        owner_id: {type: string, format: uuid}
+        revision: {type: integer}
+        access_epoch: {type: integer}
+        restricted: {type: boolean}
+        classification: {enum: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED]}
+        suspended: {type: boolean}
+        deleted_at: {type: [string, 'null'], format: date-time}
+        active_release_id: {type: [string, 'null'], format: uuid}
+        active_version_id: {type: [string, 'null'], format: uuid, description: 从active_release投影，不是另一个可编辑指针}
+        latest_version_id: {type: [string, 'null'], format: uuid, description: 当前用户可访问的最新版本，仅列表元数据}
+        latest_version_revision: {type: [integer, 'null'], description: 最新可访问版本的乐观锁版本号}
+        latest_version_no: {type: [integer, 'null']}
+        latest_state: {type: [string, 'null']}
+    ResourceList: {type: object, required: [items, next_cursor], properties: {items: {type: array, items: {$ref: '#/components/schemas/Resource'}}, next_cursor: {type: [string, 'null']}}}
+    Permissions:
+      type: object
+      additionalProperties: false
+      required: [restricted, classification, grants]
+      properties:
+        restricted: {type: boolean}
+        classification: {enum: [PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED]}
+        grants:
+          type: array
+          maxItems: 500
+          items: {type: object, additionalProperties: false, required: [user_id, permission], properties: {user_id: {type: string, format: uuid}, permission: {enum: [read, download, edit, review, publish, manage]}}}
+    DraftCreate:
+      type: object
+      additionalProperties: false
+      required: [title, change_reason]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 300}
+        base_version_id: {type: [string, 'null'], format: uuid}
+        change_kind: {enum: [UPDATE, CORRECTION], default: UPDATE}
+        change_reason: {type: string, maxLength: 2000}
+    Block:
+      type: object
+      additionalProperties: false
+      required: [block_id, ordinal, block_type, data, locator, citations]
+      properties:
+        block_id: {type: string, format: uuid}
+        ordinal: {type: integer, minimum: 0}
+        block_type: {enum: [heading, paragraph, list, table, step, warning, formula, image, attachment]}
+        data: {type: object, additionalProperties: true, description: 由block_type对应Schema严格校验；heading/paragraph/warning可含text_format=plain或markdown，缺省plain保持字面量；线上Markdown经安全渲染，禁止任意HTML脚本。原件不随文稿编辑覆盖。}
+        locator: {type: object, additionalProperties: true, description: 原文定位；人工知识可为空}
+        citations:
+          type: array
+          items: {type: object, additionalProperties: false, required: [version_id, block_id, purpose], properties: {version_id: {type: string, format: uuid}, block_id: {type: string, format: uuid}, purpose: {enum: [RULE, INTERNAL_OPINION, FACT, CASE, CALCULATION]}}}
+    ContentWrite:
+      type: object
+      additionalProperties: false
+      required: [title, knowledge_type, applicability, required_facts, legal_status, valid_from, valid_to, blocks]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 300}
+        knowledge_type: {enum: [source, faq, rule, sop, scenario, case, term, solution_template]}
+        applicability: {type: object, additionalProperties: true, description: 字段白名单及AND/OR条件见delivery.md，禁止表达式执行}
+        required_facts: {type: array, items: {type: string}}
+        legal_status: {enum: [UNKNOWN, NOT_APPLICABLE, FUTURE, EFFECTIVE, PARTIAL, REPEALED]}
+        valid_from: {type: [string, 'null'], format: date}
+        valid_to: {type: [string, 'null'], format: date}
+        source_url: {type: [string, 'null'], format: uri}
+        blocks: {type: array, maxItems: 10000, items: {$ref: '#/components/schemas/Block'}}
+    Version:
+      allOf:
+        - {$ref: '#/components/schemas/ContentView'}
+        - type: object
+          required: [id, resource_id, version_no, state, revision, author_id, source_verified, content_sha256]
+          properties:
+            id: {type: string, format: uuid}
+            resource_id: {type: string, format: uuid}
+            version_no: {type: integer}
+            state: {enum: [DRAFT, IN_REVIEW, APPROVED, REJECTED]}
+            revision: {type: integer}
+            author_id: {type: string, format: uuid}
+            origin: {enum: [UPLOAD, HUMAN, AI_DRAFT, COPY]}
+            base_version_id: {type: [string, 'null'], format: uuid}
+            source_verified: {type: boolean}
+            content_sha256: {type: [string, 'null']}
+    ContentView:
+      type: object
+      required: [title, knowledge_type, applicability, required_facts, legal_status, valid_from, valid_to, blocks]
+      properties:
+        title: {type: string}
+        knowledge_type: {type: string}
+        applicability: {type: object}
+        required_facts: {type: array, items: {type: string}}
+        legal_status: {type: string}
+        valid_from: {type: [string, 'null'], format: date}
+        valid_to: {type: [string, 'null'], format: date}
+        blocks: {type: array, items: {$ref: '#/components/schemas/Block'}}
+    ReviewInput:
+      type: object
+      additionalProperties: false
+      required: [decision, reviewed_sha256, comment]
+      properties:
+        decision: {enum: [APPROVE, REJECT]}
+        reviewed_sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        comment: {type: string, maxLength: 10000}
+        source_verified: {type: boolean, description: 仅来源审核；由有权reviewer确认，不来自LLM}
+    Review:
+      allOf:
+        - type: object
+          required: [id, version_id, reviewer_id, decision, reviewed_sha256, comment, created_at]
+          properties:
+            id: {type: string, format: uuid}
+            version_id: {type: string, format: uuid}
+            reviewer_id: {type: string, format: uuid}
+            decision: {enum: [APPROVE, REJECT]}
+            reviewed_sha256: {type: string}
+            comment: {type: string}
+            created_at: {type: string, format: date-time}
+    Relation:
+      type: object
+      additionalProperties: false
+      required: [target_resource_id, relation_type, conditions]
+      properties:
+        target_resource_id: {type: string, format: uuid}
+        relation_type: {enum: [CITES, EXPLAINS, APPLIES_TO, REQUIRES, EXCEPTION_OF, DEPENDS_ON, SUPERSEDES]}
+        conditions: {type: object}
+        evidence_version_id: {type: string, format: uuid}
+        evidence_block_id: {type: string, format: uuid}
+    CompileInput:
+      type: object
+      additionalProperties: false
+      required: [target_space_id, knowledge_type]
+      properties:
+        target_space_id: {type: string, format: uuid}
+        knowledge_type: {enum: [faq, rule, sop, scenario, case, term]}
+        template_version_id: {type: string, format: uuid}
+    UploadInput:
+      type: object
+      additionalProperties: false
+      required: [version_id, filename, size_bytes]
+      properties:
+        version_id: {type: string, format: uuid}
+        filename: {type: string, minLength: 1, maxLength: 255}
+        size_bytes: {type: integer, minimum: 1, maximum: 104857600}
+        expected_sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+    Part: {type: object, required: [part_no, size_bytes, sha256], properties: {part_no: {type: integer, minimum: 1}, size_bytes: {type: integer, minimum: 1}, sha256: {type: string, pattern: '^[a-f0-9]{64}$'}}}
+    UploadComplete: {type: object, additionalProperties: false, required: [parts], properties: {parts: {type: array, minItems: 1, maxItems: 13, items: {$ref: '#/components/schemas/Part'}}}}
+    Upload:
+      type: object
+      required: [id, version_id, state, part_size, part_count, completed_parts, expires_at]
+      properties:
+        id: {type: string, format: uuid}
+        version_id: {type: string, format: uuid}
+        state: {enum: [OPEN, SEALED, CANCELLED, EXPIRED]}
+        part_size: {type: integer}
+        part_count: {type: integer}
+        completed_parts: {type: array, items: {$ref: '#/components/schemas/Part'}}
+        expires_at: {type: string, format: date-time}
+    Job:
+      type: object
+      required: [id, kind, state, stage, attempts, error_code, result]
+      properties:
+        id: {type: string, format: uuid}
+        kind: {enum: [SCAN_PARSE, COMPILE, PUBLISH, ANSWER, EXPORT, INVALIDATE, PURGE]}
+        state: {enum: [QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED]}
+        stage: {type: string}
+        attempts: {type: integer}
+        error_code: {type: [string, 'null']}
+        result: {type: [object, 'null'], additionalProperties: true, description: kind对应结果格式见delivery.md}
+    SearchInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, query]
+      properties:
+        space_id: {type: string, format: uuid}
+        query: {type: string, minLength: 1, maxLength: 2000}
+        kind: {enum: [document, knowledge, template]}
+        business_date: {type: string, format: date}
+        context: {$ref: '#/components/schemas/Context'}
+        cursor: {type: string}
+        limit: {type: integer, minimum: 1, maximum: 100, default: 20}
+    SearchResult:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: {type: object, required: [resource_id, version_id, block_id, title, excerpt, locator], properties: {resource_id: {type: string, format: uuid}, version_id: {type: string, format: uuid}, block_id: {type: string, format: uuid}, title: {type: string}, excerpt: {type: string}, locator: {type: object}}}
+        next_cursor: {type: [string, 'null']}
+    Context:
+      type: object
+      additionalProperties: false
+      properties:
+        product_type: {type: string}
+        fund_label: {type: string}
+        share_class: {type: string}
+        asset_type: {type: string}
+        market: {type: string}
+        business_event: {type: string}
+        business_date: {type: string, format: date}
+        knowledge_cutoff: {type: string, format: date-time}
+        business_state: {type: string}
+    Thread: {type: object, required: [id, space_id, title, created_at], properties: {id: {type: string, format: uuid}, space_id: {type: string, format: uuid}, title: {type: string}, created_at: {type: string, format: date-time}}}
+    RunInput:
+      type: object
+      additionalProperties: false
+      required: [question, mode, context]
+      properties:
+        answer_scope: {enum: [formal, reference], default: formal, description: reference可引用有权访问的待复核资料，仅供参考；formal仅已核验发布资料}
+        retrieval_selection: {$ref: '#/components/schemas/RetrievalSelection'}
+        model_selection:
+          type: object
+          additionalProperties: false
+          required: [connection_id, model_id]
+          properties:
+            connection_id: {type: string, format: uuid}
+            model_id: {type: string, minLength: 1, maxLength: 512}
+        question: {type: string, minLength: 1, maxLength: 10000}
+        require_model: {type: boolean, default: false, description: 交互式AI答疑要求已配置模型，禁止默默改为资料摘录}
+        automatic_retry: {type: boolean, default: true, description: 设为false时该咨询失败后仅允许用户手动重试，不自动重新执行}
+        reasoning_strategy: {enum: [model_first, evidence_first], description: model_first先仅按问题与业务背景调用模型，随后按计划检索本地并结合证据综合；evidence_first为旧客户端兼容路径}
+        mode: {enum: [auto, answer, solution]}
+        context: {$ref: '#/components/schemas/Context'}
+        parent_run_id: {type: string, format: uuid}
+        attachment_version_ids: {type: array, maxItems: 10, items: {type: string, format: uuid}, description: 仅已扫描且有权访问版本，临时附件只能提供用户事实，不能绕过知识发布}
+    RetrievalSelection:
+      type: object
+      additionalProperties: false
+      required: [profile_id]
+      description: 只接受服务器注册的检索方案；未传时新问题使用服务器默认，补充提问继承父轮明确绑定。排队与重试不随默认变化。
+      properties:
+        profile_id: {type: string, pattern: '^[a-z0-9][a-z0-9_-]{0,63}$'}
+        fingerprint: {type: string, pattern: '^[0-9a-f]{64}$'}
+    FrozenRetrievalSelection:
+      type: object
+      additionalProperties: false
+      required: [profile_id, fingerprint, model, dimensions]
+      description: 服务端核对后冻结的实际检索方案；不推断或回填无绑定的历史记录。
+      properties:
+        profile_id: {type: string, pattern: '^[a-z0-9][a-z0-9_-]{0,63}$'}
+        fingerprint: {type: string, pattern: '^[0-9a-f]{64}$'}
+        model: {type: string, minLength: 1, maxLength: 512}
+        dimensions: {type: integer, minimum: 1}
+    Run:
+      type: object
+      required: [id, thread_id, job_id, state, invalidated, answer, error_code]
+      properties:
+        answer_scope: {enum: [formal, reference]}
+        answer_scope_origin: {enum: [explicit, inherited, legacy_default, historical_unknown], description: 服务端记录范围如何确定，旧记录未保存时为historical_unknown}
+        retrieval_selection: {$ref: '#/components/schemas/FrozenRetrievalSelection'}
+        model_snapshot:
+          type: object
+          additionalProperties: true
+          properties:
+            retrieval_selection: {$ref: '#/components/schemas/FrozenRetrievalSelection'}
+        evidence_diagnostic: {$ref: '#/components/schemas/EvidenceDiagnostic'}
+        id: {type: string, format: uuid}
+        thread_id: {type: string, format: uuid}
+        job_id: {type: string, format: uuid}
+        state: {enum: [QUEUED, RUNNING, COMPLETED, FAILED, CANCELLED]}
+        invalidated: {type: boolean}
+        answer: {oneOf: [{type: 'null'}, {$ref: './answer.schema.json'}]}
+        error_code: {type: [string, 'null']}
+        phase: {type: [string, 'null']}
+        attempt: {type: integer, minimum: 0}
+        question_analysis:
+          type: object
+          required: [source, local_sources_loaded, plan]
+          properties:
+            source: {const: model_prior_knowledge_unverified}
+            local_sources_loaded: {const: 0}
+            plan:
+              type: object
+              required: [interpretation, initial_assessment, search_queries, focus_terms]
+              properties:
+                interpretation: {type: string, minLength: 1}
+                initial_assessment: {type: string, minLength: 1}
+                search_queries: {type: array, items: {type: string}}
+                focus_terms: {type: array, items: {type: string}}
+                decision_points: {type: array, items: {type: string}}
+                missing_facts: {type: array, items: {type: string}}
+        failure_diagnostic:
+          type: object
+          required: [code, message, phase, schema_errors, retryable, next_step]
+          properties:
+            code: {type: string, maxLength: 100}
+            message: {type: string}
+            phase: {enum: [planning, synthesis, unknown]}
+            schema_errors:
+              type: array
+              maxItems: 8
+              items: {type: object, required: [path, rule], properties: {path: {type: string, maxLength: 240}, rule: {type: string}}}
+            retryable: {const: false}
+            next_step: {type: string}
+    EvidenceDiagnostic:
+      type: object
+      additionalProperties: false
+      required: [scope, basis, observed_at, message, note, reasons, next_step]
+      properties:
+        scope: {enum: [formal, reference]}
+        basis: {const: current_access, description: 仅按当前调用者权限重新检查，不是历史证据快照}
+        observed_at: {type: string, format: date-time}
+        message: {type: string, maxLength: 500}
+        note: {type: string, maxLength: 500}
+        visible_resource_count: {type: integer, minimum: 0}
+        eligible_resource_count: {type: integer, minimum: 0}
+        excluded_resource_count: {type: integer, minimum: 0}
+        reasons:
+          type: array
+          maxItems: 32
+          items:
+            type: object
+            additionalProperties: false
+            required: [code, label]
+            properties:
+              code: {type: string, maxLength: 80}
+              label: {type: string, maxLength: 220}
+              count: {type: integer, minimum: 0}
+        next_step: {type: string, maxLength: 500}
+    CaseInput:
+      type: object
+      additionalProperties: false
+      required: [space_id, title, description]
+      properties:
+        space_id: {type: string, format: uuid}
+        run_id: {type: string, format: uuid}
+        title: {type: string, minLength: 1, maxLength: 300}
+        description: {type: string, minLength: 1, maxLength: 10000}
+    Case:
+      type: object
+      required: [id, space_id, title, description, state, resolution, assignee_id, revision]
+      properties:
+        id: {type: string, format: uuid}
+        space_id: {type: string, format: uuid}
+        title: {type: string}
+        description: {type: string}
+        state: {enum: [OPEN, ASSIGNED, RESOLVED, CLOSED]}
+        resolution: {type: string}
+        assignee_id: {type: [string, 'null'], format: uuid}
+        revision: {type: integer}
+    AuditEvent:
+      type: object
+      required: [id, action, object_type, outcome, created_at, trace_id]
+      properties:
+        id: {type: string, format: uuid}
+        action: {type: string}
+        object_type: {type: string}
+        outcome: {enum: [SUCCESS, DENIED, FAILED]}
+        created_at: {type: string, format: date-time}
+        trace_id: {type: string}
+    ModelPolicy:
+      type: object
+      additionalProperties: false
+      required: [provider_ref, generation_model, extraction_model, enable_vector, prompt_version, evaluation_id]
+      properties:
+        provider_ref: {type: string, description: 安全配置中的连接引用，不允许输入任意URL或密钥}
+        generation_model: {type: string}
+        extraction_model: {type: string}
+        enable_vector: {type: boolean}
+        prompt_version: {type: string}
+        evaluation_id: {type: string, description: 已通过的模型/策略评测记录标识}

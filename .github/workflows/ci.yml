@@ -14,43 +14,53 @@ jobs:
     name: 发布边界检查
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
       - run: python scripts/check-public-release.py
       - run: git diff --check
   backend:
-    name: 后端与MCP
+    name: 后端分组 ${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
       - run: uv sync --frozen --extra test --extra semantic --extra local-models --project backend
       - run: |
           uv venv integrations/fundkb_mcp/.venv --python 3.12
           uv pip install --python integrations/fundkb_mcp/.venv/bin/python -r integrations/fundkb_mcp/requirements-test.txt
-      - run: backend/.venv/bin/python -m pytest backend/tests -o addopts='' -q
-      - run: integrations/fundkb_mcp/.venv/bin/python -B -m pytest integrations/fundkb_mcp/tests -o addopts='' -q
+      - run: backend/.venv/bin/python scripts/run-backend-tests.py --shards 4 --shard ${{ matrix.shard }}
+      - if: matrix.shard == 0
+        run: integrations/fundkb_mcp/.venv/bin/python -B -m pytest integrations/fundkb_mcp/tests -o addopts='' -q
   frontend:
     name: 前端测试与构建
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --no-audit --no-fund
-      - run: npm test
+      - run: npm run test:ci
       - run: npm run build
       - run: npm run test:sites
   containers:
@@ -58,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker compose config --quiet
       - run: docker compose up --build -d --wait --wait-timeout 120
       - run: |

@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import Module, { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { build } from "esbuild";
+import { build, stop as stopCompiler } from "esbuild";
 import { qwen, bge, profiles, selection, frozenSelection, retrievalKey } from "./retrievalProfiles.test-fixtures.mjs";
 
 const require = createRequire(import.meta.url);
@@ -227,9 +227,15 @@ afterEach(async () => {
   }
 });
 after(() => {
-  ScrollTrigger.disable();
-  gsap.ticker.sleep();
-  window.close();
+  try {
+    ScrollTrigger.disable();
+    gsap.ticker.sleep();
+    window.close();
+  } finally {
+    // This file owns the one-shot compiler service. Explicitly close it after
+    // all assertions; do not force process exit or mask an unfinished test.
+    stopCompiler();
+  }
 });
 after(async () => {
   if (process.env.CONSULTATION_PERF_REPORT) await writeFile(process.env.CONSULTATION_PERF_REPORT,

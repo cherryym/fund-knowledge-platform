@@ -369,8 +369,19 @@ def test_v3_capture_checks_wire_reasoning_separately_from_requested_effort(v3_pr
     assert result["instruction_channels_verified"] and result["model_verified"]
 
 
-def test_v3_os_policy_disallows_host_contents_keychain_and_other_network(v3_probe):
-    policy = v3_probe.sandbox_policy(Path("/synthetic-binary"), 54321, Path("/synthetic-runtime"))
+@pytest.fixture
+def darwin_policy_probe(v3_probe, monkeypatch):
+    # These two tests inspect policy text, not the host's installed sandbox.
+    # Keep the real runtime guard and verify its refusal separately below.
+    monkeypatch.setattr(v3_probe, "sys", SimpleNamespace(platform="darwin"))
+    actual_path = v3_probe.Path
+    monkeypatch.setattr(v3_probe, "Path", lambda path: SimpleNamespace(is_file=lambda: True)
+        if str(path) == "/usr/bin/sandbox-exec" else actual_path(path))
+    return v3_probe
+
+
+def test_v3_os_policy_disallows_host_contents_keychain_and_other_network(darwin_policy_probe):
+    policy = darwin_policy_probe.sandbox_policy(Path("/synthetic-binary"), 54321, Path("/synthetic-runtime"))
     assert "(deny network*)" in policy
     assert '(remote ip "localhost:54321")' in policy
     assert "(deny file-read-data file-write*)" in policy
@@ -381,10 +392,18 @@ def test_v3_os_policy_disallows_host_contents_keychain_and_other_network(v3_prob
     assert "/Users" not in policy
 
 
-def test_v3_sandbox_paths_preserve_unicode_without_json_unicode_escape(v3_probe):
-    policy = v3_probe.sandbox_policy(Path("/binary"), 54321, Path("/synthetic/中文目录"))
+def test_v3_sandbox_paths_preserve_unicode_without_json_unicode_escape(darwin_policy_probe):
+    policy = darwin_policy_probe.sandbox_policy(Path("/binary"), 54321, Path("/synthetic/中文目录"))
     assert '(subpath "/synthetic/中文目录")' in policy
     assert "\\u" not in policy
+
+
+@pytest.mark.parametrize("platform,available", [("linux", True), ("win32", True), ("darwin", False)])
+def test_v3_policy_still_requires_real_supported_host(v3_probe, monkeypatch, platform, available):
+    monkeypatch.setattr(v3_probe, "sys", SimpleNamespace(platform=platform))
+    monkeypatch.setattr(v3_probe, "Path", lambda path: SimpleNamespace(is_file=lambda: available))
+    with pytest.raises(ProviderError, match="OFFLINE_NETWORK_SANDBOX_REQUIRED"):
+        v3_probe.sandbox_policy(Path("/binary"), 54321, Path("/synthetic-runtime"))
 
 
 def test_v3_configure_refuses_an_existing_destination_without_running_binary(v3_probe, tmp_path):

@@ -212,9 +212,12 @@ beforeEach(() => {
     throw new Error("Unexpected synthetic request: " + path);
   };
 });
-afterEach(async () => {
+afterEach(async (t) => {
   if (root) await act(async () => root.unmount());
   root = undefined;
+  // Restore real timer APIs before suite-level GSAP/DOM cleanup, including
+  // failed assertions. Fake-clock cleanup must not swallow native timers.
+  t.mock.timers.reset();
   clearSession();
   globalThis.fetch = originalFetch;
   assert.deepEqual(unexpected, [], "all requests must be handled by synthetic fixtures");
@@ -1924,7 +1927,12 @@ const sse = (value, eventId = "synthetic-event") => `retry: 1500\nid: ${eventId}
 const sseResponse = value => new Response(sse(value), { headers: { "Content-Type": "text/event-stream" } });
 const runReads = () => calls.filter(call => call.method === "GET" && /^\/runs\/[^/]+$/.test(call.path));
 const progressReads = () => calls.filter(call => call.method === "GET" && call.path.endsWith("/events"));
-const advancePoll = t => act(async () => t.mock.timers.tick(1600));
+const advancePoll = t => act(async () => {
+  t.mock.timers.tick(1600);
+  // A tick schedules an async Response.text/json + React update; yielding a
+  // real event-loop turn lets that chain finish without advancing another poll.
+  await new Promise(resolve => setImmediate(resolve));
+});
 
 test("performance: progress polling avoids repeated full payloads and loads all final Markdown/citations once", async t => {
   t.mock.timers.enable({ apis: ["setInterval", "setTimeout", "Date"] });

@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict
+from hashlib import sha256
 
 from sqlalchemy import select
 
@@ -52,6 +53,7 @@ from .wiki_reader import (
     read_requests,
     requests_catalog,
     search_requests,
+    planning_search_requests,
     section_read_requests,
 )
 from .wiki_section_reader import outline_text, read_scoped_pages, source_anchors
@@ -82,6 +84,12 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         prompt_version = UNIVERSAL_PROMPT_VERSION if universal else ADAPTIVE_PROMPT_VERSION if adaptive else PROMPT_VERSION
         system_sha = UNIVERSAL_SYSTEM_SHA256 if universal else ADAPTIVE_SYSTEM_SHA256 if adaptive else SYSTEM_SHA256
         request, context, space_id = dict(run.request), dict(run.request.get("context", {})), thread.space_id
+        from .business_reading import business_profile, profile_instructions
+        business = business_profile(db, space_id) if universal else None
+        business_stamp = policy_stamp(db, space_id) if business else None
+        if business:
+            system += profile_instructions(business)
+            system_sha = sha256(system.encode()).hexdigest()
         if settings.llm_provider != "http":
             raise JobError("MODEL_REQUIRED")
         reuse = False
@@ -113,12 +121,11 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
     choice = request.get("model_selection")
     scope = request.get("answer_scope", "formal")
     question = request["question"]
-    if universal:
-        from .unit_fusion import query_weights
-        expand_parents = query_weights(question)["profile"] == "multi_aspect"
-    else:
-        expand_parents = False
+    # Reading scope follows actual source structure, not question wording.
+    reference_requested, dependency_searches, group_rank_cache = {}, set(), {}
+    context_report = None
     read_records, read_pages, notes = {}, set(), []
+    unsent_records = {}
     full_requested, section_requested, discovered_anchors = set(), {}, {}
     manual_requested = set()
     catalog_stamp = None
@@ -192,6 +199,10 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             # body/hash read immediately before it. Codex rechecks again after
             # any provider queue wait, immediately before turn/start.
             verify(list(records))
+            if business:
+                with dispatcher.read_session_factory() as db:
+                    if policy_stamp(db, space_id) != business_stamp:
+                        raise JobError("SOURCE_READING_POLICY_CHANGED")
             # The index and relation labels are protected metadata too. This
             # recheck loads no paragraph bodies and never trusts a browser cache.
             if catalog_stamp is not None:
@@ -276,6 +287,28 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             previews.discard(run_id, job_id=job_id, attempt=attempt)
             model_elapsed_ms += (time.monotonic() - started) * 1000
 
+    manager = getattr(dispatcher.vector_index,"model_runtime",None)
+    if manager is not None and manager.supported:
+        from .model_warmup import ModelWarmupError
+        dispatcher._checkpoint(job_id,attempt,"WARMING_RETRIEVAL_MODELS",{})
+        manager.start()
+        with dispatcher.session_factory.begin() as db:
+            dispatcher._fence(db,job_id,attempt)
+            current = db.get(m.ConsultationRun,run_id)
+            current.model_snapshot = {**current.model_snapshot,"retrieval_runtime":manager.snapshot()}
+        try:
+            manager.ensure_ready(cancel_check=authority)
+        except ModelWarmupError as exc:
+            with dispatcher.session_factory.begin() as db:
+                dispatcher._fence(db,job_id,attempt)
+                current = db.get(m.ConsultationRun,run_id)
+                current.model_snapshot = {**current.model_snapshot,"retrieval_runtime":manager.snapshot()}
+            raise JobError(exc.code) from None
+        with dispatcher.session_factory.begin() as db:
+            dispatcher._fence(db,job_id,attempt)
+            current = db.get(m.ConsultationRun,run_id)
+            current.model_snapshot = {**current.model_snapshot,"retrieval_runtime":manager.snapshot()}
+
     # Exact, source-free plan reuse never reuses an answer or source admission.
     # A fresh connection and a current originating-run/source check precede any
     # use; the new retrieval/reading/synthesis chain below remains unchanged.
@@ -329,7 +362,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             f"\n问题：{question}\n用户背景：{json.dumps(context, ensure_ascii=False)}", "planning")
         planning_complete = planning_finish == "stop"
         plan = {"interpretation": question, "initial_assessment": preliminary,
-            "search_queries": list(dict.fromkeys([question, *search_requests(preliminary)])),
+            "search_queries": list(dict.fromkeys([question, *planning_search_requests(preliminary)])),
             "focus_terms": [], "decision_points": [], "missing_facts": []}
         with dispatcher.session_factory.begin() as db:
             job = dispatcher._fence(db, job_id, attempt)
@@ -348,6 +381,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         connection = providers.resolve_connection(db, actor, space_id, choice["connection_id"], choice["model_id"],
             settings, require_transfer=True, expected_revision=revision) if choice else {}
         source_plan = build_reading_plan(db, space_id, question, context, pages)
+        from .business_reading import add_foundations
+        add_foundations(db, business, pages, source_plan, context)
     catalog_stamp = catalog_signature(pages)
     next_evidence, unavailable_pages = 1, set()
     # Measure the actual adapter envelope; do not divide its capacity by three.
@@ -358,7 +393,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         intro = f"问题：{question}\n用户背景：{json.dumps(context,ensure_ascii=False)}\n程序已组织阅读路径；没有单独的前置模型研判。\n"
         intro += ("本轮为资料辅助答疑：可以使用已准入的待核验资料作有条件的参考解释，不能冒称正式制度。\n"
                   if scope == "reference" else "本轮为正式依据范围，实际来源资格由服务端核对。\n")
-    intro += plan_instructions(source_plan)
+    if not business:
+        intro += plan_instructions(source_plan)
     if universal:
         intro += "\n阅读计划用于指引查证，不是固定答案；请结合实际原文自主修正、补全并综合推理。\n"
     required_anchors = {source["page_id"]: source["anchor_block_ids"] for source in source_plan["sources"]}
@@ -371,6 +407,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
     catalog = compact_catalog(pages) if adaptive else "\n".join(index_lines(pages))
     full_catalog_sent = False
     searched, retrieval_history = set(), []
+    coverage_queries = list(plan.get("search_queries") or [question])
+    coverage_attempted = set()
     discovery_selections = set()
 
     def select_full_catalog():
@@ -397,6 +435,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 if not query or query in searched:
                     continue
                 searched.add(query)
+                if universal and query not in coverage_queries:
+                    coverage_queries.append(query)
                 authority()
                 dispatcher._checkpoint(job_id, attempt, "HYBRID_RETRIEVAL", {"retrieval_queries":len(searched)})
                 with dispatcher.read_session_factory() as db:
@@ -444,12 +484,16 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 if universal:
                     from .evidence_router import plan_evidence_reads
                     extra = plan_evidence_reads(question, pages, combined.get("units", []), graph_plan=extra,
-                        max_seed_units=max(settings.retrieval_seed_units, len(current_queries)), conservative_graph=True)
+                        max_seed_units=max(settings.retrieval_seed_units, len(current_queries)), conservative_graph=True,
+                        include_query_routes=True)
                 for pid, bids in extra["anchors"].items():
                     discovered_anchors.setdefault(pid, set()).update(bids)
                 selected.extend(extra["requested"])
                 if graph_plan is not None:
                     graph_plan["used_edges"] = [*graph_plan.get("used_edges", []), *extra.get("used_edges", [])]
+                    if universal:
+                        from .evidence_coverage import merge_routes
+                        graph_plan["query_routes"] = merge_routes(graph_plan.get("query_routes", {}), extra.get("query_routes", {}))
                 if query_path is not None:
                     query_path = {**query_path, "route": "expanded_grounded",
                         "additional_search_queries": len(searched), "used_edges": graph_plan.get("used_edges", [])}
@@ -473,12 +517,12 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         from .wiki_navigation import load_inline_navigation
         # Only identifier routes are reused. Current catalog, policy and source
         # verification are still rebuilt/rechecked for this actor and context.
-        path_key = svc.digest(["adaptive-graph-path-v1", actor.id, space_id, scope, question, context,
+        path_key = svc.digest(["evidence-bundle-path-v2", actor.id, space_id, scope, question, context,
             svc.primitive(svc.effective_date(context)),
             catalog_stamp, source_plan["policy_stamp"], prompt_version, system_sha,
             dispatcher.vector_index.embedding.fingerprint if dispatcher.vector_index else None,
             *([plan.get("search_queries"), settings.reranker_mode, settings.reranker_model, settings.reranker_revision,
-               settings.reranker_max_tokens,
+               settings.reranker_max_tokens, settings.reranker_dtype, settings.reranker_instruction,
                settings.retrieval_strategy, settings.retrieval_unit_candidates, settings.retrieval_seed_units] if universal else [])])
         searched.update(plan.get("search_queries", [question]) if universal else [question])
         graph_plan = get_query_path(path_key)
@@ -508,7 +552,25 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 from .evidence_router import plan_evidence_reads
                 graph_plan = plan_evidence_reads(question, pages, result.get("units", []), graph_plan=graph_plan,
                     max_seed_units=max(settings.retrieval_seed_units, len(plan.get("search_queries", []))),
-                    conservative_graph=True)
+                    conservative_graph=True, include_query_routes=True)
+                if business:
+                    from .business_reading import core_catalog, merge_primary_route
+                    primary_pages = core_catalog(business, pages)
+                    primary_query = business["label"] + "：" + question
+                    with dispatcher.read_session_factory() as db:
+                        core_result = search_many_catalog(db, authority(), space_id, [primary_query],
+                            pages=primary_pages, scope=scope, context=context, vector=dispatcher.vector_index,
+                            limit=settings.hybrid_candidate_limit, checkpoint=authority,
+                            session_factory=dispatcher.read_session_factory)
+                    primary = plan_evidence_reads(primary_query, pages, core_result.get("units", []),
+                        max_seed_units=settings.retrieval_seed_units, conservative_graph=True)
+                    graph_plan = merge_primary_route(graph_plan, primary, primary_pages)
+                    graph_plan["domain_retrieval"] = {"label": business["label"], "catalog_pages": len(primary_pages),
+                        "returned": core_result["returned"], "query": primary_query,
+                        "timing_ms": core_result["timing_ms"], "warnings": core_result["warnings"]}
+                    if not graph_plan["domain_primary_anchors"]:
+                        graph_plan["warnings"].append("DOMAIN_CORE_NOT_LOCATED")
+                    retrieval_ms = round((time.monotonic() - start) * 1000, 3)
             graph_plan["warnings"] = list(dict.fromkeys([*graph_plan.get("warnings", []),
                 *result["warnings"], *navigation.get("warnings", [])]))
             # Commit an ID-only route only after its complete selected sources
@@ -521,6 +583,15 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 **({"batch_execution": result["batch_execution"]} if result.get("batch_execution") is not None else {}),
                 "candidate_preview_stats": result.get("candidate_preview_stats", {}),
                 **({"searches": result.get("searches", [])} if universal else {})})
+        if business:
+            from .business_reading import bind_primary_route
+            bind_primary_route(source_plan, graph_plan, pages)
+            if not graph_plan.get("domain_primary_anchors"):
+                source_plan["warnings"].append("DOMAIN_CORE_NOT_LOCATED")
+            for source in source_plan["sources"]:
+                pid = source["page_id"]
+                required_anchors[pid] = list(dict.fromkeys([*required_anchors.get(pid, []), *source["anchor_block_ids"]]))
+            intro += plan_instructions(source_plan)
         wanted = [pid for pid in graph_plan["requested"] if pid in pages]
         discovered_anchors = {pid: set(ids) for pid, ids in graph_plan["anchors"].items() if pid in pages}
         query_path = {"strategy": "universal_wiki_rag" if universal else "adaptive_graph",
@@ -534,6 +605,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             "requested_pages": wanted, "used_edges": graph_plan.get("used_edges", []),
             "reasons": graph_plan.get("reasons", {}), "warnings": graph_plan.get("warnings", []),
             "stats": graph_plan.get("stats", {}), "coverage_is_professional_verification": False,
+            **({"domain_retrieval": graph_plan.get("domain_retrieval")} if business else {}),
             **({"reranker_model": settings.reranker_model, "reranker_revision": settings.reranker_revision,
                 "reading_plan_source": "model_public_plan"} if universal else {})}
         with dispatcher.read_session_factory() as db:
@@ -542,6 +614,9 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             job = dispatcher._fence(db, job_id, attempt)
             current = db.get(m.ConsultationRun, run_id)
             current.model_snapshot = {**current.model_snapshot, "query_path": query_path,
+                "source_reading_plan": {"required_sources": [{key: source[key] for key in
+                    ("page_id", "resource_id", "version_id", "title", "role")} for source in source_plan["sources"]],
+                    "warnings": source_plan["warnings"]},
                 "hybrid_retrieval": {"strategy": "wiki_rag_graph_adaptive", "queries": retrieval_history,
                     "full_catalog_available": True}}
             dispatcher._audit(db, job, "answer.query_path_planned", query_path)
@@ -568,7 +643,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         page = pages[pid]
         available = {s["section_id"] for s in page.get("source_outline", [])}
         valid = set(section_requested.get(pid, ())) & available
-        return (pid, pid in full_requested, tuple(sorted(valid)), tuple(sorted(anchors.get(pid, ()))))
+        return (pid, pid in full_requested, tuple(sorted(valid)), tuple(sorted(anchors.get(pid, ()))),
+                tuple(sorted(reference_requested.get(pid, ()))))
 
     while True:
         reading_round += 1
@@ -602,6 +678,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         fresh_ids = [pid for pid in expanded if pid not in unavailable_pages and read_signature(pid, anchors) not in seen_reads and (
             pid not in read_pages or pid in full_requested and not pages[pid].get("full_text_loaded")
             or set(section_requested.get(pid, ())) - {s["section_id"] for s in pages[pid].get("read_sections", [])}
+            or set(reference_requested.get(pid, ())) - set(pages[pid].get("incoming_context", {}))
             or set(anchors.get(pid, ())) - {r["block_id"] for r in pages[pid].get("records", [])})]
         reading_progress("loading_sections", round=reading_round, requested_pages=len(fresh_ids),
                          current_batch=0, total_batches=0, completed_batches=0)
@@ -609,14 +686,15 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             fresh, unavailable, next_evidence, outlines = read_scoped_pages(db, authority(), space_id, pages, fresh_ids,
                 context=context, scope=scope, anchors=anchors, sections=section_requested,
                 full_pages=full_requested, next_evidence=next_evidence,
-                **({"structure_version": "v3", "expand_dependencies": True,
-                    "expand_parents": expand_parents} if universal else {}))
+                **({"structure_version": "v3", "context_completion": True,
+                    "reference_locators": reference_requested} if universal else {}))
         seen_reads.update(read_signature(pid, anchors) for pid in fresh_ids)
         unavailable_pages.update(unavailable)
         fresh_ids = [pid for pid in fresh_ids if pid not in unavailable_pages and pages[pid].get("body_loaded")]
         verify(fresh)
         read_pages.update(fresh_ids)
         read_records.update({(row["version_id"], row["block_id"]): row for row in fresh})
+        unsent_records.update({(row["version_id"], row["block_id"]): row for row in fresh})
         if (adaptive and pending_path_cache_key and not unavailable_pages and not outlines
                 and set(graph_plan["requested"]) <= read_pages):
             put_query_path(pending_path_cache_key, graph_plan)
@@ -643,11 +721,85 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 "typed_relation_navigation": True}}
             dispatcher._audit(db, job, "answer.wiki_pages_loaded", {"pages": fresh_ids, "blocks": len(fresh),
                 "catalog_pages": len(pages), "whole_wiki_pages": True, "source_mode": "complete_sections"})
+        ordered_pages = [pid for pid in pages if pid in read_pages]
+        if universal:
+            from .evidence_context import context_plan, context_instructions, order_context_groups
+            from .evidence_coverage import reading_coverage, coverage_instructions
+            closure = context_plan(pages, read_pages, unavailable_pages)
+            context_report = closure["report"]
+            coverage = reading_coverage(coverage_queries, graph_plan.get("query_routes", {}), pages, read_pages,
+                unavailable=unavailable_pages, edges=graph_plan.get("used_edges", []))
+            context_report.update(reading_coverage=coverage["report"],
+                direction_count=coverage["report"]["direction_count"],
+                direction_source_read_count=coverage["report"]["source_read_count"],
+                direction_gap_count=coverage["report"]["gap_count"])
+            followups = []
+            for pid, bids in coverage["next_reads"].items():
+                signature = (pid, pages[pid]["version_id"], tuple(bids))
+                if signature not in coverage_attempted:
+                    coverage_attempted.add(signature)
+                    discovered_anchors.setdefault(pid, set()).update(bids)
+                    followups.append(pid)
+            if followups:
+                # Use the ordinary exact dependency reader. No additional model
+                # request, permission bypass, or arbitrary full-book expansion.
+                from .evidence_router import plan_evidence_reads
+                completion = plan_evidence_reads(question, pages, [], conservative_graph=True, explicit_pages=followups)
+                followups = list(dict.fromkeys([*followups, *completion["requested"]]))
+                for pid, bids in completion["anchors"].items():
+                    discovered_anchors.setdefault(pid, set()).update(bids)
+                graph_plan["used_edges"] = [*graph_plan.get("used_edges", []), *completion["used_edges"]]
+            for pid, locators in closure["requests"].items():
+                new = locators - set(reference_requested.get(pid, ()))
+                if new:
+                    reference_requested.setdefault(pid, set()).update(new)
+                    followups.append(pid)
+            missing_queries = [q for q in closure["searches"] if q not in dependency_searches and q not in searched]
+            if missing_queries:
+                dependency_searches.update(missing_queries)
+                reading_progress("completing_dependencies", round=reading_round)
+                # Same reference is searched once per run; unchanged absence is
+                # an explicit gap, not an unbounded paid retry loop.
+                followups.extend(discover(missing_queries))
+            context_report["additional_searches"] = len(dependency_searches)
+            with dispatcher.session_factory.begin() as db:
+                job = dispatcher._fence(db, job_id, attempt)
+                current = db.get(m.ConsultationRun, run_id)
+                current.model_snapshot = {**current.model_snapshot, "context_completion": context_report}
+            if followups:
+                wanted = list(dict.fromkeys(followups))
+                continue
+            reading_progress("reranking_context", round=reading_round)
+            authority()
+            verify(list(read_records.values()))
+            # No DB transaction held across native model inference. Authority,
+            # cancellation and source identities are rechecked after the wait.
+            ordered_pages, rank_receipt = order_context_groups(question, pages, read_pages,
+                [*closure["edges"], *((e["source"], e["target"]) for e in graph_plan.get("used_edges", [])
+                    if e.get("verification_status") == "REGISTERED_NOT_BUSINESS_VERIFIED"
+                    and e.get("origin") != "proposed" and e.get("type") in {"CITES", "REQUIRES", "DEPENDS_ON", "APPLIES_TO", "EXCEPTION_OF"})],
+                dispatcher.vector_index, group_rank_cache)
+            authority()
+            verify(list(read_records.values()))
+            context_report["group_rerank"] = rank_receipt
+            with dispatcher.session_factory.begin() as db:
+                job = dispatcher._fence(db, job_id, attempt)
+                current = db.get(m.ConsultationRun, run_id)
+                current.model_snapshot = {**current.model_snapshot, "context_completion": context_report}
+                dispatcher._audit(db, job, "answer.context_completed", {"status": context_report["status"],
+                    "gaps": context_report["gap_count"], "references": context_report["reference_count"],
+                    "group_rerank_status": rank_receipt["status"], "dropped_pages": 0})
+        if business:
+            from .business_reading import primary_first
+            ordered_pages = primary_first(ordered_pages, source_plan)
         # Previously read material remains in direct synthesis whenever it fits.
         # For explicit very-large reads only NEW source sections need compiling;
         # do not restart a whole-handbook reading pass after every follow-up READ.
-        body = compact_evidence(pages, [pid for pid in pages if pid in read_pages], used_edges=graph_plan.get("used_edges", [])) \
+        body = compact_evidence(pages, ordered_pages, used_edges=graph_plan.get("used_edges", [])) \
             if adaptive else "\n\n".join(page_text(pages[pid], related_pages=read_pages) for pid in pages if pid in read_pages)
+        if context_report is not None:
+            body += context_instructions(context_report)
+            body += coverage_instructions(context_report["reading_coverage"])
         if outlines:
             body += "\n" + outline_text(pages, outlines)
         if not body:
@@ -657,6 +809,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         prefix = intro + "\n本次已核对的完整Wiki/原文小节：\n"
         instruction = "\n" + (UNIVERSAL_SYNTHESIS_INSTRUCTION if universal else
                               ADAPTIVE_SYNTHESIS_INSTRUCTION if adaptive else SYNTHESIS_INSTRUCTION)
+        if context_report and context_report["gap_count"]:
+            instruction += f"\n本轮原文显式依赖仍有{context_report['gap_count']}处未精确定位，请保留相应限制，不得宣称这些依赖已核验。"
         if adaptive and query_path is not None:
             query_path = {**query_path, "preparation_ms": round((time.monotonic() - path_started) * 1000, 3),
                 "complete_selected_units": True, "loaded_pages": len(read_pages), "loaded_blocks": len(read_records),
@@ -686,11 +840,17 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 # over-capacity round; it is not hidden reasoning or source truth.
                 notes = [final]
         else:
-            if notes and fresh:
-                fresh_keys = {(row["version_id"], row["block_id"]) for row in fresh}
+            if notes and unsent_records:
+                # Automatic dependency reads can span several iterations before
+                # the next model call. Keep ALL not-yet-sent blocks, not only
+                # the last iteration's fresh list.
+                fresh_keys = set(unsent_records)
                 body = "\n\n".join(page_text({**pages[pid], "records": [row for row in pages[pid]["records"]
                     if (row["version_id"], row["block_id"]) in fresh_keys], "read_scope": "sections"}, related_pages=read_pages)
-                    for pid in fresh_ids if any((r["version_id"], r["block_id"]) in fresh_keys for r in pages[pid]["records"]))
+                    for pid in ordered_pages if any((r["version_id"], r["block_id"]) in fresh_keys for r in pages[pid]["records"]))
+                if context_report is not None:
+                    body += context_instructions(context_report)
+                    body += coverage_instructions(context_report["reading_coverage"])
                 if outlines:
                     body += "\n" + outline_text(pages, outlines)
             note_instruction = "\n" + NOTES_INSTRUCTION
@@ -730,6 +890,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             job = dispatcher._fence(db, job_id, attempt)
             dispatcher._audit(db, job, "answer.wiki_pages_read", {"pages": sorted(read_pages),
                 "blocks": len(read_records), "packets": len(packets), "complete_selected_units_sent": True})
+        unsent_records.clear()
         requested = remember_commands(final, pages)
         if fusion:
             requested.extend(discover(search_requests(final)))
@@ -769,6 +930,12 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         citation_trace = public_citation_map(answer["narrative_markdown"], list(read_records.values()))
     if finish != "stop":
         answer["quality_warnings"].append({"code": "MODEL_OUTPUT_INCOMPLETE", "message": "服务商未标记完整结束；已保留收到的公开答复，内容可能未完成。"})
+    if context_report and context_report["gap_count"]:
+        answer["quality_warnings"].append({"code": "SOURCE_CONTEXT_GAPS", "message":
+            f"已读资料中仍有 {context_report['gap_count']} 处显式引用未精确定位；请查看执行记录中的关联补全详情，相关内容不可视为已核验依据。"})
+    if context_report and context_report.get("direction_gap_count"):
+        answer["quality_warnings"].append({"code": "READING_COVERAGE_GAPS", "message":
+            f"仍有 {context_report['direction_gap_count']} 个查证方向尚未关联到实际已读原文；请核对阅读账本。已读状态本身也不代表结论获原文支持。"})
     dispatcher._validate_answer(answer, list(read_records.values()))
     with dispatcher.session_factory.begin() as db:
         job = dispatcher._fence(db, job_id, attempt)

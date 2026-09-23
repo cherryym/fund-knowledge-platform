@@ -35,7 +35,8 @@ def put_query_path(key, plan):
     # The caller key MUST bind user, space, scope/context, catalog signature,
     # primary-source policy and embedding/prompt/router versions. Even a hit
     # goes through current source/hash/ACL reading before model input.
-    value = {k: plan[k] for k in ("requested", "anchors", "reasons", "used_edges", "deferred_pages", "warnings", "stats") if k in plan}
+    value = {k: plan[k] for k in ("requested", "anchors", "reasons", "used_edges", "deferred_pages", "warnings", "stats",
+                                "query_routes", "domain_primary_anchors") if k in plan}
     text = json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
     size = len(text.encode())
     if size > _MAX_BYTES:

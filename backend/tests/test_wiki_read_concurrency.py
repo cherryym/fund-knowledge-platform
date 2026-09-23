@@ -35,7 +35,7 @@ EXPECTED_READ_ONLY_OPERATIONS = frozenset({
     "downloadExport", "getAdminReview", "getCase", "getDocumentTaxonomy", "getGuidanceNormalization",
     "getHealth", "getJob", "getLibrary", "getMe", "getModelConnection", "getModelOAuthChallenge",
     "getModelOAuthState", "getModelPolicy", "getPermissions", "getPurgeEligibility", "getRelations",
-    "getResource", "getResourcePreservation", "getRetentionPolicy", "getRetrievalProfiles", "getRetrievalStatus", "getReviewQueue", "getRun",
+    "getResource", "getResourcePreservation", "getRetentionPolicy", "getRetrievalProfiles", "getRetrievalStatus", "getRetrievalModelRuntime", "getReviewQueue", "getRun",
     "getRunProgress", "getThread", "getUpload", "getVersion", "getWikiCompilationSpecs",
     "getWikiEntryMaintenance", "getWikiGraph", "getWikiMaintenanceProposal", "getWikiPageLinks",
     "getWikiReaderCatalog", "getWikiTaxonomy", "getWikiWorkspace", "listCases", "listDocuments", "listJobs",
@@ -54,7 +54,7 @@ EXPECTED_READ_ONLY_OPERATIONS = frozenset({
 READ_OPERATIONS = (
     "getWikiGraph", "getWikiWorkspace", "getWikiPageLinks", "resolveWikiTitle",
     "getWikiTaxonomy", "getJob", "getResource", "getVersion", "listResources", "listVersions",
-    "listJobs", "getRetrievalProfiles",
+    "listJobs", "getRetrievalProfiles", "getRetrievalModelRuntime",
 )
 
 
@@ -218,6 +218,7 @@ def readable(database):
         "getWikiGraph": f"/wiki/graph?space_id={env.space}",
         "getWikiWorkspace": f"/wiki/workspace?space_id={env.space}",
         "getRetrievalProfiles": f"/retrieval/profiles?space_id={env.space}",
+        "getRetrievalModelRuntime": f"/retrieval/model-runtime?space_id={env.space}",
         "getWikiPageLinks": f"/wiki/pages/{knowledge[0]}/links",
         "resolveWikiTitle": f"/wiki/resolve?space_id={env.space}&title={quote('并发知识')}",
         "getWikiTaxonomy": f"/wiki/taxonomy?space_id={env.space}",

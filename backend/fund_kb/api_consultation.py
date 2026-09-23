@@ -192,7 +192,7 @@ def _run_projection(ctx, run):
                 for row in fresh_records if (row["version_id"], row["block_id"]) in frozen_ids]
             rendered = build_narrative_answer((run.request or {}).get("question", ""), answer["mode"],
                 (run.request or {}).get("context", {}), records, answer["narrative_markdown"], run.id)
-            retained_codes = {"SENSITIVE_INFORMATION_REDACTED", "PRIVATE_REASONING_REMOVED", "SYSTEM_ACTION_CLAIM_REMOVED", "MODEL_OUTPUT_INCOMPLETE", "PRIMARY_RULE_CITATION_MISSING", "SOURCE_AUTHORITY_COVERAGE_GAP"}
+            retained_codes = {"SENSITIVE_INFORMATION_REDACTED", "PRIVATE_REASONING_REMOVED", "SYSTEM_ACTION_CLAIM_REMOVED", "MODEL_OUTPUT_INCOMPLETE", "PRIMARY_RULE_CITATION_MISSING", "SOURCE_AUTHORITY_COVERAGE_GAP", "SOURCE_CONTEXT_GAPS", "DOMAIN_CORE_CITATION_MISSING", "READING_COVERAGE_GAPS"}
             warnings = {warning["code"]: warning for warning in rendered["quality_warnings"]}
             warnings.update({warning["code"]: warning for warning in answer.get("quality_warnings", []) if warning["code"] in retained_codes})
             answer = {**answer, "citations": rendered["citations"], "grounding_status": rendered["grounding_status"],
@@ -218,7 +218,7 @@ def _run_projection(ctx, run):
         "question": (run.request or {}).get("question", ""), "context": (run.request or {}).get("context", {}),
         "created_at": primitive(run.created_at), "model_snapshot": {
             **{key: value for key, value in (run.model_snapshot or {}).items() if key != "public_preview"
-                and (not invalidated or key not in {"wiki_reading", "reading_progress", "hybrid_retrieval", "source_reading_plan", "primary_source_coverage", "query_path", "citation_integrity", "source_authority_coverage", "source_authority_stamp"})},
+                and (not invalidated or key not in {"wiki_reading", "reading_progress", "hybrid_retrieval", "source_reading_plan", "primary_source_coverage", "query_path", "citation_integrity", "source_authority_coverage", "source_authority_stamp", "context_completion"})},
             **({"public_preview": preview} if preview is not None else {})}}
 
 

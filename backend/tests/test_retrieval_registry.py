@@ -86,7 +86,7 @@ def make_settings(root, *, default_id="qwen3-4b", profile_updates=None, **update
     manifest = root / "retrieval-profiles.json"
     manifest.write_text(json.dumps({"schema_version": 1, "default_profile_id": default_id,
                                    "profiles": entries}), encoding="utf-8")
-    return Settings(**{"app_env": "test", "storage_dir": root, "database_url": f"sqlite:///{root / 'test.sqlite'}",
+    return Settings(**{"app_env": "test", "retrieval_warmup_mode": "disabled", "storage_dir": root, "database_url": f"sqlite:///{root / 'test.sqlite'}",
         "qdrant_path": root / "vectors", "retrieval_profiles_file": manifest,
         "retrieval_profile": root / f"{default_id}.json", "allowed_origins": ["http://testserver"],
         "auth_mode": "demo", "job_workers": 1, "llm_provider": "evidence", **updates})

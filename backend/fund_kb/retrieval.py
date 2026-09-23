@@ -450,6 +450,8 @@ class VectorIndex:
         self.embedding = EmbeddingProvider(settings)
         self._reranker = None
         self._reranker_lock = threading.RLock()
+        from .model_warmup import ModelWarmup
+        self.model_runtime = ModelWarmup(settings, self._warm_models)
         self.collection = "fkb_" + self.embedding.fingerprint[:24]
         self._closed = False
         self._last_error = None
@@ -1279,11 +1281,12 @@ class VectorIndex:
         result = {"backend": "qdrant", "mode": self.mode, "database_kind": "QdrantLocal" if self.mode == "local" else "QdrantRemote",
                   "embedding_mode": self.embedding.mode, "development_only": self.embedding.mode == "hashing",
                   "embedding_model": self.embedding.model, "embedding_dimensions": self.embedding.dimension,
+                  "model_runtime": self.model_runtime.snapshot(),
                   "retrieval_strategy": getattr(self.settings, "retrieval_strategy", "version_rrf"),
                   "reranking": {"mode": getattr(self.settings, "reranker_mode", "disabled"),
                       "model": getattr(self.settings, "reranker_model", ""),
                       "revision": getattr(self.settings, "reranker_revision", ""),
-                      "loaded": self._reranker is not None},
+                      "loaded": getattr(self._reranker, "_model", None) is not None},
                   "semantic_effectiveness": "NOT_EVALUATED", "embedding_fingerprint": self.embedding.fingerprint,
                   "collection": self.collection, "closed": self._closed,
                   "projection_schema": self.embedding.projection_schema, "embedding_chunk_bytes": self.embedding.chunk_bytes,
@@ -1328,6 +1331,20 @@ class VectorIndex:
         except Exception:  # noqa: BLE001 - status must sanitize backend errors without exposing endpoints or credentials.
             return {**result, "available": False, "status": "UNAVAILABLE", "error_code": "VECTOR_BACKEND_UNAVAILABLE"}
 
+    def _warm_models(self, phase):
+        # Synthetic health inputs only; no vector-store writes or library text.
+        phase("loading_embedding")
+        query = "查找本地模型预热自检文本"
+        vectors = self.embedding.embed([query], query=True)
+        if (len(vectors) != 1 or len(vectors[0]) != self.embedding.dimension
+                or not all(math.isfinite(float(value)) for value in vectors[0])):
+            raise ValueError("WARMUP_EMBEDDING_INVALID")
+        phase("loading_reranker")
+        scores = self.rerank(query, ["本地模型预热自检文本。", "另一段合成的本地检查材料。"])
+        if scores is None or len(scores) != 2 or not all(math.isfinite(float(s)) for s in scores):
+            raise ValueError("WARMUP_RERANK_INVALID")
+        phase("self_test_complete")
+
     def rerank(self, query, texts):
         """Local complete-input relevance scores; no source/authority decisions."""
         if getattr(self.settings, "reranker_mode", "disabled") != "local":
@@ -1336,8 +1353,8 @@ class VectorIndex:
             raise RuntimeError("VECTOR_INDEX_CLOSED")
         with self._reranker_lock:
             if self._reranker is None:
-                from .local_encoders import LocalReranker
-                self._reranker = LocalReranker(self.settings)
+                from .local_encoders import create_reranker
+                self._reranker = create_reranker(self.settings)
             scores = self._reranker.score(query, texts)
             if len(scores) != len(texts) or any(not math.isfinite(float(s)) for s in scores):
                 raise ProviderError("RERANKER_INVALID_RESPONSE")
@@ -1359,8 +1376,8 @@ class VectorIndex:
             raise RuntimeError("VECTOR_INDEX_CLOSED")
         with self._reranker_lock:
             if self._reranker is None:
-                from .local_encoders import LocalReranker
-                self._reranker = LocalReranker(self.settings)
+                from .local_encoders import create_reranker
+                self._reranker = create_reranker(self.settings)
             scores = self._reranker.score_many(requests)
             try:
                 if not isinstance(scores, (list, tuple)) or len(scores) != len(requests):
@@ -1377,6 +1394,8 @@ class VectorIndex:
                 raise ProviderError("RERANKER_INVALID_RESPONSE") from exc
 
     def close(self):
+        # Do not free a native model while the preparation thread is using it.
+        self.model_runtime.close()
         with _REGISTRY_LOCK, self._shared.lock:
             if self._closed:
                 return

@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     qdrant_url: str | None = None
     qdrant_api_key: str | None = Field(default=None, repr=False)
     retrieval_mode: Literal["wiki", "hybrid"] = "wiki"
+    retrieval_warmup_mode: Literal["auto", "on_demand", "disabled"] = "auto"
     retrieval_profile: Path | None = None
     retrieval_profiles_file: Path | None = None
     provider_master_key: str | None = Field(default=None, repr=False)
@@ -102,6 +103,8 @@ class Settings(BaseSettings):
     reranker_model_path: Path | None = None
     reranker_revision: str = ""
     reranker_device: Literal["auto", "cpu", "mps"] = "auto"
+    reranker_dtype: Literal["float32", "float16", "bfloat16"] = "float32"
+    reranker_instruction: str = Field(default="", max_length=1000)
     reranker_max_tokens: int = Field(default=1024, ge=64, le=32768)
     reranker_batch_size: int = Field(default=8, ge=1, le=128)
     hybrid_candidate_limit: int = Field(default=24, ge=1, le=100)

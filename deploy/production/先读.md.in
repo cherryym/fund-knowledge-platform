@@ -1,0 +1,36 @@
+# 基金运营知识平台 · Windows x64 / Oracle 安装交付
+
+先打开 **[生产安装手册](deploy/production/安装手册.md)**。
+
+本包交付：完整应用源码、已编译前端、生产 Compose、Windows PowerShell 入口、锁定依赖、配置模板、Oracle Alembic 建表、预检/健康检查、镜像导入导出工具、迁移及回退方案、逐文件 SHA256。
+
+**本包类型：联网构建安装包。没有预制 Linux amd64 镜像、业务数据或模型权重，不是完整离线镜像包。** 可以在联网 Docker 准备机 Build + ExportImages，生成供生产导入的镜像包。实际镜像若另行交付，会有单独清单和哈希，不用猜。
+
+你需要准备：Linux amd64 Docker 引擎、Oracle 12.2+ 专属 schema、HTTPS 域名/证书、机构 OIDC。当前默认Local模式使用内部完整包的Qwen嵌入/重排及BGE备选；显式`-ModelMode Http`才需机构嵌入服务。具体系统版本、网络、SSO及目标性能仍须核验。不要误用根目录旧 `compose.yaml`（开发演示配置）。
+
+**完整RAR的业务数据、模型和索引在应用ZIP之外的分卷ZIP中。先按[完整数据接入](deploy/production/本地模型与完整数据接入.md)恢复到新数据卷，并完成Oracle逻辑导入/身份映射；不能跳过数据步骤直接Start空库。**
+
+```powershell
+.\Deploy.ps1 -Action Verify
+.\Deploy.ps1 -Action Init -ModelMode Local
+# 填写 C:\ProgramData\FundKB\production\settings.json，放入 HTTPS 证书
+.\Deploy.ps1 -Action Build
+# 先完成完整数据接入与CPU配置重定位，再检查
+.\Deploy.ps1 -Action Check
+.\Deploy.ps1 -Action Services
+.\Deploy.ps1 -Action Doctor
+# DBA 批准、确认空 schema/备份之后：
+.\Deploy.ps1 -Action Migrate -AcknowledgeDatabaseChange
+# 按手册指定监听 IPv4 地址：
+.\Deploy.ps1 -Action Start
+```
+
+其他必读：
+
+- [Oracle 与运维准备](deploy/production/Oracle与运维准备.md)
+- [本机知识库迁移方案](deploy/production/知识库迁移方案.md)：本次不执行迁移、不复制密钥、不恢复你删掉的资料。
+- [部署验收清单](deploy/production/部署验收清单.md)
+- `VALIDATION.md`：本次打包实际做了什么验证，哪些没有做。
+- [项目中文介绍](README.md)、[架构](docs/architecture.md)、[用户手册](docs/user-guide.md)、[MIT 许可证](LICENSE)
+
+打包完成不等于生产放行。首次生产部署须在隔离/试运行环境通过连接、登录、权限、文件扫描、检索、咨询引用和恢复验收，再开放给正式用户。

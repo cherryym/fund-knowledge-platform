@@ -1575,6 +1575,57 @@ test("model-first progress labels source-free analysis separately from local ret
   assert.equal(sentRuns().length, 0);
 });
 
+test("source closure exposes precise gaps and real rerank receipt without a professional PASS", async () => {
+  await history([run({ model_snapshot: { context_completion: {
+    status: "GAPS_REMAIN", reference_count: 3, resolved_count: 2, gap_count: 1, structural_groups_added: 2,
+    additional_searches: 1, professional_completeness: "NOT_EVALUATED",
+    references: [{ text: "《合成规则》第三条第一款", source_page_id: "W1", status: "broader_context" }],
+    group_rerank: { status: "scored", model: "Qwen/Qwen3-Reranker-4B", dropped_pages: 0, cache_hit: false },
+  } } })]);
+  const text = messages()[0].textContent;
+  assert.match(text, /显式引用 2 \/ 3 已定位/);
+  assert.match(text, /具体款待核对/);
+  assert.match(text, /Qwen\/Qwen3-Reranker-4B/);
+  assert.match(text, /不代表全库召回完整/);
+  assert.doesNotMatch(text, /专业验收通过/);
+});
+
+test("invalidated run never displays dependency source text or group counts", async () => {
+  await history([run({ invalidated: true, answer: null, model_snapshot: { context_completion: {
+    reference_count: 1, resolved_count: 0, gap_count: 1, structural_groups_added: 1,
+    references: [{ text: "PRIVATE_WITHDRAWN_REFERENCE", source_page_id: "W1", status: "unresolved" }],
+  } } })]);
+  assert.doesNotMatch(messages()[0].textContent, /PRIVATE_WITHDRAWN_REFERENCE|关联补全/);
+});
+
+test("reading ledger distinguishes retrieved Wiki, read source, and missing evidence without claiming accuracy", async () => {
+  await history([run({ model_snapshot: { context_completion: {
+    status: "OBSERVED_REFERENCES_CLOSED", reference_count: 0, resolved_count: 0, gap_count: 0, structural_groups_added: 0,
+    professional_completeness: "NOT_EVALUATED", direction_count: 3, direction_source_read_count: 1, direction_gap_count: 2,
+    reading_coverage: { status: "READING_GAPS", direction_count: 3, source_read_count: 1, gap_count: 2,
+      professional_completeness: "NOT_EVALUATED", directions: [
+        { id: "D1", query: "合成估值条件", status: "SOURCE_READ", source_pages: ["W1"], wiki_pages: [], evidence_ids: ["E1"], semantic_support: "NOT_EVALUATED" },
+        { id: "D2", query: "合成阶段", status: "WIKI_ONLY", source_pages: [], wiki_pages: ["W2"], evidence_ids: [], semantic_support: "NOT_EVALUATED" },
+        { id: "D3", query: "合成例外", status: "NO_CANDIDATE", source_pages: [], wiki_pages: [], evidence_ids: [], semantic_support: "NOT_EVALUATED" },
+      ] },
+  } } })]);
+  const text = messages()[0].textContent;
+  assert.match(text, /查证方向：1 \/ 3/);
+  assert.match(text, /仅已读 Wiki，缺原文依据/);
+  assert.match(text, /尚无可用候选，请补查/);
+  assert.match(text, /来源定位：E1/);
+  assert.match(text, /不是业务准确率/);
+  assert.equal(document.querySelectorAll('[data-reading-coverage="ledger"]').length, 1);
+});
+
+test("revoked run suppresses all reading ledger directions and citations", async () => {
+  await history([run({ invalidated: true, answer: null, model_snapshot: { context_completion: {
+    reading_coverage: { directions: [{ id: "D1", query: "WITHDRAWN_COVERAGE", status: "SOURCE_READ", evidence_ids: ["E999"] }] },
+  } } })]);
+  assert.doesNotMatch(messages()[0].textContent, /WITHDRAWN_COVERAGE|E999|查证方向与原文阅读/);
+  assert.equal(document.querySelectorAll('[data-reading-coverage="ledger"]').length, 0);
+});
+
 test("a complete model response is distinct from answer admission, with real budgets and usage", async () => {
   await history([run({ state: "FAILED", answer: null, phase: "FAILED", model_snapshot: {
     model_invoked: true, validation_status: "failed", model_request_count: 2,

@@ -29,6 +29,7 @@ def test_projection_has_explicit_small_whitelist_and_keeps_all_final_data_out():
         model_snapshot={"model_id":"selected-model", "api_key":"synthetic-secret", "base_url":"private",
             "query_path":{"deferred_unit_ids":["x"] * 10000}, "hybrid_retrieval":{"queries":["x"] * 10000},
             "wiki_reading":{"loaded_blocks":999, "page_titles":["private-title"] * 10000},
+            "context_completion":{"gap_count":2, "references":["private-source-text"] * 10000},
             "last_request":{"phase":"synthesis","state":"waiting", "diagnostic":{"raw":"private"},
                 "usage":{"prompt_tokens":2000,"api_key":"private"}},
             "reading_progress":{"stage":"synthesis","total_characters":10000,"raw":"private"}},
@@ -38,6 +39,7 @@ def test_projection_has_explicit_small_whitelist_and_keeps_all_final_data_out():
     encoded = json.dumps(result)
     assert len(encoded) < 1600 and "private" not in encoded and "synthetic-secret" not in encoded
     assert result["model_snapshot"]["wiki_reading"] == {"loaded_blocks":999}
+    assert result["model_snapshot"]["context_completion"] == {"gap_count":2}
     assert result["model_snapshot"]["last_request"]["usage"] == {"prompt_tokens":2000}
     assert "response" not in result and "query_path" not in encoded
     assert result["progress_version"] == 1 and result["source_check"] == "current_access"
@@ -77,12 +79,16 @@ def test_terminal_progress_omits_full_answer_and_invalidated_source_metadata(env
         run = db.get(m.ConsultationRun, rid)
         run.state, run.response = "COMPLETED", {"full": "complete-answer-must-use-GET-run"}
         run.invalidated_at = svc.now()
-        run.model_snapshot = {"model_id":"synthetic", "wiki_reading":{"loaded_blocks":999}, "evidence_count":30}
+        run.model_snapshot = {"model_id":"synthetic", "wiki_reading":{"loaded_blocks":999}, "evidence_count":30,
+            "context_completion":{"gap_count":2,"references":[{"text":"withdrawn-source"}]}}
     response = env.call("GET", f"/runs/{rid}/events")
     data = parse(response)
     assert data["invalidated"] and data["state"] == "COMPLETED"
     assert "event: completed" in response.text and "complete-answer" not in response.text
     assert "wiki_reading" not in data["model_snapshot"] and "evidence_count" not in data["model_snapshot"]
+    assert "context_completion" not in data["model_snapshot"]
+    full = env.call("GET", f"/runs/{rid}").json()
+    assert "context_completion" not in full["model_snapshot"]
 
 
 def test_progress_preview_keeps_real_fresh_source_fence_and_revokes_changed_body(env):

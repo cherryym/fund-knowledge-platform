@@ -245,7 +245,17 @@ export type Run = {
       fresh_source_checks: boolean; source_run_id?: string; age_ms?: number};
     answer_model_invoked?: boolean;
     model_request_count?: number;
+    retrieval_runtime?: {state: string; phase: string; self_tested: boolean; process_id: number; runtime_id: string; error_code?: string | null};
     validation_status?: "pending" | "passed" | "failed" | "review_required";
+    context_completion?: {status: string; reference_count: number; resolved_count: number; gap_count: number;
+      structural_groups_added: number; additional_searches?: number; professional_completeness: string;
+      direction_count?: number; direction_source_read_count?: number; direction_gap_count?: number;
+      reading_coverage?: {status: string; direction_count: number; source_read_count: number; gap_count: number;
+        professional_completeness: string; directions: {id: string; query: string; status: string;
+          source_pages: string[]; wiki_pages: string[]; evidence_ids: string[]; semantic_support: string}[]};
+      references?: {text: string; status: string; source_page_id: string; target_page_id?: string; reason?: string}[];
+      group_rerank?: {status: string; model?: string; dropped_pages: number; cache_hit: boolean; ordered_pages?: string[];
+        ranking_basis?: string; scored_sources?: number; reused_source_scores?: number}};
     wiki_reading?: {catalog_pages: number; loaded_pages: number; loaded_blocks: number; loaded_characters: number;
       page_titles: string[]; full_text_loaded: boolean; scoped_source_pages?: number; full_source_pages?: number;
       source_sections?: number};

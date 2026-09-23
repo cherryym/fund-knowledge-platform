@@ -51,7 +51,7 @@ READ_ONLY_OPERATIONS = frozenset({
     "listThreads", "listVersionReviews", "listVersions", "queryAudit", "readVersionContent",
     "resolveWikiTitle", "searchKnowledge", "getWikiCompilationSpecs", "getWikiReaderCatalog",
     "getWikiEntryMaintenance", "resolveWikiMaintenanceAlias", "listWikiMaintenanceProposals", "getWikiMaintenanceProposal",
-    "getRetrievalStatus", "getRetrievalProfiles", "searchHybridKnowledge",
+    "getRetrievalStatus", "getRetrievalProfiles", "getRetrievalModelRuntime", "searchHybridKnowledge",
     "listSourceAuthority", "getSourceAuthority", "listSourceAuthoritySuggestions",
     "listCapabilities", "getCapabilityStarter", "getCapability", "getCapabilityVersion",
     "exportCapabilitySkill", "listCapabilityRuns", "getCapabilityRun", "getCapabilityRunNext",

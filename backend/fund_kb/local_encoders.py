@@ -50,6 +50,13 @@ class LocalEncoderError(ValueError):
     """Stable, text-free diagnostics; never include supplied business text."""
 
 
+def create_reranker(settings):
+    if getattr(settings, "reranker_model", None) == "Qwen/Qwen3-Reranker-4B":
+        from .qwen_reranker import QwenReranker
+        return QwenReranker(settings)
+    return LocalReranker(settings)
+
+
 def verify_model_file(directory: Path, name: str, pin: tuple[int, str]) -> dict:
     """Validate a fixed file before loading; return independently computed SHA256."""
     path = directory / name

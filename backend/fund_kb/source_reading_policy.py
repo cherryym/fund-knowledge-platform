@@ -75,8 +75,10 @@ def plan_instructions(plan):
     if not plan["matched_rules"]:
         return ""
     lines = ["\n本题主来源核对要求（仅决定本题阅读组织，不宣告法规效力或扩大权限）：",
-        "先辨明用户问的是日常估值取价还是合同兑付金额。估值取价应依据适用估值标准的直接条款；会计手册只解释核算衔接，不能以分录、兑付金额或脚注倒推估值规则。",
-        "合同回售价、第三方估值价格、会计结转金额应区分。若问合同金额，需核对发行条款和公告，不把估值标准误说成合同定价规则。新旧资料有差异时，说明时点与适用范围，不能混用。"]
+        "以当前业务直接适用的估值准则/指引为核心，交易规则只解释事件条件，会计手册说明核算衔接。新旧资料有差异时核对业务日期、适用主体和效力，不能混用。"]
+    if any(source.get("role") == "valuation_rule" for source in plan["sources"]):
+        lines += ["先辨明用户问的是日常估值取价还是合同兑付金额。估值取价应依据适用估值标准的直接条款；会计手册只解释核算衔接，不能以分录、兑付金额或脚注倒推估值规则。",
+                  "合同回售价、第三方估值价格、会计结转金额应区分。若问合同金额，需核对发行条款和公告，不把估值标准误说成合同定价规则。"]
     for source in plan["sources"]:
         lines.append(f"必须核对 {source['page_id']} | {source['title']} 的本题直接条款、适用范围和实施时间。"
             "综合答案对估值价格口径的说明应引用该直接原文，不能只引用手册或第三方技术说明。")
@@ -94,7 +96,13 @@ def check_primary_citations(plan, records, answer):
         topics = {(source["version_id"], bid) for bid in source["topic_block_ids"]}
         covered.append({"resource_id": source["resource_id"], "version_id": source["version_id"],
             "read": bool(topics) and topics <= actual, "cited": bool(topics & cited)})
-    complete = not plan["warnings"] and bool(covered) and all(row["read"] and row["cited"] for row in covered)
+    required = [row for row, source in zip(covered, plan["sources"]) if source.get("role") != "domain_core"]
+    candidates = [row for row, source in zip(covered, plan["sources"]) if source.get("role") == "domain_core"]
+    # Explicit owner-bound standards remain mandatory; retrieved core candidates
+    # form an alternative pool, not a demand to cite every possibly relevant file.
+    complete = (not plan["warnings"] and bool(covered)
+        and all(row["read"] and row["cited"] for row in required)
+        and (not candidates or any(row["read"] and row["cited"] for row in candidates)))
     if plan["matched_rules"] and not complete:
         answer["quality_warnings"].append({"code": "PRIMARY_RULE_CITATION_MISSING",
             "message": "本题直接估值标准尚未完整核对或未被正确引用，不能把当前答复作为确定取价依据。"})

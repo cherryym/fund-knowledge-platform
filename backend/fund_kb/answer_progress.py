@@ -15,6 +15,11 @@ READING = frozenset({"stage", "round", "current_batch", "total_batches", "comple
 WIKI = frozenset({"catalog_pages", "loaded_pages", "loaded_blocks", "loaded_characters", "full_text_loaded",
     "scoped_source_pages", "full_source_pages", "source_sections", "catalog_body_blocks_loaded",
     "unavailable_pages", "typed_relation_navigation"})
+CONTEXT = frozenset({"status", "reference_count", "resolved_count", "gap_count", "structural_groups_added",
+                     "additional_searches", "professional_completeness", "direction_count",
+                     "direction_source_read_count", "direction_gap_count"})
+RUNTIME = frozenset({"runtime_id","process_id","scope","policy","supported","state","phase","attempts",
+                     "started_at","completed_at","error_code","self_tested","elapsed_ms"})
 REQUEST = frozenset({"phase", "state", "attempt", "started_at", "duration_ms", "response_chars", "finish_reason"})
 
 
@@ -41,7 +46,7 @@ def progress_projection(run, job, *, invalidated, preview=None):
         if isinstance(original.get("planning_cache"), dict):
             snapshot["planning_cache"] = scalars(original["planning_cache"],
                 {"hit", "saved_model_requests", "fresh_source_checks", "final_answer_reused", "age_ms", "source_run_id"})
-        for key, fields in (("reading_progress", READING), ("wiki_reading", WIKI)):
+        for key, fields in (("reading_progress", READING), ("wiki_reading", WIKI), ("context_completion", CONTEXT), ("retrieval_runtime", RUNTIME)):
             if isinstance(original.get(key), dict):
                 snapshot[key] = scalars(original[key], fields)
         if preview is not None:

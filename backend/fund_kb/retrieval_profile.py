@@ -40,6 +40,8 @@ class LocalRetrievalProfile(BaseModel):
     reranker_model_path: Path | None = None
     reranker_revision: str = ""
     reranker_device: Literal["auto", "cpu", "mps"] = "auto"
+    reranker_dtype: Literal["float32", "float16", "bfloat16"] = "float32"
+    reranker_instruction: str = Field(default="", max_length=1000)
     reranker_max_tokens: int = Field(default=1024, ge=64, le=32768)
     reranker_batch_size: int = Field(default=8, ge=1, le=128)
     wiki_query_strategy: Literal["interactive", "adaptive", "universal"] = "interactive"

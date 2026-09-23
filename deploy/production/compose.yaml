@@ -1,0 +1,123 @@
+name: fundkb-production
+x-app: &app
+  image: ${FKB_API_IMAGE:-fundkb-api:0.1.0-production.20260923}
+  platform: linux/amd64
+  build:
+    context: .
+    dockerfile: deploy/production/api.Dockerfile
+  init: true
+  restart: unless-stopped
+  read_only: true
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  tmpfs: ["/tmp:rw,nosuid,nodev,size=512m"]
+  environment:
+    FKB_CONFIG_FILE: /run/fkb/settings.json
+  volumes:
+    - type: bind
+      source: ${FKB_CONFIG_DIR:?Set FKB_CONFIG_DIR}/settings.json
+      target: /run/fkb/settings.json
+      read_only: true
+      bind: {create_host_path: false}
+    - app-data:/app/data
+  networks: [application, services]
+  logging: {driver: json-file, options: {max-size: 10m, max-file: "5"}}
+services:
+  api:
+    <<: *app
+    command: [api]
+    depends_on:
+      broker: {condition: service_healthy}
+      clamav: {condition: service_healthy}
+      qdrant: {condition: service_started}
+    healthcheck:
+      test: [CMD, /app/backend/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/v1/health', timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 40s
+  worker:
+    <<: *app
+    command: [worker]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, /app/backend/.venv/bin/python, /app/ops/entry.py, worker-health]
+      interval: 45s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 90s
+  web:
+    image: ${FKB_WEB_IMAGE:-fundkb-web:0.1.0-production.20260923}
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: deploy/production/web.Dockerfile
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    ports: ["${FKB_BIND_IP:-127.0.0.1}:${FKB_HTTPS_PORT:-443}:8443"]
+    volumes:
+      - type: bind
+        source: ${FKB_CONFIG_DIR:?Set FKB_CONFIG_DIR}/tls
+        target: /etc/fkb/tls
+        read_only: true
+        bind: {create_host_path: false}
+    networks: [application]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, "wget -q --no-check-certificate -O /dev/null https://127.0.0.1:8443/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "5"}}
+  broker:
+    image: rabbitmq:4.3.6@sha256:303b85ffce03e0dbce993f9e9355691a73a001c9ad43d6d8a55c1e747f9bdef1
+    platform: linux/amd64
+    hostname: fundkb-broker
+    restart: unless-stopped
+    env_file:
+      - path: ${FKB_CONFIG_DIR:?Set FKB_CONFIG_DIR}/broker.env
+        format: raw
+    volumes: [broker-data:/var/lib/rabbitmq]
+    networks: [services]
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "5"}}
+  qdrant:
+    image: qdrant/qdrant:v1.19.1@sha256:12364fe851b9f17356fc88189fc06d1b521262e04659ec7345975b00c9246a10
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file:
+      - path: ${FKB_CONFIG_DIR:?Set FKB_CONFIG_DIR}/qdrant.env
+        format: raw
+    volumes: [qdrant-data:/qdrant/storage]
+    networks: [services]
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "5"}}
+  clamav:
+    image: clamav/clamav:1.5.4@sha256:0e31ce089574268aefa0b543767d66b70240ab51ed49eec53e07f18d5629d817
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes: [clamav-data:/var/lib/clamav]
+    networks: [services, scan-updates]
+    healthcheck:
+      test: [CMD, clamdcheck.sh]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    mem_limit: 4g
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "5"}}
+networks:
+  application: {}
+  services: {internal: true}
+  scan-updates: {}
+volumes:
+  app-data: {}
+  broker-data: {}
+  qdrant-data: {}
+  clamav-data: {}

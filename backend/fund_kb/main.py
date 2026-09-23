@@ -67,6 +67,8 @@ def build_application(settings: Settings | None = None):
                 if settings.app_env == "development" and vector is not None and settings.embedding_mode == "hashing":
                     _index_development(app.state.session_factory, vector)
                 dispatcher.recover()
+                from .model_warmup import start_default_warmup
+                start_default_warmup(settings, vector)
                 yield
 
     application.router.lifespan_context = integrated_lifespan

@@ -22,6 +22,14 @@ def body(properties, required):
 
 
 PATHS = {
+    "/retrieval/model-runtime":{"get":{"operationId":"getRetrievalModelRuntime",
+        "parameters":[{"name":"space_id","in":"query","required":True,"schema":UUID},
+            {"name":"profile_id","in":"query","required":False,"schema":{"type":"string","maxLength":64}}],
+        "responses":response("Lightweight process-local preparation state; never starts loading")}},
+    "/retrieval/model-warmup":{"post":{"operationId":"prepareRetrievalModels",
+        "requestBody":body({"space_id":UUID,"retry":{"type":"boolean","default":False},
+            "retrieval_selection":SELECTION},["space_id"]),
+        "responses":response("Single-flight local model self-test; no business data or generation","202")}},
     "/retrieval/profiles":{"get":{"operationId":"getRetrievalProfiles",
         "parameters":[{"name":"space_id","in":"query","required":True,"schema":UUID}],
         "responses":response("Server-owned embedding profiles; no document bodies or generated answers")}},
@@ -70,9 +78,15 @@ def _local_model_status(settings, role):
     """
     from .local_encoders import MODEL_SPECS
     from .qwen_model_spec import QWEN4B_SPEC
+    from .qwen_reranker_spec import QWEN_RERANKER_SPEC
 
     model = getattr(settings, f"{role}_model", None)
-    spec = QWEN4B_SPEC if role == "embedding" and model == QWEN4B_SPEC["repo"] else MODEL_SPECS[role]
+    if role == "embedding" and model == QWEN4B_SPEC["repo"]:
+        spec = QWEN4B_SPEC
+    elif role == "reranker" and model == QWEN_RERANKER_SPEC["repo"]:
+        spec = QWEN_RERANKER_SPEC
+    else:
+        spec = MODEL_SPECS[role]
     if model != spec["repo"] or getattr(settings, f"{role}_revision", None) != spec["revision"]:
         return False, "LOCAL_MODEL_IDENTITY_NOT_PINNED"
     packages = ("transformers", "torch", "safetensors")
@@ -119,12 +133,15 @@ def _profile_readiness(runtime, backend, *, can_edit):
     index_state = ("UNAVAILABLE" if not backend_ready else "NOT_BUILT" if not exists
                    else "UNKNOWN" if type(chunks) is not int or chunks < 0
                    else "READY" if index_ready else "EMPTY")
-    available = model_ready and index_ready
+    runtime_state = backend.get("model_runtime") if isinstance(backend.get("model_runtime"),dict) else {}
+    inference_state = runtime_state.get("state", "UNKNOWN")
+    available = model_ready and index_ready and inference_state not in {"FAILED", "CLOSED"}
     return {"available": available, "state": "READY" if available else "NOT_READY",
         "model_ready": model_ready, "model_available": model_ready,
         "embedding_status": embedding_status, "reranker_status": reranker_status,
         "index_ready": index_ready, "index_available": index_ready, "index_state": index_state,
         "can_index": bool(can_edit and embedding_ready and backend_ready),
+        "inference_state": inference_state, "inference_ready": inference_state == "READY" and runtime_state.get("self_tested") is True,
         "readiness_check": "prerequisites_only"}
 
 
@@ -157,7 +174,38 @@ def status(ctx):
         retrieval_selection=runtime.selection()) if runtime else status_for(ctx)
     if runtime:
         value["retrieval_selection"] = runtime.selection()
-    return svc.Result(value)
+    return svc.Result(value, headers={"Cache-Control": "private, no-store"})
+
+
+def _runtime_payload(ctx, runtime, vector):
+    manager = getattr(vector, "model_runtime", None)
+    snapshot = manager.snapshot() if manager is not None else {"state":"NOT_APPLICABLE","supported":False,"scope":"current_process"}
+    return {"space_id":ctx.query.get("space_id") or ctx.data.get("space_id"), "model_runtime":snapshot,
+        "can_prepare": bool(snapshot.get("supported") and svc.roles(ctx.db,ctx.user,
+            ctx.query.get("space_id") or ctx.data.get("space_id")) & {"admin","editor"}),
+        **({"retrieval_selection":runtime.selection()} if runtime else {})}
+
+
+def model_runtime(ctx):
+    svc.space_access(ctx.db,ctx.user,ctx.query["space_id"])
+    runtime = selected_runtime(ctx, {"profile_id":ctx.query["profile_id"]} if ctx.query.get("profile_id") else None)
+    vector = runtime.vector if runtime else ctx.request.app.state.vector_index
+    return svc.Result(_runtime_payload(ctx,runtime,vector), headers={"Cache-Control":"private, no-store"})
+
+
+def prepare_models(ctx):
+    svc.space_access(ctx.db,ctx.user,ctx.data["space_id"],"editor")
+    runtime = selected_runtime(ctx,ctx.data.get("retrieval_selection"))
+    vector = runtime.vector if runtime else ctx.request.app.state.vector_index
+    manager = getattr(vector,"model_runtime",None)
+    if manager is None or not manager.supported:
+        svc.fail(409,"LOCAL_WARMUP_NOT_ENABLED","当前方案未启用本地模型预热")
+    from .model_warmup import ModelWarmupError
+    try:
+        manager.start(retry=ctx.data.get("retry",False))
+    except ModelWarmupError as exc:
+        svc.fail(409,exc.code,"模型运行进程正在关闭，请稍后重试")
+    return svc.Result(_runtime_payload(ctx,runtime,vector),202,headers={"Cache-Control":"private, no-store"})
 
 
 def create_index(ctx):
@@ -173,12 +221,20 @@ def create_index(ctx):
 
 
 def search(ctx):
+    svc.space_access(ctx.db,ctx.user,ctx.data["space_id"])
     runtime = selected_runtime(ctx, ctx.data.get("retrieval_selection"))
     settings = runtime.settings if runtime else ctx.settings
     if settings.embedding_mode == "http" and not settings.embedding_allow_document_transfer:
         svc.fail(409,"EMBEDDING_DOCUMENT_TRANSFER_NOT_AUTHORIZED","尚未授权向嵌入服务传输查询")
     data = ctx.data
     vector = runtime.vector if runtime else ctx.request.app.state.vector_index
+    manager = getattr(vector, "model_runtime", None)
+    if manager is not None and manager.supported:
+        from .model_warmup import ModelWarmupError
+        try:
+            manager.ensure_ready()
+        except ModelWarmupError as exc:
+            svc.fail(409,exc.code,"本地检索模型预热未通过；请查看准备状态并手动重试，不会跳过重排")
     factory = getattr(ctx.request.app.state, "read_session_factory", None)
     if (vector is not None and factory is not None
             and getattr(vector.settings, "retrieval_strategy", None) == "unit_rerank"
@@ -199,6 +255,14 @@ def search(ctx):
 
 
 def replay_authority(ctx,cached):
+    if ctx.operation == "prepareRetrievalModels":
+        svc.space_access(ctx.db,ctx.user,ctx.data["space_id"],"editor")
+        runtime = selected_runtime(ctx,ctx.data.get("retrieval_selection"))
+        vector = runtime.vector if runtime else ctx.request.app.state.vector_index
+        current = _runtime_payload(ctx,runtime,vector)
+        if current["model_runtime"].get("runtime_id") != cached.get("body",{}).get("model_runtime",{}).get("runtime_id"):
+            svc.fail(409,"MODEL_RUNTIME_CHANGED","模型服务已重载，请重新提交预热请求")
+        return True
     if ctx.operation != "createVectorIndexJob":
         return False
     svc.space_access(ctx.db,ctx.user,ctx.data["space_id"],"editor")
@@ -206,4 +270,5 @@ def replay_authority(ctx,cached):
 
 
 HANDLERS = {"getRetrievalStatus":status,"getRetrievalProfiles":profiles,
+    "getRetrievalModelRuntime":model_runtime,"prepareRetrievalModels":prepare_models,
     "createVectorIndexJob":create_index,"searchHybridKnowledge":search}

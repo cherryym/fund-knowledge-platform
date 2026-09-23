@@ -4,6 +4,12 @@ import type { Job, Resource } from "./types";
 import { Badge, ErrorBox, Notice, useApp, useLoad, useTask } from "./ui";
 import { RetrievalProfilePicker, useRetrievalProfile, type FrozenRetrievalSelection } from "./retrievalProfiles";
 import "./retrieval-panel.css";
+import { LocalModelReadiness, type ModelRuntimeState } from "./LocalModelReadiness";
+
+type IndexOperation = Job & {force: boolean; counts_verified: boolean; created_at?: string; completed_at?: string;
+  application_state?: string; matched_current_versions?: number; current_catalog_versions?: number};
+type IndexSnapshot = {version: number; checked_at: string; state: string; generation: string | null;
+  last_indexed_at: string | null; latest_job: IndexOperation | null; last_rebuild: IndexOperation | null};
 
 export type RetrievalStatus = {
   retrieval_selection?: FrozenRetrievalSelection;
@@ -17,6 +23,8 @@ export type RetrievalStatus = {
     status: string;
     collection?: string;
     embedding_mode?: string;
+    reranking?: { mode: string; model?: string; revision?: string; loaded?: boolean };
+    model_runtime?: ModelRuntimeState;
   };
   embedding: { mode: string; model: string; dimensions: number; development_only: boolean };
   coverage: {
@@ -28,6 +36,7 @@ export type RetrievalStatus = {
   };
   permissions: { can_index: boolean };
   active_job: Job | null;
+  index_snapshot?: IndexSnapshot;
   notes: string[];
 };
 
@@ -57,12 +66,25 @@ export type RetrievalSearchResult = {
   warnings: string[];
   timing_ms: number;
   evidence_preview: false;
+  reranking?: {mode: string; model?: string | null; input_units?: number; elapsed_ms?: number};
 };
 
 const active = (job: Job | null) => !!job && ["QUEUED", "RUNNING"].includes(job.state);
 const count = (value: unknown) =>
   typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
 const countText = (value: unknown) => count(value)?.toLocaleString("zh-CN") ?? "未提供";
+const timeText = (value: unknown) => {
+  if (typeof value !== "string" || !value || !Number.isFinite(Date.parse(value))) return "未提供";
+  return new Date(value).toLocaleString("zh-CN", {timeZone: "Asia/Shanghai", hour12: false});
+};
+const rerankerStateText = (value: RetrievalStatus["vector"]["reranking"]) => {
+  if (value?.mode === "disabled") return "未启用";
+  if (value?.mode !== "local") return "接口未返回明确状态";
+  if (!value.model) return "模型配置待核对";
+  if (value.loaded === true) return "本地模型已加载";
+  if (value.loaded === false) return "已配置 · 当前进程尚未加载";
+  return "已配置 · 加载状态未知";
+};
 const modeText = (mode: string) => ["hybrid", "hybrid_unit_rerank", "universal_unit_retrieval"].includes(mode) ? "Wiki + RAG 混合检索"
   : mode === "wiki_fallback" ? "Wiki 检索（向量未就绪或已降级）" : "Wiki 检索";
 const vectorModeText = (mode: string) => (({ remote: "独立 Qdrant 服务", local: "内嵌 Qdrant（本地）",
@@ -78,6 +100,32 @@ const nonRetryable = new Set(["FILE_REJECTED", "UNSUPPORTED_FORMAT", "PASSWORD_R
 
 function Metric({ label, value, name }: { label: string; value: unknown; name: string }) {
   return <div data-metric={name}><dt>{label}</dt><dd>{countText(value)}</dd></div>;
+}
+
+function IndexUpdate({snapshot}: {snapshot: IndexSnapshot}) {
+  const rebuild = snapshot.last_rebuild;
+  const verification = rebuild?.application_state;
+  const verified = snapshot.state === "CURRENT_CATALOG_INDEXED" && verification === "CURRENT_GENERATION_VERIFIED"
+    && rebuild?.counts_verified === true && rebuild.state === "SUCCEEDED" && !!snapshot.generation;
+  const latestNeedsReview = snapshot.latest_job && snapshot.latest_job.counts_verified !== true;
+  return <div className="retrieval-update" data-index-generation={snapshot.generation ?? "unknown"}>
+    <p className="retrieval-update-title" role="status">{latestNeedsReview ? "最近作业未全部成功，当前索引状态请结合下方回执核对"
+      : verified ? "重建已生效 · 当前目录已核验使用该次新索引"
+      : snapshot.state === "CURRENT_CATALOG_INDEXED" ? "当前目录索引已核验"
+      : snapshot.state === "SYNC_REQUIRED" ? "当前目录仍有待同步内容"
+      : snapshot.state === "EMPTY_CATALOG" ? "当前目录没有可检索内容" : "当前索引状态尚不可用"}</p>
+    <dl className="retrieval-config">
+      <div><dt>当前索引代次</dt><dd><code title={snapshot.generation ?? undefined}>{snapshot.generation?.slice(0, 16) ?? "未核验"}</code></dd></div>
+      <div><dt>最近索引写入（北京时间）</dt><dd>{timeText(snapshot.last_indexed_at)}</dd></div>
+      <div><dt>最近完整重建结束（北京时间）</dt><dd>{timeText(rebuild?.completed_at)}</dd></div>
+      <div><dt>状态核验时间（北京时间）</dt><dd>{timeText(snapshot.checked_at)}</dd></div>
+    </dl>
+    {rebuild && <p className="retrieval-meta">最近重建：<code>{rebuild.id}</code> · {
+      ({CURRENT_GENERATION_VERIFIED: "当前目录的新代次已核验", OPERATION_NOT_FULLY_SUCCESSFUL: "任务未全部成功，请核对下方结果",
+        CURRENT_STATE_UNVERIFIED: "当前代次尚未核验通过", NO_CURRENT_CONTENT: "当前目录无可索引内容",
+        CURRENT_GENERATION_DIFFERS: "当前代次与该次重建不同，可能已有后续更新"} as Record<string, string>)[verification ?? ""] ?? "状态待核对"}</p>}
+    <p className="retrieval-meta">索引代次来自当前可读版本的实际索引回执；同样的资料重新构建，数量可以不变，代次与写入时间会更新。最近作业仅显示当前账号、空间及所选方案的记录。</p>
+  </div>;
 }
 
 function JobProgress({ job }: { job: Job }) {
@@ -161,7 +209,9 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
   const reloadStatus = useRef(loaded.reload);
   reloadStatus.current = loaded.reload;
   const [trackedJob, setJob] = useState<Job | null>(null);
-  const job = trackedJob ?? status?.active_job ?? null;
+  const job = trackedJob ?? status?.active_job ?? status?.index_snapshot?.latest_job ?? null;
+  const [refreshAfterJob, setRefreshAfterJob] = useState<string>();
+  const [modelRuntime, setModelRuntime] = useState<ModelRuntimeState>();
   const [pollError, setPollError] = useState<Error>();
   const [pollRevision, setPollRevision] = useState(0);
   const [cancelRequested, setCancelRequested] = useState<string>();
@@ -191,6 +241,14 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
     }
   }
 
+  function refreshAfterOperation(next: Job) {
+    setRefreshAfterJob(next.id);
+    setSearchResult(undefined);
+    // Fetch verified current receipts even when all cardinalities are unchanged.
+    // Never re-use an old search result or automatically launch another search.
+    reloadStatus.current();
+  }
+
   useEffect(() => {
     if (status?.active_job) {
       const snapshot = status.active_job;
@@ -214,7 +272,7 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
         setJob(next);
         setPollError(undefined);
         if (active(next)) timer = setTimeout(() => void poll(), 2000);
-        else reloadStatus.current();
+        else refreshAfterOperation(next);
       } catch (error) {
         if (!controller.signal.aborted) setPollError(error instanceof Error ? error : new Error(String(error)));
         // Pause after an error; only an explicit retry resumes status reads.
@@ -253,7 +311,8 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
       setPollError(undefined);
       setCancelRequested(undefined);
       setSearchResult(undefined);
-      if (!active(next)) reloadStatus.current();
+      setRefreshAfterJob(undefined);
+      if (!active(next)) refreshAfterOperation(next);
     }));
   }
 
@@ -270,13 +329,13 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
       setPollError(undefined);
       setCancelRequested(action === "cancel" ? next.id : undefined);
       setSearchResult(undefined);
-      if (!active(next)) reloadStatus.current();
+      if (!active(next)) refreshAfterOperation(next);
     }));
   }
 
   function search(value = query) {
     const text = value.trim();
-    if (!text || !status || loaded.loading || searchTask.busy || profiles.blockedReason) return;
+    if (!text || !status || loaded.loading || searchTask.busy || profiles.blockedReason || modelRuntime?.state === "FAILED") return;
     autoSearched.current = true;
     onQuerySubmitted(text);
     void searchTask.run(() => scopedRequest(async signal => {
@@ -291,7 +350,12 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
       if (selection && ["wiki", "wiki_fallback"].includes(result.mode))
         throw new Error("所选方案未完成语义检索，已停止展示；不会自动降级为 Wiki 检索。");
       if (result.query !== text || result.scope !== "reference") throw new Error("返回结果与本次检索请求不一致。");
-      if (!signal.aborted) setSearchResult(result);
+      if (!signal.aborted) {
+        setSearchResult(result);
+        // A first local query may load the reranker. Re-read its status once,
+        // without another search/index request or inferring load from success.
+        reloadStatus.current();
+      }
     }));
   }
 
@@ -331,17 +395,24 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
         <div><dt>嵌入模式</dt><dd>{status.embedding.mode || "未提供"}</dd></div>
         <div><dt>嵌入模型</dt><dd>{status.embedding.model || "未提供"}</dd></div>
         <div><dt>向量维数</dt><dd>{countText(status.embedding.dimensions)}</dd></div>
+        <div><dt>语义重排模型</dt><dd>{status.vector.reranking ? status.vector.reranking.model || "未配置" : "接口未返回模型信息"}</dd></div>
+        <div><dt>重排状态</dt><dd>{rerankerStateText(status.vector.reranking)}</dd></div>
         {status.vector.embedding_mode && <div><dt>向量层嵌入模式</dt><dd>{status.vector.embedding_mode}</dd></div>}
       </dl>
       <p className="retrieval-meta">可切换已登记的检索方案；模型参数与部署配置为只读，由服务端维护。</p>
+      <p className="retrieval-meta">加载状态仅代表当前 API 服务进程，不代表某次查询已经执行重排；后台任务是否重排请查看该次执行记录。刷新状态不会加载模型。</p>
+      {status.vector.model_runtime?.supported && <LocalModelReadiness initial={status.vector.model_runtime}
+        selection={selection} queryPending={searchTask.busy} onState={setModelRuntime}
+        onReady={()=>{ if (!searchTask.busy) reloadStatus.current(); }} />}
       {status.embedding.mode === "http" && <Notice>当前嵌入模式为 HTTP：语义索引与语义检索会使用已配置的嵌入服务；检索试验不调用生成模型。</Notice>}
       {status.embedding.development_only && <Notice>当前嵌入配置仅供开发验证，不能将其结果视为生产语义检索效果。</Notice>}
       {!status.vector.available && <Notice>{selection
         ? "所选方案的向量通道当前不可用；索引就绪前不能检索，不会自动切换方案。"
         : "向量通道当前不可用。检索可能降级，实际召回模式与警示以本次结果为准。"}</Notice>}
       {status.notes.length > 0 && <Notice><ul className="retrieval-notes" aria-label="检索状态说明">{status.notes.map((note, index) => <li key={index}>{note}</li>)}</ul></Notice>}
-      <h3>索引覆盖</h3>
-      <p className="retrieval-meta">以下覆盖只统计当前可读目录版本。</p>
+      <h3>当前目录索引覆盖</h3>
+      {status.index_snapshot && <IndexUpdate snapshot={status.index_snapshot} />}
+      <p className="retrieval-meta">以下数量只统计当前可读目录版本；下方作业结果包含该次处理的历史版本，两组数字不要求相同。</p>
       <dl className="retrieval-metrics" aria-label="当前索引覆盖">
         <Metric name="catalog_pages" label="目录页数" value={status.coverage.catalog_pages} />
         <Metric name="indexed_pages" label="已索引页数" value={status.coverage.indexed_pages} />
@@ -350,6 +421,12 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
         <Metric name="indexed_chunks" label="已索引子块" value={status.coverage.indexed_chunks} />
       </dl>
     </>}
+    {refreshAfterJob && <p className="retrieval-meta" role="status" data-index-refresh={loaded.loading ? "checking" : loaded.error ? "failed" : status?.index_snapshot ? "checked" : "unknown"}>
+      {loaded.loading ? "索引作业已结束，正在核验最新代次与目录覆盖…"
+        : loaded.error ? "作业已结束，但最新索引状态读取失败；请重试，暂不确认新索引已生效。"
+        : status?.index_snapshot ? "已自动重新核验索引状态。旧检索结果已清除，可基于当前代次重新检索。"
+        : "作业已结束，覆盖数量已刷新；服务端尚未返回索引代次，不能仅据数量确认更新。"}
+    </p>}
     <section className="retrieval-section" aria-labelledby={`${id}-jobs`}>
       <h3 id={`${id}-jobs`}>向量索引</h3>
       <div className="retrieval-actions">
@@ -366,7 +443,8 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
       <ErrorBox error={indexTask.error} />
       <ErrorBox error={pollError} retry={() => { setPollError(undefined); setPollRevision(value => value + 1); }} />
       {pollError && <p className="retrieval-meta">进度读取已暂停，以上次回执为准；点击重试恢复读取。</p>}
-      {job ? <JobProgress job={job} /> : status && <p className="retrieval-empty">当前没有活动索引作业。打开面板不会自动启动索引。</p>}
+      {job ? <><h4>{active(job) ? "本次作业 · 全部处理版本" : "最近作业结果 · 全部处理版本（含历史版本）"}</h4><JobProgress job={job} /></>
+        : status && <p className="retrieval-empty">当前没有活动索引作业。打开面板不会自动启动索引。</p>}
       {activeId && cancelRequested === job?.id && <p role="status">已请求取消，等待后台确认。</p>}
     </section>
     <section className="retrieval-section" aria-labelledby={`${id}-search`}>
@@ -377,7 +455,7 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
         <div className="retrieval-search-input">
           <input id={`${id}-query`} type="search" value={query} autoComplete="off" placeholder="输入要查找的主题或术语" aria-describedby={`${id}-search-help`}
             onChange={event => { setQuery(event.target.value); onQueryChange(event.target.value); }} />
-          <button type="submit" className="primary" disabled={!status || loaded.loading || !query.trim() || searchTask.busy || !!profiles.blockedReason}>{searchTask.busy ? "正在检索…" : "检索"}</button>
+          <button type="submit" className="primary" disabled={!status || loaded.loading || !query.trim() || searchTask.busy || !!profiles.blockedReason || modelRuntime?.state === "FAILED"}>{searchTask.busy ? "正在检索…" : "检索"}</button>
         </div>
       </form>
       <ErrorBox error={searchTask.error} />
@@ -387,6 +465,13 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
       {searchResult && <div className="retrieval-results" aria-label="检索结果">
         {searchResult.retrieval_selection && <p className="retrieval-scheme-used">本次方案：{searchResult.retrieval_selection.model} · {searchResult.retrieval_selection.dimensions} 维</p>}
         <p role="status">“{searchResult.query}” · {modeText(searchResult.mode)} · 返回 {countText(searchResult.returned)} 项 / 共 {countText(searchResult.total_candidates)} 个候选 · 耗时 {Number.isFinite(searchResult.timing_ms) ? searchResult.timing_ms.toLocaleString("zh-CN", { maximumFractionDigits: 2 }) : "未提供"} ms</p>
+        <p className="retrieval-meta" data-query-reranking={searchResult.reranking?.mode ?? "unknown"}>
+          {searchResult.reranking?.mode === "local_cross_encoder"
+            ? `本次检索已执行语义重排 · ${searchResult.reranking.model || "模型名未返回"} · ${countText(searchResult.reranking.input_units)} 个候选单元`
+            : searchResult.reranking?.mode === "unavailable" ? "本次重排不可用，已保留检索候选；不能视为重排成功。"
+            : searchResult.reranking?.mode === "disabled" ? "本次检索未执行重排；请结合候选数量与模型配置核对。"
+            : "本次检索未返回重排执行记录，不能仅据已配置或已加载认定执行成功。"}
+        </p>
         <p className="retrieval-meta">本次目录 {countText(searchResult.catalog_pages)} 页，其中已索引 {countText(searchResult.indexed_catalog_pages)} 页；检索分数不代表置信度。</p>
         {searchResult.warnings.length > 0 && <Notice><ul className="retrieval-notes" aria-label="检索警示">{searchResult.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></Notice>}
         {searchResult.hits.length === 0 ? <p className="retrieval-empty">未找到匹配候选。可调整检索词，并检查覆盖统计与警示。</p> : <ol className="retrieval-hits">

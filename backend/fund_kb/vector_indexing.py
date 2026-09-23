@@ -459,6 +459,32 @@ def status_for(ctx, *, vector=_UNSET, settings=None, retrieval_selection=None):
         return _status_for(ctx, ctx.request.app.state.vector_index, settings or ctx.settings, None)
 
 
+def _public_reranking(backend):
+    """Expose runtime identity/load state, never paths, secrets or raw diagnostics.
+
+    A status read does not load the model or prove it ran in any consultation.
+    Missing/invalid fields remain unknown rather than becoming disabled/false.
+    """
+    value = backend.get("reranking")
+    if not isinstance(value, dict):
+        return {}
+    result = {key: value[key] for key in ("mode", "model", "revision")
+              if isinstance(value.get(key), str)}
+    if type(value.get("loaded")) is bool:
+        result["loaded"] = value["loaded"]
+    return {"reranking": result} if result else {}
+
+
+def _public_model_runtime(backend):
+    raw = backend.get("model_runtime")
+    if not isinstance(raw,dict):
+        return {}
+    fields = {"runtime_id","process_id","scope","policy","supported","state","phase","attempts",
+              "started_at","completed_at","error_code","self_tested","elapsed_ms"}
+    return {"model_runtime": {key:value for key,value in raw.items() if key in fields and
+        (value is None or type(value) in (str,int,float,bool))}}
+
+
 def _status_for(ctx, vector, settings, retrieval_selection):
     space_id = ctx.query["space_id"]
     pages = build_catalog(ctx.db, ctx.user, space_id, scope="reference")
@@ -471,9 +497,13 @@ def _status_for(ctx, vector, settings, retrieval_selection):
         if job.payload.get("task") == TASK and job.payload.get("space_id") == space_id
         and job.payload.get("retrieval_selection") == retrieval_selection]
     enabled = vector is not None and settings.retrieval_mode == "hybrid"
+    from .index_observation import observe_index
+    observation = observe_index(ctx.db, ctx.user, space_id, vector, pages, ready, backend, retrieval_selection)
     return {"space_id":space_id,"mode":settings.retrieval_mode,"enabled":enabled,
+        "index_snapshot": observation,
         **({"retrieval_selection": retrieval_selection} if retrieval_selection is not None else {}),
-        "vector":{key:backend[key] for key in ("backend","mode","available","status","collection","embedding_mode") if key in backend},
+        "vector":{**{key:backend[key] for key in ("backend","mode","available","status","collection","embedding_mode") if key in backend},
+                  **_public_reranking(backend), **_public_model_runtime(backend)},
         "embedding":{"mode":settings.embedding_mode,"model":settings.embedding_model,
             "dimensions":settings.embedding_dimensions,"development_only":settings.embedding_mode == "hashing"},
         "coverage":{"catalog_pages":len(pages),"indexed_pages":len(ready),"dirty_pages":len(pages)-len(ready),

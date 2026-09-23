@@ -10,13 +10,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 from fund_kb.local_encoders import MODEL_SPECS
 from fund_kb.qwen_model_spec import QWEN4B_SPEC, QWEN_QUERY_INSTRUCTION
+from fund_kb.qwen_reranker_spec import QWEN_RERANKER_SPEC
 from fund_kb.retrieval_profile import LocalRetrievalProfile
 
 
-def profiles(root, device, default):
+def profiles(root, device, default, reranker="qwen3-4b"):
     root = Path(root).resolve()
     model_root = root / "universal-models"
-    rerank = MODEL_SPECS["reranker"]
+    rerank = QWEN_RERANKER_SPEC if reranker == "qwen3-4b" else MODEL_SPECS["reranker"]
+    rerank_directory = "qwen3-reranker-4b" if reranker == "qwen3-4b" else "bge-reranker-v2-m3"
     common = {"schema_version": 1, "retrieval_mode": "hybrid", "embedding_mode": "transformers",
         "embedding_chunk_strategy": "semantic_sections_v3", "embedding_max_tokens": 768,
         "embedding_device": device, "embedding_cache_dir": str(model_root / ".cache"),
@@ -24,8 +26,11 @@ def profiles(root, device, default):
         "embedding_allow_downloads": False, "retrieval_strategy": "unit_rerank",
         "retrieval_unit_candidates": 80, "retrieval_seed_units": 6,
         "reranker_mode": "local", "reranker_model": rerank["repo"], "reranker_revision": rerank["revision"],
-        "reranker_model_path": str(model_root / "bge-reranker-v2-m3" / rerank["revision"]),
-        "reranker_device": device, "reranker_max_tokens": 1024, "reranker_batch_size": 8,
+        "reranker_model_path": str(model_root / rerank_directory / rerank["revision"]),
+        "reranker_device": device,
+        "reranker_dtype": "bfloat16" if reranker == "qwen3-4b" and device != "cpu" else "float32",
+        "reranker_max_tokens": 2048 if reranker == "qwen3-4b" else 1024,
+        "reranker_batch_size": 2 if reranker == "qwen3-4b" else 8,
         "wiki_query_strategy": "universal"}
     qwen, bge = QWEN4B_SPEC, MODEL_SPECS["embedding"]
     values = {
@@ -53,9 +58,10 @@ def main():
     parser.add_argument("--write", action="store_true", help="Create new profiles only; never overwrite")
     parser.add_argument("--device", choices=["cpu", "mps", "auto"], default="cpu")
     parser.add_argument("--default", choices=["qwen3-4b", "bge-m3"], default="qwen3-4b")
+    parser.add_argument("--reranker", choices=["qwen3-4b", "bge-m3"], default="qwen3-4b")
     args = parser.parse_args()
     root = ROOT / "data"
-    result = profiles(root, args.device, args.default)
+    result = profiles(root, args.device, args.default, args.reranker)
     if args.write:
         if root.is_symlink(): raise RuntimeError("DATA_SYMLINK_FORBIDDEN")
         targets = [root / path for path in result]

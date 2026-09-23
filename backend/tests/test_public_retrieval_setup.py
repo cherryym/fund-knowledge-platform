@@ -27,6 +27,14 @@ def test_profiles_are_separate_valid_and_preserve_semantic_settings(setup_script
     assert qwen["embedding_query_instruction"] and qwen["retrieval_strategy"] == "unit_rerank"
     assert qwen["embedding_chunk_strategy"] == "semantic_sections_v3"
     assert qwen["embedding_dtype"] == ("float32" if device == "cpu" else "bfloat16")
+    assert qwen["reranker_model"] == bge["reranker_model"] == "Qwen/Qwen3-Reranker-4B"
+    assert qwen["reranker_dtype"] == ("float32" if device == "cpu" else "bfloat16")
+    assert qwen["reranker_max_tokens"] == 2048
+
+
+def test_explicit_legacy_reranker_remains_available(setup_script, tmp_path):
+    values = setup_script.profiles(tmp_path, "cpu", "qwen3-4b", "bge-m3")
+    assert values["retrieval-profile.json"]["reranker_model"] == "BAAI/bge-reranker-v2-m3"
 
 
 def test_default_plan_writes_nothing(setup_script, monkeypatch, tmp_path, capsys):

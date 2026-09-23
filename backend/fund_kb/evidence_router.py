@@ -325,7 +325,7 @@ def _graph_hints(plan, catalog, edges, warnings):
 
 
 def plan_evidence_reads(question, pages, units, *, graph_plan=None, max_seed_units=24,
-                        conservative_graph=False, explicit_pages=()) -> dict:
+                        conservative_graph=False, explicit_pages=(), include_query_routes=False) -> dict:
     """Return the seven query_graph-compatible fields; perform no IO or mutation.
 
     pages is the current authorized page-id mapping. Units carry unit_id,
@@ -440,9 +440,17 @@ def plan_evidence_reads(question, pages, units, *, graph_plan=None, max_seed_uni
             query_appearances[search] = min(query_appearances.get(search, index), index)
     query_order = sorted(query_appearances, key=query_appearances.get)
     covered_queries = set()
+    query_routes = {}
+    from .evidence_coverage import query_key
     for search in query_order:
         candidates = sorted((unit for unit in eligible if search in unit["matched_queries"]),
                             key=lambda unit: unit["query_priorities"][search])
+        direct = next((unit for unit in candidates if catalog[unit["page_id"]].get("kind") == "document"), None)
+        targets = candidates[:1] + ([direct] if direct is not None and direct not in candidates[:1] else [])
+        # Identifiers only: retained through the route cache, then rebound to
+        # current source records by the reader. Scores never certify coverage.
+        query_routes[query_key(search)] = [{**{key: unit[key] for key in
+            ("page_id", "resource_id", "version_id", "unit_id")}, "block_ids": list(unit["block_ids"])} for unit in targets]
         # Best per-query sections may share asset terms, one manual, or the same
         # cited original. Those similarities cannot veto a distinct query's best.
         if candidates and add_seed(candidates[0], query_best=True):
@@ -561,6 +569,7 @@ def plan_evidence_reads(question, pages, units, *, graph_plan=None, max_seed_uni
     source_resources = {catalog[pid]["resource_id"] for pid in sources}
     page_sections = {pid: sum(section[0] == pid for section in sections) for pid in seed_pages}
     return {"requested": requested, "anchors": {pid: sorted(anchors[pid]) for pid in requested},
+            **({"query_routes": query_routes} if include_query_routes else {}),
             "reasons": dict(reasons), "used_edges": [edges[index]["public"] for index in sorted(used)],
             "deferred_pages": deferred, "warnings": sorted(warnings), "stats": {
                 "catalog_count": len(catalog), "hit_count": len({unit["page_id"] for unit in admitted}),

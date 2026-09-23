@@ -85,7 +85,7 @@ ADAPTIVE_SYNTHESIS_INSTRUCTION = """请直接回答本题，结论、适用前�
 
 # Universal V1 is model-agnostic and contains no question/document allowlists.
 # It separates a public reading plan from source-grounded reasoning/citations.
-UNIVERSAL_PROMPT_VERSION = "wiki-rag-universal-v2-20260913"
+UNIVERSAL_PROMPT_VERSION = "wiki-rag-universal-v3-20260923"
 UNIVERSAL_SYSTEM = """你是面向中国公募基金运营的知识助手。目标是理解用户真实业务问题，阅读相关知识与原文，给出完整、准确、可解释的业务答复。
 
 自主理解与阅读
@@ -280,6 +280,46 @@ def search_requests(text):
     prose = _command_prose(text)
     return list(dict.fromkeys(query.strip().strip('"“”') for query in re.findall(
         r"(?im)^\s*SEARCH\s*[:： ]\s*([^\n]+)$", prose) if query.strip()))
+
+
+def planning_search_requests(text):
+    """Source-free public planner only: literal queries in a labelled search list.
+
+    Never used to parse source documents or final prose. No inferred query from
+    free-form analysis, code fences, quotations, links or another list section.
+    Presentation is optional, not an output-format gate on the whole answer.
+    """
+    result = search_requests(text)
+    if not isinstance(text, str):
+        return result
+    active, level, fence = False, 0, None
+    for raw in text.splitlines():
+        line = raw.strip()
+        marker = re.match(r"^(`{3,}|~{3,})", line)
+        if marker:
+            if fence is None:
+                fence = marker[1][0]
+            elif fence == marker[1][0]:
+                fence = None
+            continue
+        if fence or line.startswith(">"):
+            continue
+        heading = re.match(r"^(#{1,6})\s+(.+)$", line)
+        if heading:
+            title = heading[2].strip("*_ ")
+            search_heading = bool(re.search(r"\bSEARCH\b|检索(?:表达|词|建议|方向)|搜索(?:表达|词|建议)", title, re.I))
+            if search_heading:
+                active, level = True, len(heading[1])
+            elif len(heading[1]) <= level:
+                active = False
+            continue
+        if not active or not re.match(r"^(?:\d+[.)、]|[-*+])\s+", line):
+            continue
+        for literal in re.findall(r"(?<!`)`([^`\n]+)`(?!`)", line):
+            value = literal.strip()
+            if value and not re.search(r"https?://|\[[^]]+\]\(|^(?:READ|SEARCH|CATALOG)\b", value, re.I):
+                result.append(value)
+    return list(dict.fromkeys(result))
 
 
 def requests_catalog(text):

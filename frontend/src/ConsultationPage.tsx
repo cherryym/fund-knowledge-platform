@@ -104,6 +104,7 @@ const phaseLabels: Record<string,string> = {
   PLANNING_QUESTION:"模型分析问题", RETRIEVING:"检索本地资料", SELECTING_SOURCES:"选择相关条款",
   LOADING_WIKI_CATALOG:"载入完整知识目录", READING_WIKI_INDEX:"模型查阅知识索引", READING_WIKI_PAGES:"模型阅读已选资料",
   HYBRID_RETRIEVAL:"关键词与语义融合检索",
+  WARMING_RETRIEVAL_MODELS:"等待本地嵌入与重排模型准备",
   PREPARING_ANSWER:"核对证据", GENERATING:"模型综合解答", VALIDATING_ANSWER:"检查答案与引用", CLARIFYING:"核对缺失信息",
   COMPLETED:"处理完成", FAILED:"处理未完成", CANCELLED:"已取消",
 };
@@ -114,9 +115,15 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
   const retrievalQueries = snapshot?.hybrid_retrieval?.queries;
   const lastRetrieval = retrievalQueries?.at(-1);
   const progress = snapshot?.reading_progress;
+  const contextCompletion = run.invalidated ? undefined : snapshot?.context_completion;
+  const dependencyLabels: Record<string, string> = {resolved: "已精确定位", pending: "待补读",
+    broader_context: "已补读所在整条，具体款待核对", ambiguous: "存在多个可能位置", unresolved: "未定位",
+    external: "外部引用待核对", unavailable: "当前不可读取", locator_required: "缺少章节定位",
+    not_in_authorized_catalog: "当前授权目录未找到"};
   const batchesKnown = !!progress && isRecordedCount(progress.total_batches) && progress.total_batches! > 0
     && isRecordedCount(progress.completed_batches) && progress.completed_batches! <= progress.total_batches!;
   const readingStages: Record<string, string> = {loading_sections: "正在定位完整知识页与原文小节",
+    completing_dependencies: "正在补查原文引用与缺失依赖", reranking_context: "正在对完整证据组进行语义重排",
     reading_sections: "正在阅读相关完整内容", synthesis: "正在综合生成答复", consolidating: "正在汇总已读材料",
     batch_completed: "已完成当前批次，继续核对与综合"};
   // A selected model or an execution mode is not proof of an actual invocation.
@@ -189,6 +196,16 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
           {request?.limits && snapshot?.protocol !== "codex_app_server" && <span>连接上限：{request.limits.connect_seconds} 秒 · {request.limits.read_idle_seconds === null ? "等待模型期间无固定读取时限" : `无数据等待上限：${request.limits.read_idle_seconds} 秒`}</span>}
           {snapshot?.wiki_reading && <span>可读目录：{snapshot.wiki_reading.catalog_pages} 页 · {snapshot.wiki_reading.full_text_loaded ? "已加载全文" : "已按相关章节读取"}：{snapshot.wiki_reading.loaded_pages} 页 / {snapshot.wiki_reading.loaded_blocks} 段</span>}
           {snapshot?.wiki_reading?.scoped_source_pages ? <span>其中 {snapshot.wiki_reading.scoped_source_pages} 份原文为完整小节范围，不是整本已读；全文仍可查看。</span> : null}
+          {contextCompletion && <span>关联补全：{contextCompletion.structural_groups_added} 组结构上下文 · 显式引用 {contextCompletion.resolved_count} / {contextCompletion.reference_count} 已定位 · 剩余 {contextCompletion.gap_count} 处缺口</span>}
+          {!run.invalidated && snapshot?.retrieval_runtime && <span>执行进程的本地模型准备：{
+            snapshot.retrieval_runtime.state === "READY" && snapshot.retrieval_runtime.self_tested ? "自检已通过"
+              : snapshot.retrieval_runtime.state === "FAILED" ? "准备失败" : "等待准备完成"} · 进程 {snapshot.retrieval_runtime.process_id}
+            {snapshot.retrieval_runtime.error_code ? ` · ${snapshot.retrieval_runtime.error_code}` : ""}</span>}
+          {isRecordedCount(contextCompletion?.direction_count) && <span>查证方向：{contextCompletion.direction_source_read_count ?? 0} / {contextCompletion.direction_count} 已关联原文阅读 · {contextCompletion.direction_gap_count ?? 0} 项待补查（不是业务准确率）</span>}
+          {contextCompletion?.additional_searches ? <span>针对未定位引用已补查 {contextCompletion.additional_searches} 次；补查结果仍须核对原文。</span> : null}
+          {contextCompletion?.group_rerank && <span>证据组重排：{contextCompletion.group_rerank.model ?? "未配置"} · {
+            {scored: "已评分，保留全部依赖", not_needed: "仅一组，无须重排", not_enabled: "未启用，保留原序",
+              unavailable_preserved_order: "重排不可用，保留原序与全部证据"}[contextCompletion.group_rerank.status] ?? "状态待核对"}</span>}
           {lastRetrieval && <span>知识检索：Wiki + RAG · {retrievalQueries!.length} 次检索 · 最近返回 {lastRetrieval.returned} 个候选页（候选不等于依据）</span>}
           {lastRetrieval && <span>最近检索：{lastRetrieval.mode === "hybrid" ? "关键词与语义融合" : "Wiki 目录回退"} · 当前已索引 {lastRetrieval.indexed_catalog_pages} / {lastRetrieval.catalog_pages} 页</span>}
           {lastRetrieval?.warnings?.length ? <span>检索提示：{lastRetrieval.warnings.join("、")}；仍可查阅完整授权目录。</span> : null}
@@ -214,6 +231,22 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
           </p>
         )}
       </details>
+      {contextCompletion?.reading_coverage && <details className="consultation-run-details" data-reading-coverage="ledger">
+        <summary>查证方向与原文阅读 · {contextCompletion.reading_coverage.gap_count ? "仍有阅读缺口" : "各方向已关联原文"}</summary>
+        <p className="muted">记录计划查证方向是否读到了原文，不代表该段支持结论、规则适用或全部业务事项已解决。仅命中候选或 Wiki 不算原文已读。</p>
+        <ul>{contextCompletion.reading_coverage.directions.map(direction => <li key={direction.id}>
+          <strong>{direction.query}</strong> · {{SOURCE_READ: "已读对应原文，待核对支持性", WIKI_ONLY: "仅已读 Wiki，缺原文依据",
+            UNREAD: "有候选，尚未读到对应原文", NO_CANDIDATE: "尚无可用候选，请补查"}[direction.status] ?? "阅读状态待核对"}
+          {direction.evidence_ids.length > 0 && <span> · 来源定位：{direction.evidence_ids.join("、")}</span>}
+        </li>)}</ul>
+      </details>}
+      {contextCompletion?.references?.length ? <details className="consultation-run-details">
+        <summary>关联补全详情 · {contextCompletion.gap_count ? "仍有待核对项" : "已检查当前显式引用"}</summary>
+        <p className="muted">仅检查已读资料中的显式关系；不代表全库召回完整、业务正确或已通过专家复核。重排不会删除已选依赖。</p>
+        <ul>{contextCompletion.references.map((ref, i) => <li key={i}>
+          {ref.source_page_id} · {ref.text}：{dependencyLabels[ref.status] ?? "待核对"}{ref.target_page_id ? ` → ${ref.target_page_id}` : ""}
+        </li>)}</ul>
+      </details> : null}
       {snapshot?.wiki_reading?.page_titles?.length && !run.invalidated ? <details className="consultation-run-details">
         <summary>本轮查阅的知识与来源（{snapshot.wiki_reading.loaded_pages}）</summary>
         <ul>{snapshot.wiki_reading.page_titles.map((title,i)=><li key={i}>{title}</li>)}</ul>

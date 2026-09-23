@@ -11,6 +11,7 @@ export type RetrievalProfileOption = {
   is_default: boolean; available: boolean; state: string; brand: string; bm25: boolean; reranker_model: string;
   model_ready?: boolean; index_ready?: boolean; can_index?: boolean;
   embedding_status?: string; reranker_status?: string; index_state?: string;
+  inference_state?: string; inference_ready?: boolean;
 };
 type ProfilesResponse = { default_profile_id: string | null; items: RetrievalProfileOption[]; enabled: boolean };
 const changedEvent = "fund-kb:retrieval-profile-preference";
@@ -90,7 +91,9 @@ export function useRetrievalProfile() {
       : preferredId && !data?.enabled ? "当前服务不支持已选的检索方案，请恢复服务器默认或刷新。"
         : data?.enabled && !selected ? "所选检索方案已移除或停用，请重新选择。"
           : "";
-  const blockedReason = indexBlockedReason || (selected?.model_ready === false
+  const blockedReason = indexBlockedReason || (selected?.inference_state === "FAILED"
+    ? "本地模型预热失败，请在检索管理中核对并重试预热。"
+    : selected?.model_ready === false
     ? "所选检索方案的模型运行前提尚未就绪，请刷新状态或选择可用方案。"
     : selected && (!selected.available || selected.index_ready === false)
       ? "所选检索方案的索引尚未就绪，请选择可用方案。" : "");
@@ -121,7 +124,7 @@ export function RetrievalProfilePicker({ value, disabled = false, compact = fals
     </label>
     {!compact && value.selected && <span className="retrieval-profile-description">
       {value.selected.dimensions.toLocaleString()} 维 · BM25 混合召回 · 保留 Wiki / 图谱联动
-      {value.selected.model_ready !== undefined && <> · 模型运行前提：{value.selected.model_ready ? "就绪" : "未就绪"}</>}
+      {value.selected.model_ready !== undefined && <> · 模型文件与依赖：{value.selected.model_ready ? "已检查" : "未就绪"}</>}
       {value.selected.index_ready !== undefined && <> · 索引：{value.selected.index_ready ? "就绪" : "未就绪"}</>}
     </span>}
     {value.preferredId && <button type="button" disabled={disabled} onClick={() => value.choose(null)}>恢复默认</button>}

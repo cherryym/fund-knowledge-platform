@@ -8,7 +8,7 @@ from __future__ import annotations
 import threading
 
 from celery import Celery
-from celery.signals import worker_process_shutdown, worker_shutdown
+from celery.signals import worker_process_init, worker_process_shutdown, worker_shutdown
 
 from .settings import get_settings
 
@@ -29,6 +29,8 @@ def _worker_runtime(settings):
                 index = VectorIndex(settings)
             dispatcher = JobDispatcher(settings, make_session_factory(engine), index)
             _runtime = (dispatcher, index, engine)
+            from .model_warmup import start_default_warmup
+            start_default_warmup(settings, index)
         return _runtime[0]
 
 
@@ -59,6 +61,14 @@ def create_celery_app(settings=None):
         return _worker_runtime(settings)._recover_once()
 
     return application
+
+
+@worker_process_init.connect
+def prepare_worker_runtime(**_):
+    settings = get_settings()
+    if (settings.retrieval_mode == "hybrid" and settings.embedding_mode == "transformers"
+            and settings.reranker_mode == "local" and settings.retrieval_warmup_mode == "auto"):
+        _worker_runtime(settings)
 
 
 @worker_process_shutdown.connect

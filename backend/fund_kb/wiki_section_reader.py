@@ -33,7 +33,8 @@ def source_anchors(pages, requested, discovered=None):
 
 def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, scope="reference",
                       anchors=None, sections=None, full_pages=(), next_evidence=1,
-                      structure_version="v2", expand_dependencies=False, expand_parents=False):
+                      structure_version="v2", expand_dependencies=False, expand_parents=False,
+                      context_completion=False, reference_locators=None):
     wanted = list(dict.fromkeys(pid for pid in requested if pid in pages))
     versions = {pages[pid]["version_id"] for pid in wanted}
     records = reference_evidence(db, user, space_id, context or {}, reading=True, version_ids=versions) \
@@ -49,7 +50,7 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
             unavailable.append(pid)
             continue
         existing = {row["block_id"]: row for row in page.get("records", [])}
-        if page["kind"] == "knowledge" or pid in full_pages:
+        if page["kind"] == "knowledge" or pid in full_pages and not context_completion:
             chosen, chosen_sections = rows, []
         else:
             blocks = [{"block_id": row["block_id"], "ordinal": row["ordinal"],
@@ -62,7 +63,20 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
             chosen_sections = [section for section in outline if section["section_id"] in requested_ids]
             chosen_sections += select_sections_from_outline(outline, set((anchors or {}).get(pid, ())))
             allow_parent = expand_parents and not requested_ids
-            if expand_dependencies or allow_parent:
+            if context_completion:
+                from .source_associations import complete_source_context
+                # Retain previous reads and their dependency receipts across READs.
+                chosen_sections += page.get("read_sections", [])
+                if pid in full_pages:
+                    chosen_sections = outline
+                expansion = complete_source_context(outline, chosen_sections, blocks=blocks,
+                    locators=(reference_locators or {}).get(pid, ()), structural_groups=not requested_ids)
+                chosen_sections = expansion["sections"]
+                page["reading_dependencies"] = expansion["references"]
+                page["incoming_context"] = {**page.get("incoming_context", {}), **expansion["incoming"]}
+                additions = [*page.get("context_structural_additions", []), *expansion["structural_additions"]]
+                page["context_structural_additions"] = list({(x["from_section_id"], x["to_section_id"]): x for x in additions}.values())
+            elif expand_dependencies or allow_parent:
                 from .source_sections import expand_reading_sections
                 purpose = ("parent_and_dependencies" if expand_dependencies and allow_parent else
                            "parent" if allow_parent else "dependencies")
@@ -74,6 +88,9 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
             # A large structured source with no locator instead exposes its outline.
             if not chosen_sections and len(outline) == 1:
                 chosen_sections = outline
+                if context_completion:
+                    expansion = complete_source_context(outline, chosen_sections, blocks=blocks, structural_groups=False)
+                    page["reading_dependencies"] = expansion["references"]
             chosen_sections = list({section["section_id"]: section for section in chosen_sections}.values())
             ids = {bid for section in chosen_sections for bid in section["block_ids"]}
             # A leaf clause can depend on its parent's introductory conditions.

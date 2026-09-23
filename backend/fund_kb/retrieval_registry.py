@@ -71,6 +71,7 @@ def _can_reuse_vector(vector, settings, fingerprint):
     # local model files or reranker used by this particular client.
     keys = {key for key in type(settings).model_fields if key.startswith(("embedding_", "reranker_"))}
     keys.update({"qdrant_path", "qdrant_url", "qdrant_api_key", "retrieval_strategy",
+                 "retrieval_warmup_mode",
                  "retrieval_unit_candidates", "retrieval_seed_units", "hybrid_candidate_limit"})
     return original is not None and all(getattr(original, key) == getattr(settings, key) for key in keys)
 

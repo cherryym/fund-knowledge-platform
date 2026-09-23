@@ -3,6 +3,7 @@ import { after, afterEach, beforeEach, test } from "node:test";
 import { createRequire, Module } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFile } from "node:fs/promises";
 import { build } from "esbuild";
 import { qwen, bge, profiles, selection, frozenSelection, retrievalKey } from "./retrievalProfiles.test-fixtures.mjs";
 
@@ -28,6 +29,8 @@ const interceptedFetch = async (url, init = {}) => {
   calls.push(request);
   const key = `${request.method} ${request.url}`;
   const allowed = /^GET \/api\/v1\/retrieval\/profiles\?space_id=[^&]+$/.test(key)
+    || /^GET \/api\/v1\/retrieval\/model-runtime\?space_id=[^&]+(?:&profile_id=[^&]+)?$/.test(key)
+    || /^POST \/api\/v1\/retrieval\/model-warmup$/.test(key)
     || /^GET \/api\/v1\/retrieval\/status\?space_id=[^&]+(?:&profile_id=[^&]+)?$/.test(key)
     || /^POST \/api\/v1\/retrieval\/(search|index-jobs)$/.test(key)
     || /^GET \/api\/v1\/(jobs|resources)\/[^/?]+$/.test(key)
@@ -190,6 +193,58 @@ test("HTTP embedding and development-only configuration are disclosed without cr
   assert.equal(writes().length, 0);
 });
 
+for (const loaded of [false, true]) test(`Qwen reranker identity and real load state are visible: ${loaded}`, async () => {
+  const current = status();
+  current.vector.reranking = { mode: "local", model: "Qwen/Qwen3-Reranker-4B", loaded };
+  stub("GET", "/retrieval/status?space_id=space-a", current);
+  await mount();
+  assert.match(body(), /Qwen\/Qwen3-Reranker-4B/);
+  assert.ok(body().includes(loaded ? "本地模型已加载" : "已配置 · 当前进程尚未加载"));
+  assert.equal(writes().length, 0);
+});
+
+for (const loaded of [undefined, null, "true", 1]) test(`missing/invalid load state stays unknown: ${loaded}`, async () => {
+  const current = status();
+  current.vector.reranking = { mode: "local", model: "Qwen/Qwen3-Reranker-4B", loaded };
+  stub("GET", "/retrieval/status?space_id=space-a", current);
+  await mount();
+  assert.match(body(), /已配置 · 加载状态未知/);
+  assert.doesNotMatch(body(), /本地模型已加载|当前进程尚未加载/);
+  assert.equal(writes().length, 0);
+});
+
+if (process.env.RERANK_STATUS_CONTRACT_DIR) {
+  for (const [state, expected] of [["configured", "已配置 · 当前进程尚未加载"], ["loaded", "本地模型已加载"], ["disabled", "未启用"]]) {
+    test(`actual Python HTTP response renders in React: ${state}`, async () => {
+      const payload = JSON.parse(await readFile(resolve(process.env.RERANK_STATUS_CONTRACT_DIR, `${state}.json`), "utf8"));
+      assert.equal(payload.vector.reranking.model, "Qwen/Qwen3-Reranker-4B");
+      stub("GET", `/retrieval/profiles?space_id=${payload.space_id}`, { default_profile_id: null, items: [], enabled: false });
+      stub("GET", `/retrieval/status?space_id=${payload.space_id}`, payload);
+      await mount(app({ space: { id: payload.space_id, name: "实际合成HTTP空间", roles: ["editor"] } }));
+      assert.match(body(), /Qwen\/Qwen3-Reranker-4B/);
+      assert.ok(body().includes(expected));
+      assert.doesNotMatch(body(), /接口未返回模型信息|接口未返回明确状态/);
+      assert.match(body(), /不代表某次查询已经执行重排/);
+      assert.equal(writes().length, 0);
+    });
+  }
+}
+
+for (const [mode, expected] of [["local_cross_encoder", "本次检索已执行语义重排"], ["unavailable", "本次重排不可用"],
+  ["disabled", "本次检索未执行重排"], [undefined, "本次检索未返回重排执行记录"]]) {
+  test(`per-query receipt does not infer execution from model load state: ${mode}`, async () => {
+    const current = status();
+    current.vector.reranking = { mode: "local", model: "Qwen/Qwen3-Reranker-4B", loaded: true };
+    stub("GET", "/retrieval/status?space_id=space-a", current);
+    stub("POST", "/retrieval/search", result({ reranking: mode ? { mode, model: "Qwen/Qwen3-Reranker-4B", input_units: 8 } : undefined }));
+    await mount(); await type(); await submit();
+    const receipt = document.querySelector('[data-query-reranking]');
+    assert.ok(receipt.textContent.includes(expected));
+    if (mode !== "local_cross_encoder") assert.doesNotMatch(receipt.textContent, /已执行语义重排/);
+    assert.equal(writes().length, 1);
+  });
+}
+
 test("server permissions disable indexing even for an admin-shaped context; search stays readable", async () => {
   stub("GET", "/retrieval/status?space_id=space-a", status({ permissions: { can_index: false }, active_job: job({ state: "FAILED" }) }));
   stub("POST", "/retrieval/search", result());
@@ -205,6 +260,93 @@ test("server permissions disable indexing even for an admin-shaped context; sear
   await submit();
   assert.equal(writes().length, 1);
   assert.equal(writes()[0].url, "/api/v1/retrieval/search");
+});
+
+test("successful search refreshes load metadata once without another model/index request", async () => {
+  let reads = 0;
+  stub("GET", "/retrieval/status?space_id=space-a", () => {
+    const current = status();
+    current.vector.reranking = { mode: "local", model: "Qwen/Qwen3-Reranker-4B", loaded: ++reads > 1 };
+    return json(current);
+  });
+  stub("POST", "/retrieval/search", result({ reranking: { mode: "local_cross_encoder", model: "Qwen/Qwen3-Reranker-4B", input_units: 8 } }));
+  await mount();
+  assert.match(body(), /当前进程尚未加载/);
+  await type(); await submit();
+  assert.match(body(), /本地模型已加载/);
+  assert.match(body(), /本次检索已执行语义重排/);
+  assert.equal(reads, 2);
+  assert.equal(writes().length, 1);
+});
+
+const warmState = (state, extra={}) => ({runtime_id:"synthetic-runtime",process_id:123,scope:"current_process",policy:"auto",
+  supported:true,state,phase:state === "READY" ? "ready" : state === "FAILED" ? "failed" : "loading_embedding",
+  attempts:1,self_tested:state === "READY",...extra});
+const warmResponse = (runtime,can_prepare=true) => ({space_id:"space-a",model_runtime:runtime,can_prepare});
+function warmStatus(runtime) {
+  const current=status();
+  current.vector.model_runtime=runtime;
+  current.vector.reranking={mode:"local",model:"Qwen/Qwen3-Reranker-4B",loaded:runtime.state === "READY"};
+  return current;
+}
+
+test("startup readiness polling stays read-only and stops after real READY", async t => {
+  t.mock.timers.enable({apis:["setTimeout"]});
+  let runtime=warmState("LOADING");
+  stub("GET","/retrieval/status?space_id=space-a",()=>json(warmStatus(runtime)));
+  stub("GET","/retrieval/model-runtime?space_id=space-a",()=>json(warmResponse(runtime)));
+  await mount();
+  assert.match(body(),/加载与自检中/);
+  assert.match(body(),/查询会等待同一个准备任务/);
+  await tick(t,1000);
+  runtime=warmState("READY");
+  await tick(t,1000);
+  assert.match(body(),/推理就绪/);
+  assert.match(body(),/本地模型已加载/);
+  const count=calls.length;
+  await tick(t,5000);
+  assert.equal(calls.length,count);
+  assert.equal(writes().length,0);
+});
+
+test("failed preparation is visible and only an explicit retry starts local work", async t => {
+  t.mock.timers.enable({apis:["setTimeout"]});
+  let runtime=warmState("FAILED",{error_code:"LOCAL_MODEL_HASH_MISMATCH"});
+  stub("GET","/retrieval/status?space_id=space-a",()=>json(warmStatus(runtime)));
+  stub("GET","/retrieval/model-runtime?space_id=space-a",()=>json(warmResponse(runtime)));
+  stub("POST","/retrieval/model-warmup",request=>{
+    assert.equal(JSON.parse(request.body).retry,true);
+    runtime=warmState("LOADING"); return json(warmResponse(runtime),202);
+  });
+  await mount();
+  assert.match(body(),/模型文件校验未通过/);
+  const before=calls.length;
+  await tick(t,5000); assert.equal(calls.length,before);
+  await click(button("重试预热"));
+  assert.equal(writes().length,1);
+  runtime=warmState("READY"); await tick(t,1000);
+  assert.match(body(),/推理就绪/);
+  assert.equal(writes().length,1);
+});
+
+test("read-only member can see readiness but cannot force preparation", async () => {
+  const runtime=warmState("NOT_LOADED",{phase:"idle",attempts:0});
+  stub("GET","/retrieval/status?space_id=space-a",warmStatus(runtime));
+  stub("GET","/retrieval/model-runtime?space_id=space-a",warmResponse(runtime,false));
+  await mount();
+  assert.match(body(),/待准备/);
+  assert.equal([...document.querySelectorAll("button")].some(b=>b.textContent.includes("预热本地模型")),false);
+  assert.equal(writes().length,0);
+});
+
+test("preparation metadata error is not presented as ready and does not start a retry loop", async t => {
+  t.mock.timers.enable({apis:["setTimeout"]});
+  stub("GET","/retrieval/status?space_id=space-a",warmStatus(warmState("LOADING")));
+  stub("GET","/retrieval/model-runtime?space_id=space-a",()=>json({code:"SYNTHETIC",message:"合成读取失败"},503));
+  await mount();
+  assert.match(body(),/本地推理：状态读取失败/);
+  const before=calls.length; await tick(t,5000);
+  assert.equal(calls.length,before); assert.equal(writes().length,0);
 });
 
 test("disabled indexing explains deployment gating and still displays a Wiki search fallback", async () => {
@@ -263,7 +405,7 @@ test("incremental sync sends force=false once, reports real counts and stops pol
   assert.equal(metric("pending_versions"), "4");
   assert.equal(metric("job_chunks"), "23");
   assert.match(body(), /向量索引/);
-  assert.match(body(), /以下覆盖只统计当前可读目录版本/);
+  assert.match(body(), /以下数量只统计当前可读目录版本/);
   assert.match(body(), /作业可能包含可读历史版本，版本总数不能等同于目录页数/);
   assert.match(body(), /阶段：计算嵌入/);
   assert.match(body(), /synthetic-version-3/);
@@ -333,6 +475,92 @@ test("fully reconciled success refreshes coverage exactly once and ends polling"
   const reads = calls.length;
   await tick(t, 10000);
   assert.equal(calls.length, reads);
+});
+
+const completedIndex = (id = "new-index-job") => job({ id, state: "SUCCEEDED", stage: "COMPLETED", force: true,
+  created_at: "2026-09-23T08:40:00Z", completed_at: "2026-09-23T09:00:00Z", counts_verified: true,
+  application_state: "CURRENT_GENERATION_VERIFIED", matched_current_versions: 19, current_catalog_versions: 19,
+  result: {phase: "COMPLETED", total_versions: 20, completed_versions: 20, indexed_versions: 19, skipped_versions: 1,
+    failed_versions: 0, indexed_blocks: 41, indexed_chunks: 67} });
+const indexSnapshot = (generation = "a".repeat(64), op = completedIndex()) => ({version: 1,
+  checked_at: "2026-09-23T09:00:02Z", state: "CURRENT_CATALOG_INDEXED", generation,
+  last_indexed_at: "2026-09-23T08:59:59Z", latest_job: op, last_rebuild: op});
+
+test("same counts after rebuild still update generation and clear old search results", async t => {
+  t.mock.timers.enable({apis: ["setTimeout"]});
+  const original = status({active_job: job(), index_snapshot: indexSnapshot("a".repeat(64), completedIndex("old-job"))});
+  stub("GET", "/retrieval/status?space_id=space-a", original);
+  stub("GET", "/jobs/index-job", job());
+  stub("POST", "/retrieval/search", result());
+  await mount(); await type(); await submit();
+  assert.ok(document.querySelector(".retrieval-results"));
+  const done = completedIndex("index-job");
+  stub("GET", "/jobs/index-job", done);
+  stub("GET", "/retrieval/status?space_id=space-a", status({index_snapshot: indexSnapshot("b".repeat(64), done)}));
+  await tick(t);
+  assert.equal(document.querySelector('[data-index-generation]').getAttribute('data-index-generation'), "b".repeat(64));
+  assert.equal(metric("indexed_chunks"), "67", "same cardinality is not fake incremented");
+  assert.match(body(), /重建已生效/);
+  assert.match(body(), /已自动重新核验索引状态/);
+  assert.match(body(), /2026\/9\/23 17:00:00/);
+  assert.equal(document.querySelector(".retrieval-results"), null);
+  assert.equal(calls.filter(c => c.method === "POST").length, 1, "no automatic new search or rebuild");
+  const reads = calls.length;
+  await tick(t, 10000);
+  assert.equal(calls.length, reads);
+});
+
+test("completed rebuild survives page remount with distinct current and job count scopes", async () => {
+  stub("GET", "/retrieval/status?space_id=space-a", status({index_snapshot: indexSnapshot()}));
+  await mount();
+  assert.match(body(), /最近作业结果 · 全部处理版本（含历史版本）/);
+  assert.equal(metric("catalog_pages"), "19");
+  assert.equal(metric("total_versions"), "20");
+  assert.match(body(), /当前索引代次/);
+  await unmount(); await mount();
+  assert.match(body(), /new-index-job/);
+  assert.match(body(), /重建已生效/);
+  assert.equal(writes().length, 0);
+});
+
+test("post-completion status error never confirms a new generation", async t => {
+  t.mock.timers.enable({apis: ["setTimeout"]});
+  stub("GET", "/retrieval/status?space_id=space-a", status({active_job: job()}));
+  stub("GET", "/jobs/index-job", job());
+  await mount();
+  stub("GET", "/jobs/index-job", completedIndex("index-job"));
+  stub("GET", "/retrieval/status?space_id=space-a", () => json({code: "SYNTHETIC", message: "合成读取失败"}, 503));
+  await tick(t);
+  assert.match(body(), /最新索引状态读取失败/);
+  assert.doesNotMatch(body(), /重建已生效/);
+  assert.equal(document.querySelector('[data-index-generation]'), null);
+});
+
+test("failed or unreconciled historical operation cannot be labelled applied", async () => {
+  const failed = completedIndex();
+  failed.counts_verified = false;
+  failed.result.failed_versions = 1;
+  stub("GET", "/retrieval/status?space_id=space-a", status({index_snapshot: indexSnapshot("c".repeat(64), failed)}));
+  await mount();
+  assert.match(body(), /最近作业未全部成功/);
+  assert.doesNotMatch(body(), /重建已生效/);
+});
+
+if (process.env.INDEX_REFRESH_CONTRACT_DIR) test("actual rebuild HTTP snapshots update generation in React with unchanged counts", async () => {
+  const read = async name => JSON.parse(await readFile(resolve(process.env.INDEX_REFRESH_CONTRACT_DIR, `${name}.json`), "utf8"));
+  const before = await read("before"), after = await read("after");
+  assert.deepEqual(before.coverage, after.coverage);
+  assert.notEqual(before.index_snapshot.generation, after.index_snapshot.generation);
+  stub("GET", `/retrieval/profiles?space_id=${before.space_id}`, {default_profile_id: null, items: [], enabled: false});
+  stub("GET", `/retrieval/status?space_id=${before.space_id}`, before);
+  await mount(app({space: {id: before.space_id, name: "合成重建空间", roles: ["editor"]}}));
+  assert.equal(document.querySelector('[data-index-generation]').dataset.indexGeneration, before.index_snapshot.generation);
+  stub("GET", `/retrieval/status?space_id=${before.space_id}`, after);
+  await click(button("刷新状态"));
+  assert.equal(document.querySelector('[data-index-generation]').dataset.indexGeneration, after.index_snapshot.generation);
+  assert.match(body(), /重建已生效/);
+  assert.ok(body().includes(after.index_snapshot.last_rebuild.id));
+  assert.equal(writes().length, 0);
 });
 
 test("active job reads pause on error, preserve counts, and resume only on explicit retry", async t => {

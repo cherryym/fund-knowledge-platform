@@ -54,7 +54,14 @@ _SECRETS = re.compile(
 _SECRET_FIELD = re.compile(r"api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|secret|authorization|密钥|密码|访问令牌",
                            re.IGNORECASE)
 _REFERENCE = re.compile(r"(?<![A-Za-z0-9_./@])E[0-9]+(?![A-Za-z0-9_/@]|\.[A-Za-z0-9_])")
-_RANGE_JOIN = re.compile(r"[ \t]*(?:[\]】][ \t]*)?(?:[-‐‑‒–—―－﹣−]{1,2}|至|到)[ \t]*(?:[\[【][ \t]*)?")
+_RANGE_JOIN = re.compile(r"[ \t]*(?P<closed>[\]】］〕])?[ \t]*(?:[-‐‑‒–—―－﹣−]{1,2}|至|到)"
+                         r"[ \t]*(?P<opened>[\[【［〔])?[ \t]*")
+# Beyond a CLOSED citation, a dash can be ordinary narrative punctuation. Only
+# endpoint-shaped text or a dangling/masked boundary asserts a range attempt;
+# an explicit opening bracket is handled separately. Keep malformed E/number
+# endpoints observable without treating words such as 'Explanation' as IDs.
+_RANGE_END_INTENT = re.compile(r"E(?=[0-9]|$|[\s\]】］〕。.,;；:：!?！？])|[0-9]"
+                               r"|(?=$|[\x00\r\n\]】］〕。.,;；:：!?！？])")
 _FENCE = re.compile(r"^[ \t]{0,3}(?:>[ \t]*)?(`{3,}|~{3,})(.*)$")
 _BACKTICKS = re.compile(r"`+")
 _EVIDENCE_ID = re.compile(r"E[1-9][0-9]*\Z")
@@ -292,6 +299,12 @@ def _reference_ids(narrative, available, warn):
         first = match[0]
         cursor = match.end()
         join = _RANGE_JOIN.match(view, cursor)
+        if (join is not None and join["closed"] and not join["opened"]
+                and _RANGE_END_INTENT.match(view, join.end()) is None):
+            # [E1]—explanation is a complete single marker plus prose. [E1]—[E3],
+            # [E1]—E3 and explicit/dangling malformed ranges still use the same
+            # endpoint, registry, reverse-order and code-mask checks below.
+            join = None
         if join is None:
             if first in available:
                 selected.setdefault(first, None)

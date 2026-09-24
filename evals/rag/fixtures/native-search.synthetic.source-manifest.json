@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "kind": "source_manifest",
+  "manifest_id": "synthetic-metadata-v1",
+  "provenance": {
+    "kind": "authorized_source_metadata_export",
+    "export_id": "synthetic-export-only",
+    "exported_at": "2026-01-16T00:00:00Z"
+  },
+  "sources": [
+    {
+      "resource_id": "syn-resource",
+      "version_id": "syn-v1",
+      "block_id": "syn-block-a",
+      "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "valid_from": "2026-01-01",
+      "valid_to": "2027-01-01",
+      "block_char_count": 128
+    },
+    {
+      "resource_id": "syn-resource",
+      "version_id": "syn-v1",
+      "block_id": "syn-block-b",
+      "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "valid_from": "2026-01-01",
+      "valid_to": "2027-01-01",
+      "block_char_count": 128
+    },
+    {
+      "resource_id": "syn-resource",
+      "version_id": "syn-v1",
+      "block_id": "syn-block-c",
+      "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "valid_from": "2026-01-01",
+      "valid_to": "2027-01-01",
+      "block_char_count": 128
+    }
+  ]
+}

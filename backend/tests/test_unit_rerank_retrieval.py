@@ -67,6 +67,20 @@ def test_reranker_failure_is_explicit_without_fabricating_semantic_scores(env):
     assert "fake_secret" not in repr(result)
 
 
+@pytest.mark.parametrize("scores", [[1.0], [1.0, float("nan")], [1.0, float("inf")],
+    [1.0, True], [1.0, "2.0"], [1.0, 2.0, 3.0]])
+def test_single_rerank_rejects_invalid_scores_atomically(env, scores):
+    rows = source(env, texts=[("paragraph", {"text": "完整事项及前提。"}),
+                             ("paragraph", {"text": "另一完整事项及例外。"})])
+    vector, pages = indexed(env, [semantic_hit(rows, indices=(i,)) for i in range(2)])
+    enable(vector, lambda *_: scores)
+    result = discover(env, vector, pages)
+    assert len(result["units"]) == 2
+    assert result["reranking"]["mode"] == "unavailable"
+    assert "RERANKER_UNAVAILABLE" in result["warnings"]
+    assert all("rerank_score" not in row for row in result["units"])
+
+
 def test_fusion_deduplicates_identical_spans_but_not_different_parts():
     rows = [{"text": f"第{i}个事项", "resource_id": "r", "version_id": "v",
              "source_spans": [{"block_id": f"b{i}"}], "block_ids": [f"b{i}"]} for i in range(6)]
@@ -74,6 +88,27 @@ def test_fusion_deduplicates_identical_spans_but_not_different_parts():
     result, weights = fuse_units("如何处理", {"vector": rows + [rows[0]], "bm25": rows[::-1]}, [])
     assert len(result) == 6 and all(set(u["channels"]) == {"vector", "bm25"} for u in result)
     assert weights["profile"] == "multi_aspect" and rows == before
+
+
+def test_complete_pool_can_promote_the_previously_unscored_tail(env):
+    records = source(env, texts=[("paragraph", {"text": f"候选事项{i}及其完整条件。"}) for i in range(16)])
+    hits = [semantic_hit(records, indices=(i,)) for i in range(16)]
+    vector, pages = indexed(env, hits[:8], hits[8:])
+    enable(vector, lambda _query, texts: [0.0] * len(texts))
+    vector.settings.retrieval_unit_candidates = 8
+    vector.settings.retrieval_rerank_policy = "ranked_prefix"
+    initial = discover(env, vector, pages)
+    target = next(u for u in reversed(initial["units"]) if "rerank_score" not in u)
+    vector.rerank = lambda _q, texts: [10.0 if target["text"] in text else -1.0 for text in texts]
+    before = discover(env, vector, pages)
+    vector.settings.retrieval_rerank_policy = "complete_pool"
+    after = discover(env, vector, pages)
+    assert before["units"][0]["unit_id"] != target["unit_id"]
+    assert after["units"][0]["unit_id"] == target["unit_id"]
+    assert len(before["units"]) == len(after["units"]) == 16
+    assert before["retrieval_trace"]["unscored_count"] == 8
+    assert after["retrieval_trace"]["reranked_count"] == 16
+    assert after["retrieval_trace"]["unscored_count"] == 0
 
 
 @pytest.mark.parametrize("query,profile", [("第十二条原文", "exact_reference"),

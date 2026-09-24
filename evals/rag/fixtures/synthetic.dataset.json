@@ -1,0 +1,204 @@
+{
+  "schema_version": "1.0",
+  "kind": "dataset",
+  "dataset_id": "synthetic-engineering-v1",
+  "evidence_domain": "synthetic",
+  "coverage": {
+    "scope_id": "synthetic-contract-only",
+    "statement": "仅检验虚构区间、人工判断占位桩及报告行为。全部内容是合成工程夹具，无基金业务答案。",
+    "limitations": [
+      "不是业务题库、专家评审记录、真实来源或法规事实。",
+      "固定 Hash 是身份比较测试值，不是实际语料摘要。"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "syn-dev",
+      "family_id": "syn-family-dev",
+      "split": "dev",
+      "question": "合成测试：是否完整覆盖片段甲及片段乙与丙？",
+      "as_of": "2026-01-15",
+      "review_status": "engineering_confirmed",
+      "review_provenance": {
+        "kind": "human_engineering",
+        "reviewer_id": "synthetic-reviewer-stub",
+        "reviewed_at": "2026-01-16T00:00:00Z",
+        "reference_id": "synthetic-review-only"
+      },
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [
+        {
+          "group_id": "g-main",
+          "critical": true,
+          "alternatives": [
+            {
+              "alternative_id": "canonical",
+              "spans": [
+                {
+                  "resource_id": "syn-resource",
+                  "version_id": "syn-v1",
+                  "block_id": "syn-block-a",
+                  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 2,
+                    "end": 12
+                  }
+                }
+              ]
+            },
+            {
+              "alternative_id": "equivalent",
+              "spans": [
+                {
+                  "resource_id": "syn-equivalent",
+                  "version_id": "syn-v2",
+                  "block_id": "syn-alt",
+                  "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 3,
+                    "end": 13
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "group_id": "g-boundary",
+          "critical": true,
+          "alternatives": [
+            {
+              "alternative_id": "joint-spans",
+              "spans": [
+                {
+                  "resource_id": "syn-resource",
+                  "version_id": "syn-v1",
+                  "block_id": "syn-block-b",
+                  "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 0,
+                    "end": 8
+                  }
+                },
+                {
+                  "resource_id": "syn-resource",
+                  "version_id": "syn-v1",
+                  "block_id": "syn-block-c",
+                  "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 10,
+                    "end": 16
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "syn-holdout",
+      "family_id": "syn-family-holdout",
+      "split": "holdout",
+      "question": "合成测试：是否完整覆盖片段甲及片段乙与丙？",
+      "as_of": "2026-01-15",
+      "review_status": "engineering_confirmed",
+      "review_provenance": {
+        "kind": "human_engineering",
+        "reviewer_id": "synthetic-reviewer-stub",
+        "reviewed_at": "2026-01-16T00:00:00Z",
+        "reference_id": "synthetic-review-only"
+      },
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [
+        {
+          "group_id": "g-main",
+          "critical": true,
+          "alternatives": [
+            {
+              "alternative_id": "canonical",
+              "spans": [
+                {
+                  "resource_id": "syn-resource",
+                  "version_id": "syn-v1",
+                  "block_id": "syn-block-a",
+                  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 2,
+                    "end": 12
+                  }
+                }
+              ]
+            },
+            {
+              "alternative_id": "equivalent",
+              "spans": [
+                {
+                  "resource_id": "syn-equivalent",
+                  "version_id": "syn-v2",
+                  "block_id": "syn-alt",
+                  "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 3,
+                    "end": 13
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "group_id": "g-boundary",
+          "critical": true,
+          "alternatives": [
+            {
+              "alternative_id": "joint-spans",
+              "spans": [
+                {
+                  "resource_id": "syn-resource",
+                  "version_id": "syn-v1",
+                  "block_id": "syn-block-b",
+                  "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 0,
+                    "end": 8
+                  }
+                },
+                {
+                  "resource_id": "syn-resource",
+                  "version_id": "syn-v1",
+                  "block_id": "syn-block-c",
+                  "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                  "valid_from": "2026-01-01",
+                  "valid_to": "2027-01-01",
+                  "span": {
+                    "start": 10,
+                    "end": 16
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

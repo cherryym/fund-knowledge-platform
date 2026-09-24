@@ -1,14 +1,17 @@
 import copy
+from hashlib import sha256
 from types import SimpleNamespace
 
 import pytest
 
-from fund_kb.evidence_context import context_plan, order_context_groups
+from fund_kb.evidence_context import bind_context_receipts, context_plan, order_context_groups
 
 
 def page(pid, title):
-    return {"title": title, "kind": "document", "records": [{"version_id": "v" + pid,
-        "block_id": "b" + pid, "evidence_id": "E" + pid, "content_sha256": "a" * 64, "text": "SOURCE_" + pid}]}
+    return {"title": title, "kind": "document", "version_id": "v" + pid, "resource_id": "r" + pid,
+        "records": [{"version_id": "v" + pid, "resource_id": "r" + pid,
+        "block_id": "b" + pid, "evidence_id": "E" + pid,
+        "content_sha256": sha256(("SOURCE_" + pid).encode()).hexdigest(), "text": "SOURCE_" + pid}]}
 
 
 def reference(title="规则乙", locator="第三条"):
@@ -21,11 +24,31 @@ def test_exact_cross_source_request_only_resolves_after_authorized_read():
     plan = context_plan(pages, {"W1"})
     assert plan["requests"] == {"W2": {"第三条"}}
     assert plan["report"]["status"] == "PENDING"
-    pages["W2"]["incoming_context"] = {"第三条": {"status": "resolved", "target_section_ids": ["s1"]}}
+    pages["W2"]["incoming_context"] = bind_context_receipts(pages["W2"],
+        {"第三条": {"status": "resolved", "target_section_ids": ["s1"]}},
+        [{"section_id": "s1", "block_ids": ["b2"]}], pages["W2"]["records"])
     plan = context_plan(pages, set(pages))
     assert not plan["requests"] and plan["report"]["resolved_count"] == 1
     assert plan["report"]["professional_completeness"] == "NOT_EVALUATED"
     assert context_plan(pages, set(pages), {"W2"})["report"]["gap_count"] == 1
+
+
+@pytest.mark.parametrize("change", ["hash", "body", "metadata", "missing_block", "binding_shape"])
+def test_changed_target_cannot_reuse_precise_context_receipt(change):
+    pages = {"W1": page("1", "规则甲"), "W2": page("2", "规则乙")}
+    pages["W1"]["reading_dependencies"] = [reference()]
+    target = pages["W2"]
+    target["incoming_context"] = bind_context_receipts(target,
+        {"第三条": {"status": "resolved", "target_section_ids": ["s1"]}},
+        [{"section_id": "s1", "block_ids": ["b2"]}], target["records"])
+    if change == "hash": target["records"][0]["content_sha256"] = "f" * 64
+    if change == "body": target["records"][0]["text"] = "CHANGED"
+    if change == "metadata": target["_metadata_signature"] = "new-authority-epoch"
+    if change == "missing_block": target["records"] = []
+    if change == "binding_shape": target["incoming_context"]["第三条"]["source_binding"] = []
+    report = context_plan(pages, set(pages))["report"]
+    assert report["status"] == "GAPS_REMAIN" and report["gap_count"] == 1
+    assert report["references"][0]["status"] == "stale_receipt"
 
 
 @pytest.mark.parametrize("targets,locator,status", [([], "第三条", "not_in_authorized_catalog"),

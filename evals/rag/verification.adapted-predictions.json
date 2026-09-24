@@ -1,0 +1,575 @@
+{
+  "schema_version": "1.0",
+  "kind": "predictions",
+  "dataset_id": "synthetic-engineering-v1",
+  "run_id": "synthetic-candidate",
+  "exposure": {
+    "attestation": "declared",
+    "development_case_ids": [
+      "syn-dev"
+    ],
+    "development_family_ids": []
+  },
+  "predictions": [
+    {
+      "case_id": "syn-dev",
+      "sample_id": "s1",
+      "as_of": "2026-01-15",
+      "run_state": "COMPLETED",
+      "answer_complete": true,
+      "answer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "claims": [
+        {
+          "claim_id": "claim-a"
+        },
+        {
+          "claim_id": "claim-b"
+        }
+      ],
+      "stages": {
+        "candidate": {
+          "status": "complete",
+          "items": [
+            {
+              "rank": 1,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 2,
+                  "end": 7
+                }
+              },
+              "unit_id": "unit-1"
+            },
+            {
+              "rank": 2,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 7,
+                  "end": 12
+                }
+              },
+              "unit_id": "unit-2"
+            },
+            {
+              "rank": 3,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-b",
+                "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 0,
+                  "end": 8
+                }
+              },
+              "unit_id": "unit-3"
+            },
+            {
+              "rank": 4,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-c",
+                "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 10,
+                  "end": 16
+                }
+              },
+              "unit_id": "unit-4"
+            }
+          ],
+          "rank_basis": "trace_rank",
+          "observation_scope": "current_authorized_candidate_pool",
+          "failure_codes": []
+        },
+        "final": {
+          "status": "complete",
+          "items": [
+            {
+              "rank": 1,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 2,
+                  "end": 7
+                }
+              },
+              "unit_id": "unit-1"
+            },
+            {
+              "rank": 2,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 7,
+                  "end": 12
+                }
+              },
+              "unit_id": "unit-2"
+            },
+            {
+              "rank": 3,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-b",
+                "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 0,
+                  "end": 8
+                }
+              },
+              "unit_id": "unit-3"
+            },
+            {
+              "rank": 4,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-c",
+                "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 10,
+                  "end": 16
+                }
+              },
+              "unit_id": "unit-4"
+            }
+          ],
+          "rank_basis": "explicit_order",
+          "observation_scope": "explicit_final_selection",
+          "failure_codes": []
+        },
+        "read": {
+          "status": "complete",
+          "items": [
+            {
+              "rank": 1,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 2,
+                  "end": 7
+                }
+              },
+              "unit_id": "unit-1"
+            },
+            {
+              "rank": 2,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 7,
+                  "end": 12
+                }
+              },
+              "unit_id": "unit-2"
+            },
+            {
+              "rank": 3,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-b",
+                "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 0,
+                  "end": 8
+                }
+              },
+              "unit_id": "unit-3"
+            },
+            {
+              "rank": 4,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-c",
+                "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 10,
+                  "end": 16
+                }
+              },
+              "unit_id": "unit-4"
+            }
+          ],
+          "rank_basis": "export_rank",
+          "observation_scope": "explicit_read_receipt",
+          "failure_codes": []
+        }
+      },
+      "latency": {
+        "cache_state": "cold",
+        "query_state": "first",
+        "first_token_ms": null,
+        "measurement_scope": "server_execution_to_completed_answer",
+        "complete_response_ms": 1000
+      },
+      "adapter_diagnostics": [],
+      "adapter_provenance": {
+        "adapter_version": "candidate_lineage_v1_to_rag_eval_v1",
+        "source_manifest_id": "synthetic-metadata-v1",
+        "source_export_id": "synthetic-export-only",
+        "source_bytes_rehashed": false
+      },
+      "retrieval_observation": {
+        "version": "candidate_lineage_v1",
+        "scope": "current_authorized_candidate_pool",
+        "candidate_count": 4,
+        "reranked_count": 4,
+        "unscored_count": 0,
+        "source_text_included": false,
+        "all_corpus_recall": "NOT_EVALUATED",
+        "semantic_support": "NOT_EVALUATED",
+        "phases_ms": {
+          "candidate_search_ms": 10,
+          "reranking_ms": 30
+        },
+        "timing_scope": "single_query",
+        "reranking_state": "local_cross_encoder",
+        "candidate_policy": "complete_pool",
+        "channel_counts": {
+          "bm25": 4
+        }
+      },
+      "execution_observation": {
+        "execution_elapsed_ms": 1000,
+        "phases": {
+          "model_synthesis": {
+            "elapsed_ms": 900,
+            "calls": 1
+          }
+        },
+        "durations_additive": false,
+        "first_visible_answer_ms": null,
+        "first_visible_answer_status": "NOT_MEASURED"
+      }
+    },
+    {
+      "case_id": "syn-holdout",
+      "sample_id": "s1",
+      "as_of": "2026-01-15",
+      "run_state": "COMPLETED",
+      "answer_complete": true,
+      "answer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "claims": [
+        {
+          "claim_id": "claim-a"
+        },
+        {
+          "claim_id": "claim-b"
+        }
+      ],
+      "stages": {
+        "candidate": {
+          "status": "complete",
+          "items": [
+            {
+              "rank": 1,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 2,
+                  "end": 7
+                }
+              },
+              "unit_id": "unit-1"
+            },
+            {
+              "rank": 2,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 7,
+                  "end": 12
+                }
+              },
+              "unit_id": "unit-2"
+            },
+            {
+              "rank": 3,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-b",
+                "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 0,
+                  "end": 8
+                }
+              },
+              "unit_id": "unit-3"
+            },
+            {
+              "rank": 4,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-c",
+                "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 10,
+                  "end": 16
+                }
+              },
+              "unit_id": "unit-4"
+            }
+          ],
+          "rank_basis": "trace_rank",
+          "observation_scope": "current_authorized_candidate_pool",
+          "failure_codes": []
+        },
+        "final": {
+          "status": "complete",
+          "items": [
+            {
+              "rank": 1,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 2,
+                  "end": 7
+                }
+              },
+              "unit_id": "unit-1"
+            },
+            {
+              "rank": 2,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 7,
+                  "end": 12
+                }
+              },
+              "unit_id": "unit-2"
+            },
+            {
+              "rank": 3,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-b",
+                "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 0,
+                  "end": 8
+                }
+              },
+              "unit_id": "unit-3"
+            },
+            {
+              "rank": 4,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-c",
+                "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 10,
+                  "end": 16
+                }
+              },
+              "unit_id": "unit-4"
+            }
+          ],
+          "rank_basis": "explicit_order",
+          "observation_scope": "explicit_final_selection",
+          "failure_codes": []
+        },
+        "read": {
+          "status": "complete",
+          "items": [
+            {
+              "rank": 1,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 2,
+                  "end": 7
+                }
+              },
+              "unit_id": "unit-1"
+            },
+            {
+              "rank": 2,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-a",
+                "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 7,
+                  "end": 12
+                }
+              },
+              "unit_id": "unit-2"
+            },
+            {
+              "rank": 3,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-b",
+                "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 0,
+                  "end": 8
+                }
+              },
+              "unit_id": "unit-3"
+            },
+            {
+              "rank": 4,
+              "source": {
+                "resource_id": "syn-resource",
+                "version_id": "syn-v1",
+                "block_id": "syn-block-c",
+                "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "valid_from": "2026-01-01",
+                "valid_to": "2027-01-01",
+                "span": {
+                  "start": 10,
+                  "end": 16
+                }
+              },
+              "unit_id": "unit-4"
+            }
+          ],
+          "rank_basis": "export_rank",
+          "observation_scope": "explicit_read_receipt",
+          "failure_codes": []
+        }
+      },
+      "latency": {
+        "cache_state": "cold",
+        "query_state": "first",
+        "first_token_ms": null,
+        "measurement_scope": "server_execution_to_completed_answer",
+        "complete_response_ms": 1200
+      },
+      "adapter_diagnostics": [],
+      "adapter_provenance": {
+        "adapter_version": "candidate_lineage_v1_to_rag_eval_v1",
+        "source_manifest_id": "synthetic-metadata-v1",
+        "source_export_id": "synthetic-export-only",
+        "source_bytes_rehashed": false
+      },
+      "retrieval_observation": {
+        "version": "candidate_lineage_v1",
+        "scope": "current_authorized_candidate_pool",
+        "candidate_count": 4,
+        "reranked_count": 4,
+        "unscored_count": 0,
+        "source_text_included": false,
+        "all_corpus_recall": "NOT_EVALUATED",
+        "semantic_support": "NOT_EVALUATED",
+        "phases_ms": {
+          "candidate_search_ms": 10,
+          "reranking_ms": 30
+        },
+        "timing_scope": "single_query",
+        "reranking_state": "local_cross_encoder",
+        "candidate_policy": "complete_pool",
+        "channel_counts": {
+          "bm25": 4
+        }
+      },
+      "execution_observation": {
+        "execution_elapsed_ms": 1200,
+        "phases": {
+          "model_synthesis": {
+            "elapsed_ms": 900,
+            "calls": 1
+          }
+        },
+        "durations_additive": false,
+        "first_visible_answer_ms": null,
+        "first_visible_answer_status": "NOT_MEASURED"
+      }
+    }
+  ]
+}

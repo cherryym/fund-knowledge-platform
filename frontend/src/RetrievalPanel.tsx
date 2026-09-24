@@ -5,6 +5,7 @@ import { Badge, ErrorBox, Notice, useApp, useLoad, useTask } from "./ui";
 import { RetrievalProfilePicker, useRetrievalProfile, type FrozenRetrievalSelection } from "./retrievalProfiles";
 import "./retrieval-panel.css";
 import { LocalModelReadiness, type ModelRuntimeState } from "./LocalModelReadiness";
+import { RetrievalDiagnostics, type CandidateTrace } from "./RetrievalDiagnostics";
 
 type IndexOperation = Job & {force: boolean; counts_verified: boolean; created_at?: string; completed_at?: string;
   application_state?: string; matched_current_versions?: number; current_catalog_versions?: number};
@@ -67,6 +68,7 @@ export type RetrievalSearchResult = {
   timing_ms: number;
   evidence_preview: false;
   reranking?: {mode: string; model?: string | null; input_units?: number; elapsed_ms?: number};
+  retrieval_trace?: CandidateTrace;
 };
 
 const active = (job: Job | null) => !!job && ["QUEUED", "RUNNING"].includes(job.state);
@@ -472,6 +474,7 @@ function RetrievalWorkspace({ profiles, initialQuery, autoQuery, onQueryChange, 
             : searchResult.reranking?.mode === "disabled" ? "本次检索未执行重排；请结合候选数量与模型配置核对。"
             : "本次检索未返回重排执行记录，不能仅据已配置或已加载认定执行成功。"}
         </p>
+        {searchResult.retrieval_trace && <RetrievalDiagnostics trace={searchResult.retrieval_trace} />}
         <p className="retrieval-meta">本次目录 {countText(searchResult.catalog_pages)} 页，其中已索引 {countText(searchResult.indexed_catalog_pages)} 页；检索分数不代表置信度。</p>
         {searchResult.warnings.length > 0 && <Notice><ul className="retrieval-notes" aria-label="检索警示">{searchResult.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></Notice>}
         {searchResult.hits.length === 0 ? <p className="retrieval-empty">未找到匹配候选。可调整检索词，并检查覆盖统计与警示。</p> : <ol className="retrieval-hits">

@@ -1,0 +1,2778 @@
+{
+  "schema_version": "1.0",
+  "kind": "dataset",
+  "dataset_id": "fund-valuation-candidate-40-v1",
+  "evidence_domain": "professional",
+  "coverage": {
+    "scope_id": "valuation-candidate-40-pending",
+    "statement": "40道中文基金估值候选问题，20 dev与20 holdout；全部待查证与专家确认，无业务答案，无已确认gold。",
+    "limitations": [
+      "范围仅限列出的候选情景，不声称覆盖全部基金类型、法规、估值风险或真实业务分布。",
+      "分组是待审的family划分；公开的holdout候选并不自动构成盲测，实际开发暴露必须如实登记。",
+      "2026-09-23仅是模板的目标业务日期，未核验该日期下任何具体政策或事实。",
+      "source_slots是可执行的查证任务，pending_locator中的null不得替代真实绑定或用作命中。"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "valuation-dev-01",
+      "family_id": "equity-suspension",
+      "split": "dev",
+      "question": "停牌股票在估值日缺少可用成交价时，应如何查明本基金适用的方法、替代价格证据和复核要求？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对停牌事件、最近成交信息、基金适用政策及方法变更记录之间的适用关系。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "同名股票的历史处理案例",
+          "其他基金未说明适用条件的方法说明"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对停牌事件、最近成交信息、基金适用政策及方法变更记录之间的适用关系。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-02",
+      "family_id": "equity-inactive-market",
+      "split": "dev",
+      "question": "股票存在成交但交易活跃程度存疑时，如何核验价格可用性判断及其支持材料？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查证活跃程度的判定依据、交易样本时间窗以及异常交易排除证据。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "仅凭单笔成交得出的结论",
+          "未注明市场或时点的流动性介绍"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查证活跃程度的判定依据、交易样本时间窗以及异常交易排除证据。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-03",
+      "family_id": "ipo-before-listing",
+      "split": "dev",
+      "question": "新股已获配但尚未上市时，应查哪些来源才能确定估值输入和适用处理？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对获配、缴款、上市状态与估值日期；定位本基金针对该状态的有效依据。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "已上市后的行情",
+          "其他发行批次或不同证券身份的资料"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对获配、缴款、上市状态与估值日期；定位本基金针对该状态的有效依据。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-04",
+      "family_id": "equity-restricted-lockup",
+      "split": "dev",
+      "question": "持有的限售股票在不同限制条件下应如何核验估值依据和限制期限输入？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "逐项查证限制类型、起止日、剩余期限及估值方法所需输入的来源。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "仅因名称含限售而套用的案例",
+          "已解除限制后的价格说明"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "逐项查证限制类型、起止日、剩余期限及估值方法所需输入的来源。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-05",
+      "family_id": "equity-ex-rights",
+      "split": "dev",
+      "question": "发生送股、转增或配股事项的估值日，如何核对权益信息、持仓数量和价格口径是否一致？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位公司行为公告、登记除权日期、持仓变动及适用核算政策的对应区间。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "公告预案而非实际实施资料",
+          "复权价格与原始价格混用的来源"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位公司行为公告、登记除权日期、持仓变动及适用核算政策的对应区间。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-06",
+      "family_id": "equity-cash-dividend",
+      "split": "dev",
+      "question": "股票现金分红跨越登记、除息和到账日期时，应如何查证各时点的估值与权益记录？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对公告版本、日期、持仓资格和应收到账记录，确认各记录适用的业务时点。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "仅凭银行到账倒推全部确认时点",
+          "不同证券或批次的分红公告"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对公告版本、日期、持仓资格和应收到账记录，确认各记录适用的业务时点。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-07",
+      "family_id": "bond-price-interest",
+      "split": "dev",
+      "question": "同一债券的行情提供净价、全价和利息字段时，如何查明可组合的口径并避免重复或遗漏？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核验行情字段定义、计息区间、付息安排及基金采用的价格口径。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "无字段说明的行情截图",
+          "计息区间不同但名称相同的数据"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核验行情字段定义、计息区间、付息安排及基金采用的价格口径。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-08",
+      "family_id": "bond-credit-event",
+      "split": "dev",
+      "question": "债券发生信用事件后，应如何查证估值方法、关键输入和复核结论的适用版本？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对事件事实、证据取得日期、估值政策、输入假设及独立复核记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "事件前的正常报价",
+          "未经确认的传闻或未注明适用范围的案例"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对事件事实、证据取得日期、估值政策、输入假设及独立复核记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-09",
+      "family_id": "vendor-missing-price",
+      "split": "dev",
+      "question": "既定估值来源在估值日未提供价格时，如何核验缺数原因和可接受的后备证据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "区分未发布、接口遗漏和证券映射错误，并定位获准后备来源及审批记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "接口空值被当作零价",
+          "沿用前值但不说明日期的记录"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "区分未发布、接口遗漏和证券映射错误，并定位获准后备来源及审批记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-10",
+      "family_id": "vendor-price-anomaly",
+      "split": "dev",
+      "question": "外部估值价格相较历史或其他来源出现差异时，如何形成可追溯的异常核查证据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查证证券映射、单位、币种、价格日期、供应商更正及异常处置记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "只展示涨跌幅却无原始价格的图表",
+          "不同口径来源直接比较"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查证证券映射、单位、币种、价格日期、供应商更正及异常处置记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-11",
+      "family_id": "market-calendar",
+      "split": "dev",
+      "question": "交易市场休市而基金需要估值时，如何查明适用日历、最近可用价格和本基金处理依据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对市场与基金业务日历、行情时间戳及相关基金政策的适用条件。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "其他市场的日历",
+          "没有注明休市原因或价格日期的惯例说明"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对市场与基金业务日历、行情时间戳及相关基金政策的适用条件。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-12",
+      "family_id": "fx-source-date",
+      "split": "dev",
+      "question": "多币种资产折算时，应怎样查证汇率来源、报价方向、适用日期及复核关系？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对币种对、买卖或中间价字段、报价时点与基金采用的折算政策。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "方向相反的汇率",
+          "银行现钞牌价或未获认可来源被直接套用"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对币种对、买卖或中间价字段、报价时点与基金采用的折算政策。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-13",
+      "family_id": "overseas-timezone",
+      "split": "dev",
+      "question": "境外市场收盘时间与境内估值日不同步时，如何核验证据日期和信息截止边界？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查明估值时区、市场收盘时刻、数据到达时间及本基金信息截止规则。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "只按下载日期标记行情",
+          "把事后修订数据当作当时已知输入"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查明估值时区、市场收盘时刻、数据到达时间及本基金信息截止规则。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-14",
+      "family_id": "etf-iopv-versus-nav",
+      "split": "dev",
+      "question": "ETF相关资料同时出现参考值和基金净值时，如何核对其定义、用途与可用证据范围？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位各数值的生成主体、计算时点、输入口径及具体用途说明。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "将名称相近的参考值直接视作正式净值",
+          "缺少定义的营销材料"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位各数值的生成主体、计算时点、输入口径及具体用途说明。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-15",
+      "family_id": "money-fund-method-check",
+      "split": "dev",
+      "question": "货币基金不同估值口径的核对，应查证哪些适用政策、计算输入和偏离处理记录？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "确认产品范围、估值方法版本、各口径输入及差异复核机制的原文。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "其他产品口径被直接套用",
+          "未核实生效日的培训摘要"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "确认产品范围、估值方法版本、各口径输入及差异复核机制的原文。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-16",
+      "family_id": "reit-share-underlying",
+      "split": "dev",
+      "question": "持有公募REIT份额时，如何区分份额层面的估值证据与底层项目评估材料的用途？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对证券身份和上市状态，分别定位份额估值政策与底层评估用途说明。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "将底层物业评估值直接等同份额价格",
+          "混淆未上市权益与上市份额"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对证券身份和上市状态，分别定位份额估值政策与底层评估用途说明。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-17",
+      "family_id": "futures-settlement",
+      "split": "dev",
+      "question": "期货持仓估值时，如何核对合约身份、结算数据与保证金记录之间的关系？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核验合约乘数、结算价格时点、头寸方向及结算单字段定义。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "成交价与结算价混用",
+          "保证金余额被直接当作持仓价值"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核验合约乘数、结算价格时点、头寸方向及结算单字段定义。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-18",
+      "family_id": "otc-derivative-model",
+      "split": "dev",
+      "question": "场外衍生工具缺少直接报价时，如何查证估值模型、市场输入和独立复核证据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位交易确认书、模型适用范围、输入快照、参数批准及复核记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "只提供模型名称无输入快照",
+          "交易对手单方结果被当作独立复核"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位交易确认书、模型适用范围、输入快照、参数批准及复核记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-19",
+      "family_id": "fixed-fee-accrual",
+      "split": "dev",
+      "question": "管理费和托管费计提时，如何查证费率版本、计提基数、期间和核对记录？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对合同及补充文件生效时间、份额范围、计提日历和计算明细。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "其他产品的费率",
+          "更新后条款追溯覆盖旧期间的说明"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对合同及补充文件生效时间、份额范围、计提日历和计算明细。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-dev-20",
+      "family_id": "nav-rounding",
+      "split": "dev",
+      "question": "单位净值计算与披露出现尾差时，如何核对精度、舍入位置和前后口径？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位计算明细、份额数据、精度规则及实际披露记录的同日版本。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "从展示值反推未披露中间值",
+          "把不同精度字段视为相同数据"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位计算明细、份额数据、精度规则及实际披露记录的同日版本。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-01",
+      "family_id": "negotiated-deposit",
+      "split": "holdout",
+      "question": "协议存款在计息条件或支取安排变化时，如何查证估值相关条款及当日输入？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对存款协议及变更、生效日期、计息条件、余额和应收记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "普通存款介绍代替实际协议",
+          "忽略补充协议的早期合同"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对存款协议及变更、生效日期、计息条件、余额和应收记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-02",
+      "family_id": "repo-contract-legs",
+      "split": "holdout",
+      "question": "回购业务在估值核对中，如何区分交易权利义务、计息数据与质押物信息？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查证回购合同、交易类型、期限、结算记录及各项资产负债记录依据。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "用质押券行情直接代替回购合同估值",
+          "混淆正回购与逆回购"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查证回购合同、交易类型、期限、结算记录及各项资产负债记录依据。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-03",
+      "family_id": "abs-tranche",
+      "split": "holdout",
+      "question": "资产支持证券不同分层的估值，应如何核对份额身份、现金流条件和估值输入？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "逐项定位分层条款、现金流顺序、存续事件、证券映射和估值来源。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "以底层资产总额代替某分层价值",
+          "同一项目其他分层的价格"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "逐项定位分层条款、现金流顺序、存续事件、证券映射和估值来源。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-04",
+      "family_id": "convertible-conversion",
+      "split": "holdout",
+      "question": "可转换债券处于转股申请与到账衔接期间时，如何核对估值对象和业务时点？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对申请确认、证券注销或到账记录、持仓状态及该期间的适用政策。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "已完成转股的案例直接套用待确认状态",
+          "忽略业务日期的行情"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对申请确认、证券注销或到账记录、持仓状态及该期间的适用政策。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-05",
+      "family_id": "securities-lending-rights",
+      "split": "holdout",
+      "question": "证券出借期间发生相关权益事项时，应查哪些材料才能核对估值和权益归属？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位出借协议、业务确认、权益事件和归属补偿条款的对应关系。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "自有未出借持仓的处理说明",
+          "无实际合同支持的通用问答"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位出借协议、业务确认、权益事件和归属补偿条款的对应关系。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-06",
+      "family_id": "fof-underlying-nav-lag",
+      "split": "holdout",
+      "question": "基金持有其他基金且底层净值披露滞后时，如何核对可用净值及其适用日期？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对底层基金身份、净值所属日和披露时刻、本基金政策及后续修订记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "将披露日期当作净值所属日",
+          "用不同份额类别净值替代"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对底层基金身份、净值所属日和披露时刻、本基金政策及后续修订记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-07",
+      "family_id": "share-class-allocation",
+      "split": "holdout",
+      "question": "多份额类别基金发生共同费用和类别专属费用时，如何查证分摊依据与计算链条？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对类别条款、费用归属、分摊基数、期间和分摊明细的对应版本。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "仅凭类别名称推断费用",
+          "混用计提前后或不同时点的分摊基数"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对类别条款、费用归属、分摊基数、期间和分摊明细的对应版本。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-08",
+      "family_id": "flow-related-valuation-adjustment",
+      "split": "holdout",
+      "question": "大额申赎情形下，如何查证本产品是否存在适用的估值调整安排及触发证据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查找合同、已批准政策和业务记录，核验适用产品、条件与实际审批。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "将其他产品的大额申赎安排视为普遍规则",
+          "缺少批准记录的假设方案"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查找合同、已批准政策和业务记录，核验适用产品、条件与实际审批。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-09",
+      "family_id": "side-pocket-segregation",
+      "split": "holdout",
+      "question": "涉及侧袋安排的估值核对，应如何查证资产范围、账户划分和记录衔接？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位设立及后续公告、资产清单、分户记录和适用估值政策。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "侧袋安排前的资产清单",
+          "混合主袋侧袋口径但不作说明的数据"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位设立及后续公告、资产清单、分户记录和适用估值政策。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-10",
+      "family_id": "liquidation-basis",
+      "split": "holdout",
+      "question": "基金进入清算相关阶段时，如何核对估值基础、资产处置资料与费用记录的适用期间？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查证阶段文件、生效时点、清算方案、资产状态及费用支持材料。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "将持续运作期假设直接延用",
+          "缺少确认的预计处置价格"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查证阶段文件、生效时点、清算方案、资产状态及费用支持材料。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-11",
+      "family_id": "nav-error-correction",
+      "split": "holdout",
+      "question": "发现历史估值差错后，如何查证影响期间、修订输入、复核与后续处理依据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "固定差错前后数据版本，核对原因、影响范围、重算记录和适用处理文件。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "仅凭最新正确值推断历史影响",
+          "缺少版本记录的覆盖后数据"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "固定差错前后数据版本，核对原因、影响范围、重算记录和适用处理文件。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-12",
+      "family_id": "performance-fee",
+      "split": "holdout",
+      "question": "产品设有与业绩相关的费用条款时，如何查明是否适用及计算所需的具体条件？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对产品身份、合同条款、观察区间、基准或其他约定输入与结算记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "其他产品的提成公式",
+          "忽略适用条件或份额范围的销售说明"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对产品身份、合同条款、观察区间、基准或其他约定输入与结算记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-13",
+      "family_id": "tax-in-valuation",
+      "split": "holdout",
+      "question": "估值记录涉及税费时，如何查证交易类型、承担主体、适用文件与计入口径？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "根据实际业务定位税费相关有效依据、合同承担约定及计算凭证。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "未注明适用主体的税务摘要",
+          "把不同交易类型的处理直接类推"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "根据实际业务定位税费相关有效依据、合同承担约定及计算凭证。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-14",
+      "family_id": "clearing-reconciliation",
+      "split": "holdout",
+      "question": "清算对账发现估值系统与清算机构记录不一致时，如何定位支持调整的证据？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "逐项核对账户、币种、日期、清算批次和未达项目，再定位有效处理记录。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "仅比较总余额的截图",
+          "未达项目被直接认定为估值错误"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "逐项核对账户、币种、日期、清算批次和未达项目，再定位有效处理记录。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-15",
+      "family_id": "unsettled-trade-recognition",
+      "split": "holdout",
+      "question": "证券交易已成交但尚未完成交收时，如何查证估值对象、相关权利义务和记录时点？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对成交确认、交收日、交收状态与本基金确认及核算政策的原文。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "以资金到账状态替代全部业务判断",
+          "不同结算方式的历史案例"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对成交确认、交收日、交收状态与本基金确认及核算政策的原文。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-16",
+      "family_id": "derivative-collateral",
+      "split": "holdout",
+      "question": "衍生交易的担保品在估值核对中，如何查证权属、价值口径和与交易估值的关联？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位担保安排、转移记录、折扣或计值约定及对账报告的适用范围。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "担保品价值直接替代衍生工具价值",
+          "忽略权属条款的市场通用描述"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位担保安排、转移记录、折扣或计值约定及对账报告的适用范围。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-17",
+      "family_id": "bankruptcy-recovery-rights",
+      "split": "holdout",
+      "question": "持有证券涉及破产重整或受偿安排时，如何查证估值对象变化和受偿证据的时效？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对法律及实施文件版本、权利确认、分配状态和估值假设来源。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "尚未生效的方案当作确定现金流",
+          "其他债权类别的受偿资料"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对法律及实施文件版本、权利确认、分配状态和估值假设来源。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-18",
+      "family_id": "delisting-transfer",
+      "split": "holdout",
+      "question": "证券退市或转入其他交易场所后，如何核验身份映射、行情来源和估值政策适用性？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "查证证券代码映射、转移日期、交易制度变化及本基金采用的依据。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "沿用旧代码导致错配",
+          "将不同场所价格条件默认视为一致"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "查证证券代码映射、转移日期、交易制度变化及本基金采用的依据。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-19",
+      "family_id": "fund-distribution-nav",
+      "split": "holdout",
+      "question": "基金分红相关日期前后，如何查明净值计算、份额数据和分配记录应采用的口径？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "核对本基金分配文件、权益登记信息、净值所属日及会计记录的对应关系。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "混淆基金自身分红与持有股票分红",
+          "不同类别或日期的分红公告"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "核对本基金分配文件、权益登记信息、净值所属日及会计记录的对应关系。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "valuation-holdout-20",
+      "family_id": "valuation-override-governance",
+      "split": "holdout",
+      "question": "需要人工修正估值输入时，如何查证修正依据、授权、独立复核及可回溯记录？",
+      "as_of": "2026-09-23",
+      "review_status": "pending",
+      "review_provenance": null,
+      "expected_sample_ids": [
+        "s1"
+      ],
+      "required_evidence_groups": [],
+      "annotation_plan": {
+        "verification_tasks": [
+          "定位原始输入、问题证据、批准权限、修正版本和复核轨迹，核验职责关系。",
+          "由后续获授权的离线取证任务定位原件：保留资源、版本、内容块、原块SHA256、有效日期以及未经归一化的Unicode字符半开区间；不得以文档名称代替确切来源。",
+          "分离方法依据、实际输入与复核证据；由专家决定必需组、关键组及等价来源是否成立，查明例外与适用条件后才升级review_status。",
+          "检查同义改写、同一业务事件与共享答案结构是否应归入同一family；评测前冻结样本，留出题不得参与调参或样例构造。"
+        ],
+        "misleading_source_types": [
+          "只有最终数值没有修正链条",
+          "个人经验或临时聊天代替正式批准"
+        ],
+        "source_slots": [
+          {
+            "slot_id": "method",
+            "purpose": "适用依据与边界",
+            "lookup_hint": "优先查该基金有效合同、获批准估值政策及与本情景直接相关的权威原文；确切条款和生效日期待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "inputs",
+            "purpose": "业务事实与计算输入",
+            "lookup_hint": "定位原始输入、问题证据、批准权限、修正版本和复核轨迹，核验职责关系。 原始凭证和数据快照的确切来源待查证。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          },
+          {
+            "slot_id": "review",
+            "purpose": "复核与处理记录",
+            "lookup_hint": "查找本情景适用的职责、授权、独立核对要求及对应合成或获授权脱敏记录；不得凭惯例编造。",
+            "pending_locator": {
+              "resource_id": null,
+              "version_id": null,
+              "block_id": null,
+              "content_sha256": null,
+              "valid_from": null,
+              "valid_to": null,
+              "span": null
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

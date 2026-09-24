@@ -1,0 +1,23 @@
+{
+  "status": "INCOMPLETE",
+  "adoption": "NOT_ADOPTED",
+  "session_id": "89318",
+  "exit_code": 130,
+  "interrupted_at_user_request": true,
+  "probe_process_finished": true,
+  "evidence_source": "Completed warmup progress messages captured before interruption; no completed paired round or score report was emitted.",
+  "synthetic_pair_count": 880,
+  "completed_paired_rounds": 0,
+  "completed_warmups": [
+    {"batch_size": 2, "seconds": 69.15707191699767},
+    {"batch_size": 8, "seconds": 79.03459087500232}
+  ],
+  "score_equivalence": "NOT_EVALUATED",
+  "ranking_equivalence": "NOT_EVALUATED",
+  "same_strategy_drift": "NOT_EVALUATED",
+  "performance_status": "NOT_EVALUATED",
+  "warmup_timings_are_not_paired_performance_results": true,
+  "production_default_changed": false,
+  "profile_written": false,
+  "business_accuracy": "NOT_EVALUATED"
+}

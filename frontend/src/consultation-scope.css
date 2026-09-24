@@ -57,6 +57,24 @@
 }
 .consultation-layout .wiki-answer-markdown th { background: #f4f7fb; }
 .consultation-layout .wiki-answer-markdown pre { overflow: auto; padding: 14px; background: #f4f7fb; }
+.consultation-layout .wiki-answer-markdown .citation-doc-group { display: inline; }
+.consultation-layout .citation-doc-chip {
+  display: inline-flex;
+  max-width: min(100%, 22em);
+  min-width: 0;
+  align-items: center;
+  vertical-align: baseline;
+  margin: 0 2px;
+  padding: 2px 6px;
+  font-size: 11px;
+  line-height: 1.65;
+  text-align: left;
+}
+.consultation-layout .citation-doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.consultation-layout .wiki-answer-markdown .citation-doc-icon { width: 13px; height: 13px; flex-shrink: 0; }
+.consultation-layout .wiki-answer-markdown .citation-unresolved { color: #925d27; font-size: 11px; }
+.consultation-layout .citation-doc-chip:focus-visible { outline: 2px solid #2356b2; outline-offset: 2px; }
+.consultation-layout [data-run-execution] > .consultation-run-details { margin-left: 12px; }
 .consultation-layout .answer-quality-warnings { margin: 16px 0; color: #6c5b36; }
 .consultation-layout .wiki-answer-source-group { border-bottom: 1px solid #e3e8f0; padding: 12px 0; }
 .consultation-layout .wiki-answer-source-group summary { cursor: pointer; line-height: 1.7; }
@@ -147,3 +165,18 @@
 .consultation-layout .analysis-searches { color: #526581; font-size: 14px; overflow-wrap: anywhere; }
 .consultation-layout .answer-failure { padding: 14px 18px; background: #fff5f3; border: 1px solid #ecd0cb; border-radius: 8px; line-height: 1.7; }
 .consultation-layout .answer-failure small { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+.consultation-layout .evidence-review-notice {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 1px solid #dfc693;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: #61461c;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.consultation-layout .evidence-review-notice[data-severity="critical"] { border-color: #e6b8b4; background: #fff6f5; color: #80312c; }
+.consultation-layout .evidence-review-notice ul { margin: 10px 0; padding-left: 22px; }
+.consultation-layout .evidence-review-notice li + li { margin-top: 8px; }
+.consultation-layout .evidence-review-notice small { display: block; margin-top: 4px; font-size: 12px; }
+.consultation-layout .evidence-review-notice p { margin-bottom: 0; font-size: 13px; }

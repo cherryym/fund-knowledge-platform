@@ -80,8 +80,14 @@ def plan_instructions(plan):
         lines += ["先辨明用户问的是日常估值取价还是合同兑付金额。估值取价应依据适用估值标准的直接条款；会计手册只解释核算衔接，不能以分录、兑付金额或脚注倒推估值规则。",
                   "合同回售价、第三方估值价格、会计结转金额应区分。若问合同金额，需核对发行条款和公告，不把估值标准误说成合同定价规则。"]
     for source in plan["sources"]:
-        lines.append(f"必须核对 {source['page_id']} | {source['title']} 的本题直接条款、适用范围和实施时间。"
-            "综合答案对估值价格口径的说明应引用该直接原文，不能只引用手册或第三方技术说明。")
+        if source.get("role") == "domain_core":
+            lines.append(f"核心目录检索候选 {source['page_id']} | {source['title']}：相关性及目录归类不证明其适用于本题。"
+                "核对主体、资产、阶段和业务日期；候选可以是替代或参考，不要求把每份候选都当作直接主依据。")
+        elif source.get("role") == "domain_foundation":
+            lines.append(f"基础规则 {source['page_id']} | {source['title']}：核对适用的基本原则，不能替代具体品种/事件的直接条款。")
+        else:
+            lines.append(f"必须核对 {source['page_id']} | {source['title']} 的本题直接条款、适用范围和实施时间。"
+                "综合答案对估值价格口径的说明应引用该直接原文，不能只引用手册或第三方技术说明。")
     if plan["warnings"]:
         lines.append("有必需主来源未准入或未定位到主题条款：" + "、".join(plan["warnings"]) +
             "。应明确证据缺口，不能把其他来源当作已核对的主标准。")

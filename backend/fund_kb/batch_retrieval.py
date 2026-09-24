@@ -7,14 +7,15 @@ The caller still revalidates actual sources before model dispatch and delivery.
 """
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
-import math
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from . import hybrid_retrieval as hybrid
-from . import models as m, services as svc
+from . import models as m
+from . import services as svc
 from .projection_read import projection_read
 from .retrieval import lexical_scores_many
+from .retrieval_observation import rank_candidates, rerank_pool_size, validated_scores
 from .vector_indexing import current_receipts
 from .wiki_catalog import build_catalog, catalog_signature
 
@@ -31,9 +32,12 @@ def _read_state(db, user_id, space_id, pages, scope, context, vector):
 
 
 def search_catalog_batch(user, space_id, queries, *, pages, vector, scope="reference",
-                         context=None, limit=24, checkpoint=None, session_factory):
+                         context=None, limit=24, checkpoint=None, session_factory,
+                         inference_schedule="shared"):
     """Return one complete single-query result per query plus shared timing data."""
     started = time.monotonic()
+    if inference_schedule not in {"shared", "serial_equivalent"}:
+        raise ValueError("INVALID_INFERENCE_SCHEDULE")
     if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
         svc.fail(422, "INVALID_RETRIEVAL_LIMIT", "候选数量须介于1至100")
     if scope not in {"reference", "formal"}:
@@ -75,10 +79,14 @@ def search_catalog_batch(user, space_id, queries, *, pages, vector, scope="refer
             return [vector.lexical_search(q, versions, limit=count,
                 allowed_projection_ids=projections, cache_key=key) for q in queries]
 
+        def dense_queries():
+            if inference_schedule == "serial_equivalent":
+                return [vector.search(q, versions, limit=count, allowed_projection_ids=projections) for q in queries]
+            return vector.search_many(queries, versions, limit=count, allowed_projection_ids=projections)
+
         with ThreadPoolExecutor(max_workers=2, thread_name_prefix="fkb-query-batch") as pool:
             bm25 = pool.submit(lexical)
-            dense = pool.submit(vector.search_many, queries, versions, limit=count,
-                allowed_projection_ids=projections) if semantic else None
+            dense = pool.submit(dense_queries) if semantic else None
             for channel, future, warning in (("bm25", bm25, "LEXICAL_INDEX_UNAVAILABLE"),
                 ("vector", dense, "VECTOR_CHANNEL_UNAVAILABLE")):
                 if future is None:
@@ -114,32 +122,30 @@ def search_catalog_batch(user, space_id, queries, *, pages, vector, scope="refer
             warnings = list(shared_warnings)
             units, weights = hybrid._fused_unit_candidates(query, current_pages, channels,
                 catalog_order, blocks, headings, warnings)
-            prepared.append({"query": query, "units": units, "weights": weights, "warnings": warnings})
+            prepared.append({"query": query, "units": units, "weights": weights, "warnings": warnings,
+                             "rerank_count": rerank_pool_size(vector.settings, units)})
     phase["candidate_verification_and_fusion_ms"] = (time.monotonic() - phase_start) * 1000
     check()
 
     phase_start = time.monotonic()
     for item in prepared:
-        item["reranking"] = {"mode": "disabled", "model": None, "input_units": min(count, len(item["units"])),
-            "elapsed_ms": 0.0, "timing_scope": "shared_batch", "business_accuracy": "NOT_EVALUATED"}
+        item["reranking"] = {"mode": "disabled", "model": None, "input_units": item["rerank_count"],
+            "elapsed_ms": 0.0, "timing_scope": "shared_batch", "business_accuracy": "NOT_EVALUATED",
+            "candidate_policy": getattr(vector.settings, "retrieval_rerank_policy", "ranked_prefix")}
     if any(item["units"] for item in prepared) and getattr(vector.settings, "reranker_mode", "disabled") == "local":
         try:
             requests = [(item["query"], [u["title"] + "\n" + " / ".join(u.get("section_path", []))
-                + "\n" + u["text"] for u in item["units"][:count]]) for item in prepared]
-            scores = vector.rerank_many(requests)
+                + "\n" + u["text"] for u in item["units"][:item["rerank_count"]]]) for item in prepared]
+            scores = ([vector.rerank(query, texts) for query, texts in requests]
+                      if inference_schedule == "serial_equivalent" else vector.rerank_many(requests))
             if len(scores) != len(prepared):
                 raise ValueError("RERANK_BATCH_ALIGNMENT_INVALID")
             # Validate the whole batch before mutating any unit/rank.
-            if any(values is None or len(values) != len(request[1]) or
-                   any(isinstance(v, bool) or not isinstance(v, (float, int)) or not math.isfinite(v) for v in values)
-                   for values, request in zip(scores, requests, strict=True)):
-                raise ValueError("RERANK_BATCH_SCORES_INVALID")
+            for values, request in zip(scores, requests, strict=True):
+                validated_scores(values, len(request[1]))
             for item, values in zip(prepared, scores, strict=True):
-                batch, tail = item["units"][:count], item["units"][count:]
-                for unit, score in zip(batch, values, strict=True):
-                    unit["rerank_score"] = score
-                batch.sort(key=lambda u: (-u["rerank_score"], -u["score"], u["unit_id"]))
-                item["units"] = batch + tail
+                batch, tail = item["units"][:item["rerank_count"]], item["units"][item["rerank_count"]:]
+                item["units"] = rank_candidates(batch, values) + tail
                 item["reranking"].update(mode="local_cross_encoder", model=vector.settings.reranker_model,
                     revision=vector.settings.reranker_revision)
         except Exception:  # noqa: BLE001 - no invented fallback score or hidden loss of a query.
@@ -167,12 +173,13 @@ def search_catalog_batch(user, space_id, queries, *, pages, vector, scope="refer
         item["reranking"]["elapsed_ms"] = round(phase["reranking_ms"], 3)
         result = hybrid._format_unit_results(item["query"], scope, current_pages, final_ready,
             [u for u in item["units"] if u["version_id"] in admitted], item["weights"], item["reranking"],
-            checked_blocks, item["warnings"], elapsed, limit)
+            checked_blocks, item["warnings"], elapsed, limit, phases_ms=phase)
         result["timing_scope"] = "shared_batch_not_additive"
         results.append(result)
     return results, {"strategy": "shared_multi_query", "query_count": len(queries),
+        "inference_schedule": inference_schedule,
         "all_query_directions_preserved": True, "authority_rounds": 3,
         "shared_candidate_blocks_checked": checked_blocks,
-        "query_document_pairs": sum(min(count, len(item["units"])) for item in prepared),
+        "query_document_pairs": sum(item["rerank_count"] for item in prepared),
         "timing_ms": round(elapsed, 3), "phases_ms": {k: round(v, 3) for k, v in phase.items()},
         "generation_model_calls": 0, "source_bodies_written": False}

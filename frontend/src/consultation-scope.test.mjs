@@ -56,6 +56,12 @@ const { ScrollTrigger } = require("gsap/dist/ScrollTrigger");
 const srcDir = dirname(fileURLToPath(import.meta.url));
 const performanceMeasurements = [];
 const measureBaseline = process.env.CONSULTATION_PERF_BASELINE === "1";
+const nativeInterval = globalThis.setInterval;
+// Current polling owns setTimeout, not setInterval. Leave the synthetic
+// browser's RAF/GSAP interval on its native clock so window.close() can cancel
+// the same interval identity after fake-clock tests. Legacy comparison code
+// may still own an interval and therefore retains its explicit baseline mode.
+const pollingTimerApis = measureBaseline ? ["setInterval", "setTimeout", "Date"] : ["setTimeout", "Date"];
 const measuredSource = process.env.CONSULTATION_PERF_SOURCE ?? join(srcDir, "ConsultationPage.tsx");
 globalThis.__consultationRenderCounts = {};
 const compiled = await build({
@@ -992,13 +998,64 @@ test("Wiki range and grouped citations link the registered paragraphs without ex
     "[E1–E3]，表格引用 E1-E2，未绑定 E99999–E999999999999999999999。`E1–E3`", grounding_status:"SOURCE_LINKED",
     claims:[], citations:[fixtureCitation,{...fixtureCitation,id:"E2",block_id:"block-2"},{...fixtureCitation,id:"E3",block_id:"block-3"}], quality_warnings:[]})})]);
   const panel=messages()[0].querySelector('[aria-label="完整综合答复"]');
-  assert.equal(panel.querySelector('[data-evidence-ids="E1,E2,E3"]').textContent,"E1–E3");
-  assert.equal(panel.querySelector('[data-evidence-ids="E1,E2"]').textContent,"E1-E2");
+  assert.equal(panel.querySelector('[data-evidence-ids="E1,E2,E3"]').textContent,"合成来源");
+  assert.equal(panel.querySelector('[data-evidence-ids="E1,E2,E3"]').dataset.evidenceLabel,"E1–E3");
+  assert.equal(panel.querySelector('[data-evidence-ids="E1,E2"]').textContent,"合成来源");
   assert.equal(panel.querySelector('code button'),null);
   assert.equal(panel.querySelectorAll('button').length,2);
   await click(panel.querySelector('[data-evidence-ids="E1,E2,E3"]'));
   assert.deepEqual(openedVersions,[["version-fixture","block-fixture"]]);
   assert.equal(messages()[0].querySelectorAll('.wiki-answer-source-group .source-card').length,3);
+});
+
+test("technical reranking and timing live inside the closed execution record, not above the answer",async()=>{
+  await history([run({model_snapshot:{pipeline_timing:{version:'answer_timing_v1',execution_elapsed_ms:1000,phases:{},first_visible_answer_ms:null},
+    retrieval_selection:{model:'Synthetic-Embedding',dimensions:8,profile_id:'synthetic',fingerprint:'synthetic'},
+    hybrid_retrieval:{queries:[{mode:'hybrid',returned:2,indexed_catalog_pages:2,catalog_pages:2,
+      retrieval_observations:[{version:'candidate_lineage_v1',candidate_count:80,reranked_count:80,unscored_count:0,channel_counts:{},phases_ms:{},candidate_policy:'ranked_prefix'}]}]}}})]);
+  const execution=messages()[0].querySelector('[data-run-execution]');
+  assert.equal(execution.open,false);
+  assert.equal(execution.querySelector('summary').textContent,'执行记录');
+  for(const selector of ['[data-retrieval-diagnostics]','[data-pipeline-timing]','.retrieval-scheme-used']){
+    assert.equal(messages()[0].querySelector(selector).closest('[data-run-execution]'),execution);
+  }
+  execution.open=true;
+  assert.match(execution.textContent,/80 个已重排/);
+});
+
+test("document-name citations show a keyboard preview and retain the exact source destination",async()=>{
+  const second={...fixtureCitation,id:'E2',version_id:'second-version',block_id:'second-block',source_title:'另一份文献',locator:{label:'第8页'}};
+  await history([run({answer:answer({format:'wiki_markdown',narrative_markdown:'依据【E1-E2】。',citations:[fixtureCitation,second],claims:[],quality_warnings:[]})})]);
+  const panel=messages()[0].querySelector('[aria-label="完整综合答复"]');
+  assert.deepEqual([...panel.querySelectorAll('.citation-doc-name')].map(el=>el.textContent),['合成来源','另一份文献']);
+  const button=panel.querySelector('[data-evidence-id="E2"]');
+  await act(async()=>button.focus());
+  assert.equal(button.isConnected,true,'opening the preview must not replace the answer DOM');
+  assert.equal(document.activeElement,button);
+  const tip=document.getElementById(button.getAttribute('aria-describedby'));
+  assert.equal(tip.hidden,false);
+  assert.match(tip.textContent,/另一份文献/);assert.match(tip.textContent,/第8页/);
+  assert.equal(sentRuns().length,0);
+  await act(async()=>button.dispatchEvent(new window.KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  assert.equal(tip.hidden,true);
+  await click(button);
+  assert.deepEqual(openedVersions,[['second-version','second-block']]);
+});
+
+test("automatic focus scrolling repositions the source preview instead of immediately dismissing it",async()=>{
+  await history([run({answer:answer({format:'wiki_markdown',narrative_markdown:'依据[E1]。',claims:[]})})]);
+  const button=messages()[0].querySelector('[data-evidence-id="E1"]');
+  let top=100;
+  button.getBoundingClientRect=()=>({left:24,top,bottom:top+24,right:220,width:196,height:24});
+  await act(async()=>button.focus());
+  const tip=document.getElementById(button.getAttribute('aria-describedby'));
+  assert.equal(tip.hidden,false);
+  top=200;
+  await act(async()=>window.dispatchEvent(new window.Event('scroll')));
+  assert.equal(tip.hidden,false);assert.equal(tip.style.top,'232px');
+  assert.equal(document.activeElement,button);
+  await act(async()=>button.blur());
+  assert.equal(tip.hidden,true);
 });
 
 test("unlimited Wiki waiting shows cancellation and real loaded-page counts without a countdown", async () => {
@@ -1182,6 +1239,38 @@ test("execution metadata starts folded while model invocation, answer and warnin
   assert.match(details.textContent, /资料辅助答疑|依据数量：1/);
 });
 
+test("history resize is connected to its panel and never reloads the answer or sends a request",async()=>{
+  await history([run()]);
+  const layout=document.querySelector('.consultation-layout');
+  Object.defineProperty(layout,'clientWidth',{value:1100,configurable:true});
+  await act(async()=>window.dispatchEvent(new window.Event('resize')));
+  const handle=document.querySelector('[role="separator"][aria-label="调整咨询历史宽度"]');
+  assert.ok(handle);assert.equal(handle.getAttribute('aria-orientation'),'vertical');
+  assert.equal(document.getElementById(handle.getAttribute('aria-controls')),document.querySelector('.conversation-history'));
+  assert.equal(handle.closest('.conversation-history'),null,'the handle must stay outside the scrolling history');
+  assert.equal(handle.getAttribute('aria-valuenow'),'200');
+  const answerElement=messages()[0], count=calls.length;
+  await act(async()=>handle.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
+  assert.equal(layout.style.getPropertyValue('--consultation-history-width'),'224px');
+  assert.equal(window.localStorage.getItem('fkb:consultation-history-width:v1:user-fixture:space-fixture'),'224');
+  assert.equal(messages()[0],answerElement);assert.equal(calls.length,count);
+  await act(async()=>handle.dispatchEvent(new window.MouseEvent('dblclick',{bubbles:true})));
+  assert.equal(layout.style.getPropertyValue('--consultation-history-width'),'200px');
+  assert.equal(calls.length,count);
+});
+
+test("history preference restores only for the current user and workspace",async()=>{
+  window.localStorage.setItem('fkb:consultation-history-width:v1:user-fixture:space-fixture','340');
+  window.localStorage.setItem('fkb:consultation-history-width:v1:other-user:space-fixture','470');
+  window.localStorage.setItem('fkb:consultation-history-width:v1:user-fixture:other-space','460');
+  await mount();
+  const layout=document.querySelector('.consultation-layout');
+  Object.defineProperty(layout,'clientWidth',{value:1100,configurable:true});
+  await act(async()=>window.dispatchEvent(new window.Event('resize')));
+  assert.equal(layout.style.getPropertyValue('--consultation-history-width'),'340px');
+  assert.equal(sentRuns().length,0);
+});
+
 test("chat geometry fills remaining height and is isolated from the other workspaces", async () => {
   const css = await readFile(new URL("./consultation-layout.css", import.meta.url), "utf8");
   const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
@@ -1193,6 +1282,10 @@ test("chat geometry fills remaining height and is isolated from the other worksp
   assert.match(rule(".consultation-workspace .question-composer textarea"), /height: 64px/);
   assert.match(css, /@media \(max-width: 600px\)/);
   assert.match(css, /grid-template-rows: auto minmax\(0, 1fr\)/);
+  assert.match(rule(".consultation-workspace .consultation-layout"), /grid-template-columns: var\(--consultation-history-width, 200px\) minmax\(0, 1fr\)/);
+  assert.match(rule(".consultation-workspace .consultation-history-resize"), /touch-action: none/);
+  assert.match(css.slice(css.indexOf('@media (max-width: 600px)')), /\.consultation-history-resize \{ display: none; \}/);
+  assert.doesNotMatch(css, /grid-template-columns: (?:176|200)px minmax/);
   assert.match(css, /\.conversation-history \{ height: 72px; padding: 8px 12px/);
   assert.match(css, /\.history-item > button:first-child > span \{[^}]*white-space: nowrap; text-overflow: ellipsis/);
   assert.doesNotMatch(css, /(?:^|[;{])\s*zoom\s*:|transform:\s*scale/);
@@ -1590,6 +1683,15 @@ test("source closure exposes precise gaps and real rerank receipt without a prof
   assert.doesNotMatch(text, /专业验收通过/);
 });
 
+for (const mode of ["hybrid_unit_rerank", "universal_unit_retrieval"]) test(`unit retrieval mode ${mode} is not mislabeled as Wiki fallback`, async () => {
+  await history([run({model_snapshot: {hybrid_retrieval: {queries: [{
+    query: "合成检索", mode, catalog_pages: 10, indexed_catalog_pages: 10, returned: 3, warnings: [],
+  }]}}})]);
+  const text = messages()[0].querySelector(".consultation-execution-details").textContent;
+  assert.match(text, /最近检索：关键词与语义融合/);
+  assert.doesNotMatch(text, /Wiki 目录回退/);
+});
+
 test("invalidated run never displays dependency source text or group counts", async () => {
   await history([run({ invalidated: true, answer: null, model_snapshot: { context_completion: {
     reference_count: 1, resolved_count: 0, gap_count: 1, structural_groups_added: 1,
@@ -1624,6 +1726,17 @@ test("revoked run suppresses all reading ledger directions and citations", async
   } } })]);
   assert.doesNotMatch(messages()[0].textContent, /WITHDRAWN_COVERAGE|E999|查证方向与原文阅读/);
   assert.equal(document.querySelectorAll('[data-reading-coverage="ledger"]').length, 0);
+});
+
+test("revoked run hides new timing and candidate diagnostics even in stale browser state", async () => {
+  await history([run({ invalidated: true, answer: null, model_snapshot: {
+    pipeline_timing: {version: "answer_timing_v1", execution_elapsed_ms: 12345,
+      phases: {model_planning: {elapsed_ms: 12000, calls: 1}}, first_visible_answer_ms: null, first_visible_answer_status: "NOT_MEASURED"},
+    hybrid_retrieval: {queries: [{query: "WITHDRAWN", mode: "hybrid", warnings: [], retrieval_observations: [{
+      version: "candidate_lineage_v1", candidate_count: 99, reranked_count: 99, unscored_count: 0, channel_counts: {}, phases_ms: {},
+    }]}]},
+  }} )]);
+  assert.equal(document.querySelectorAll('[data-pipeline-timing],[data-retrieval-diagnostics]').length, 0);
 });
 
 test("a complete model response is distinct from answer admission, with real budgets and usage", async () => {
@@ -1950,6 +2063,27 @@ test("performance: typing does not re-render twenty unchanged historical answers
   if (!measureBaseline) assert.equal(delta.AnswerView, 0);
 });
 
+test("specific source findings are visible before the full answer without rewriting it", async () => {
+  const markdown="## 合成原始正文\n\n核对日期[E1]，正文保留。";
+  await history([run({answer:answer({format:"wiki_markdown",narrative_markdown:markdown}),model_snapshot:{
+    evidence_review:{version:"evidence_review_v1",status:"REVIEW_REQUIRED",answer_rewritten:false,
+      answer_sha256:"synthetic-only",semantic_entailment:"NOT_EVALUATED",issue_count:1,critical_count:1,
+      issues:[{code:"ANSWER_EVENT_DAY_CONFLICT",severity:"critical",message:"合成日期与原文不一致",evidence_ids:["E1"]}]}}})]);
+  const notice=document.querySelector('[aria-label="具体来源与业务疑点"]');
+  const body=document.querySelector('[aria-label="完整综合答复"]');
+  assert.match(notice.textContent,/合成日期与原文不一致/);
+  assert.ok(notice.compareDocumentPosition(body)&window.Node.DOCUMENT_POSITION_FOLLOWING);
+  assert.match(body.textContent,/正文保留/);
+  assert.equal(sentRuns().length,0);
+});
+
+test("invalidated historical source findings are not rendered from a stale snapshot", async () => {
+  await history([run({invalidated:true,answer:answer({format:"wiki_markdown",narrative_markdown:"合成正文"}),
+    model_snapshot:{evidence_review:{version:"evidence_review_v1",issues:[{code:"x",severity:"critical",message:"STALE_SOURCE_DETAIL",evidence_ids:["E1"]}]}}})]);
+  assert.equal(document.querySelector('[aria-label="具体来源与业务疑点"]'),null);
+  assert.doesNotMatch(document.body.textContent,/STALE_SOURCE_DETAIL/);
+});
+
 test("performance: a fast completed run is published without waiting for another run GET", async () => {
   let resolveSlow;
   const slow = run({ id: "slow-run", state: "RUNNING", answer: null });
@@ -1966,7 +2100,8 @@ test("performance: a fast completed run is published without waiting for another
 });
 
 test("performance: unchanged polling snapshots do not re-render historical answer bodies", async t => {
-  t.mock.timers.enable({ apis: ["setInterval", "setTimeout", "Date"] });
+  t.mock.timers.enable({ apis: pollingTimerApis });
+  if (!measureBaseline) assert.equal(globalThis.setInterval, nativeInterval);
   const pending = previewRun();
   await history([...Array.from({ length: 20 }, (_, i) => run({ id: `completed-${i}` })), pending]);
   const before = { ...globalThis.__consultationRenderCounts };
@@ -2006,7 +2141,8 @@ const advancePoll = t => act(async () => {
 });
 
 test("performance: progress polling avoids repeated full payloads and loads all final Markdown/citations once", async t => {
-  t.mock.timers.enable({ apis: ["setInterval", "setTimeout", "Date"] });
+  t.mock.timers.enable({ apis: pollingTimerApis });
+  if (!measureBaseline) assert.equal(globalThis.setInterval, nativeInterval);
   const initial = previewRun();
   initial.model_snapshot.query_path = { deferred_ids: Array.from({ length: 3000 }, (_, i) => `synthetic-deferred-${i}-${"x".repeat(32)}`) };
   let current = initial, bytes = 0;

@@ -1,0 +1,20 @@
+.fundkb-citation-preview {
+  position: fixed;
+  z-index: 220;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #d7e1ef;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 28px #1734581f;
+  color: #1e3452;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.fundkb-citation-preview[hidden] { display: none; }
+.fundkb-citation-preview strong { display: block; margin: 4px 0 6px; font-size: 13px; font-weight: 600; }
+.fundkb-citation-preview small, .fundkb-citation-preview span { color: #60738c; font-size: 11px; }
+.fundkb-citation-preview p { margin: 0 0 6px; color: #3f5878; }

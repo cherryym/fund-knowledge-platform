@@ -1,0 +1,419 @@
+{
+  "schema_version": "1.0",
+  "kind": "capture",
+  "dataset_id": "synthetic-engineering-v1",
+  "run_id": "synthetic-candidate",
+  "exposure": {
+    "attestation": "declared",
+    "development_case_ids": [
+      "syn-dev"
+    ],
+    "development_family_ids": []
+  },
+  "records": [
+    {
+      "case_id": "syn-dev",
+      "sample_id": "s1",
+      "as_of": "2026-01-15",
+      "run_state": "COMPLETED",
+      "answer_complete": true,
+      "answer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "claims": [
+        {
+          "claim_id": "claim-a",
+          "citation_ids": [
+            "E1"
+          ]
+        },
+        {
+          "claim_id": "claim-b",
+          "citation_ids": [
+            "E2",
+            "E3"
+          ]
+        }
+      ],
+      "search_result": {
+        "retrieval_trace": {
+          "version": "candidate_lineage_v1",
+          "query_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "scope": "current_authorized_candidate_pool",
+          "candidate_count": 4,
+          "reranked_count": 4,
+          "unscored_count": 0,
+          "channel_counts": {
+            "bm25": 4
+          },
+          "reranking_state": "local_cross_encoder",
+          "candidate_policy": "complete_pool",
+          "phases_ms": {
+            "candidate_search_ms": 10,
+            "reranking_ms": 30
+          },
+          "timing_scope": "single_query",
+          "source_text_included": false,
+          "all_corpus_recall": "NOT_EVALUATED",
+          "semantic_support": "NOT_EVALUATED",
+          "units": [
+            {
+              "unit_id": "unit-1",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 1,
+              "fusion_rank": 1,
+              "channel_ranks": {
+                "bm25": 1
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-a",
+                  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "start": 2,
+                  "end": 7
+                }
+              ]
+            },
+            {
+              "unit_id": "unit-2",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 2,
+              "fusion_rank": 2,
+              "channel_ranks": {
+                "bm25": 2
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-a",
+                  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "start": 7,
+                  "end": 12
+                }
+              ]
+            },
+            {
+              "unit_id": "unit-3",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 3,
+              "fusion_rank": 3,
+              "channel_ranks": {
+                "bm25": 3
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-b",
+                  "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "start": 0,
+                  "end": 8
+                }
+              ]
+            },
+            {
+              "unit_id": "unit-4",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 4,
+              "fusion_rank": 4,
+              "channel_ranks": {
+                "bm25": 4
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-c",
+                  "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                  "start": 10,
+                  "end": 16
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "model_snapshot": {
+        "pipeline_timing": {
+          "version": "answer_timing_v1",
+          "execution_elapsed_ms": 1000,
+          "phases": {
+            "model_synthesis": {
+              "elapsed_ms": 900,
+              "calls": 1
+            }
+          },
+          "scope": "execution_observation_not_deadline",
+          "durations_additive": false,
+          "first_visible_answer_ms": null,
+          "first_visible_answer_status": "NOT_MEASURED",
+          "model_phase_includes_network_queue_and_rechecks": true
+        }
+      },
+      "final_unit_ids": [
+        "unit-1",
+        "unit-2",
+        "unit-3",
+        "unit-4"
+      ],
+      "read_receipt": {
+        "status": "complete",
+        "items": [
+          {
+            "rank": 1,
+            "unit_id": "unit-1",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-a",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "start": 2,
+            "end": 7
+          },
+          {
+            "rank": 2,
+            "unit_id": "unit-2",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-a",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "start": 7,
+            "end": 12
+          },
+          {
+            "rank": 3,
+            "unit_id": "unit-3",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-b",
+            "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "start": 0,
+            "end": 8
+          },
+          {
+            "rank": 4,
+            "unit_id": "unit-4",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-c",
+            "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "start": 10,
+            "end": 16
+          }
+        ]
+      },
+      "cache_state": "cold",
+      "query_state": "first"
+    },
+    {
+      "case_id": "syn-holdout",
+      "sample_id": "s1",
+      "as_of": "2026-01-15",
+      "run_state": "COMPLETED",
+      "answer_complete": true,
+      "answer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "claims": [
+        {
+          "claim_id": "claim-a",
+          "citation_ids": [
+            "E1"
+          ]
+        },
+        {
+          "claim_id": "claim-b",
+          "citation_ids": [
+            "E2",
+            "E3"
+          ]
+        }
+      ],
+      "search_result": {
+        "retrieval_trace": {
+          "version": "candidate_lineage_v1",
+          "query_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "scope": "current_authorized_candidate_pool",
+          "candidate_count": 4,
+          "reranked_count": 4,
+          "unscored_count": 0,
+          "channel_counts": {
+            "bm25": 4
+          },
+          "reranking_state": "local_cross_encoder",
+          "candidate_policy": "complete_pool",
+          "phases_ms": {
+            "candidate_search_ms": 10,
+            "reranking_ms": 30
+          },
+          "timing_scope": "single_query",
+          "source_text_included": false,
+          "all_corpus_recall": "NOT_EVALUATED",
+          "semantic_support": "NOT_EVALUATED",
+          "units": [
+            {
+              "unit_id": "unit-1",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 1,
+              "fusion_rank": 1,
+              "channel_ranks": {
+                "bm25": 1
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-a",
+                  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "start": 2,
+                  "end": 7
+                }
+              ]
+            },
+            {
+              "unit_id": "unit-2",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 2,
+              "fusion_rank": 2,
+              "channel_ranks": {
+                "bm25": 2
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-a",
+                  "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "start": 7,
+                  "end": 12
+                }
+              ]
+            },
+            {
+              "unit_id": "unit-3",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 3,
+              "fusion_rank": 3,
+              "channel_ranks": {
+                "bm25": 3
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-b",
+                  "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "start": 0,
+                  "end": 8
+                }
+              ]
+            },
+            {
+              "unit_id": "unit-4",
+              "resource_id": "syn-resource",
+              "version_id": "syn-v1",
+              "page_id": "syn-page",
+              "rank": 4,
+              "fusion_rank": 4,
+              "channel_ranks": {
+                "bm25": 4
+              },
+              "reranked": true,
+              "source_kind": "document",
+              "source_spans": [
+                {
+                  "block_id": "syn-block-c",
+                  "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                  "start": 10,
+                  "end": 16
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "model_snapshot": {
+        "pipeline_timing": {
+          "version": "answer_timing_v1",
+          "execution_elapsed_ms": 1200,
+          "phases": {
+            "model_synthesis": {
+              "elapsed_ms": 900,
+              "calls": 1
+            }
+          },
+          "scope": "execution_observation_not_deadline",
+          "durations_additive": false,
+          "first_visible_answer_ms": null,
+          "first_visible_answer_status": "NOT_MEASURED",
+          "model_phase_includes_network_queue_and_rechecks": true
+        }
+      },
+      "final_unit_ids": [
+        "unit-1",
+        "unit-2",
+        "unit-3",
+        "unit-4"
+      ],
+      "read_receipt": {
+        "status": "complete",
+        "items": [
+          {
+            "rank": 1,
+            "unit_id": "unit-1",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-a",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "start": 2,
+            "end": 7
+          },
+          {
+            "rank": 2,
+            "unit_id": "unit-2",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-a",
+            "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "start": 7,
+            "end": 12
+          },
+          {
+            "rank": 3,
+            "unit_id": "unit-3",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-b",
+            "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "start": 0,
+            "end": 8
+          },
+          {
+            "rank": 4,
+            "unit_id": "unit-4",
+            "resource_id": "syn-resource",
+            "version_id": "syn-v1",
+            "block_id": "syn-block-c",
+            "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "start": 10,
+            "end": 16
+          }
+        ]
+      },
+      "cache_state": "cold",
+      "query_state": "first"
+    }
+  ]
+}

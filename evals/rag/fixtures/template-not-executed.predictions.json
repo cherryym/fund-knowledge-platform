@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "kind": "predictions",
+  "dataset_id": "fund-valuation-candidate-40-v1",
+  "run_id": "not-executed",
+  "exposure": {
+    "attestation": "unknown",
+    "development_case_ids": [],
+    "development_family_ids": []
+  },
+  "predictions": []
+}

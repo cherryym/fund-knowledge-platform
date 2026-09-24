@@ -100,5 +100,13 @@ def bind_primary_route(plan, route, pages):
 
 
 def primary_first(ids, plan):
-    primary = {p["page_id"] for p in plan["sources"] if p["role"] in {"domain_core", "domain_foundation", "valuation_rule"}}
-    return [pid for pid in ids if pid in primary] + [pid for pid in ids if pid not in primary]
+    # Explicit owner bindings must not be demoted by a broadly-scoped directory
+    # candidate's relevance score. This changes presentation order only; all
+    # pages remain readable, and a role never confers legal effect.
+    priorities = {"valuation_rule": 0, "domain_core": 1, "domain_foundation": 2}
+    by_page = {}
+    for source in (plan or {}).get("sources", []):
+        priority = priorities.get(source.get("role"), 3)
+        pid = source["page_id"]
+        by_page[pid] = min(by_page.get(pid, 3), priority)
+    return sorted(ids, key=lambda pid: by_page.get(pid, 3))

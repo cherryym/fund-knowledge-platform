@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "kind": "judgments",
+  "dataset_id": "synthetic-engineering-v1",
+  "run_id": "synthetic-candidate",
+  "judgments": [
+    {
+      "case_id": "syn-dev",
+      "sample_id": "s1",
+      "answer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "review_status": "human_reviewed",
+      "review_provenance": {
+        "kind": "human_engineering",
+        "reviewer_id": "synthetic-reviewer-stub",
+        "reviewed_at": "2026-01-16T00:00:00Z",
+        "reference_id": "synthetic-review-only"
+      },
+      "inventory_complete": true,
+      "claims": [
+        {
+          "claim_id": "claim-a",
+          "label": "supported",
+          "evidence_group_ids": [
+            "g-main"
+          ],
+          "rationale": "纯合成标签，用于测试导入人工作业契约，并非真实人工复核。"
+        },
+        {
+          "claim_id": "claim-b",
+          "label": "supported",
+          "evidence_group_ids": [
+            "g-boundary"
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "syn-holdout",
+      "sample_id": "s1",
+      "answer_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "review_status": "human_reviewed",
+      "review_provenance": {
+        "kind": "human_engineering",
+        "reviewer_id": "synthetic-reviewer-stub",
+        "reviewed_at": "2026-01-16T00:00:00Z",
+        "reference_id": "synthetic-review-only"
+      },
+      "inventory_complete": true,
+      "claims": [
+        {
+          "claim_id": "claim-a",
+          "label": "supported",
+          "evidence_group_ids": [
+            "g-main"
+          ],
+          "rationale": "纯合成标签，用于测试导入人工作业契约，并非真实人工复核。"
+        },
+        {
+          "claim_id": "claim-b",
+          "label": "supported",
+          "evidence_group_ids": [
+            "g-boundary"
+          ]
+        }
+      ]
+    }
+  ]
+}

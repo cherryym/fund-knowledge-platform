@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "kind": "predictions",
+  "dataset_id": "synthetic-engineering-v1",
+  "run_id": "synthetic-planning-failed",
+  "exposure": {
+    "attestation": "declared",
+    "development_case_ids": [
+      "syn-dev"
+    ],
+    "development_family_ids": []
+  },
+  "predictions": [
+    {
+      "case_id": "syn-dev",
+      "sample_id": "s1",
+      "as_of": "2026-01-15",
+      "run_state": "FAILED",
+      "answer_complete": false,
+      "answer_sha256": null,
+      "claims": [],
+      "stages": {},
+      "latency": {
+        "cache_state": "unknown",
+        "query_state": "first",
+        "first_token_ms": null,
+        "measurement_scope": "server_execution_to_completed_answer",
+        "complete_response_ms": null
+      },
+      "adapter_diagnostics": [
+        "ANSWER_NOT_CONFIRMED_COMPLETE",
+        "FINAL_STAGE_NOT_EXPORTED",
+        "READ_STAGE_NOT_EXPORTED",
+        "RUN_NOT_COMPLETED",
+        "TRACE_MISSING"
+      ],
+      "adapter_provenance": {
+        "adapter_version": "candidate_lineage_v1_to_rag_eval_v1",
+        "source_manifest_id": null,
+        "source_export_id": null,
+        "source_bytes_rehashed": false
+      },
+      "execution_observation": {
+        "execution_elapsed_ms": 10000,
+        "phases": {
+          "model_planning": {
+            "elapsed_ms": 10000,
+            "calls": 1
+          }
+        },
+        "durations_additive": false,
+        "first_visible_answer_ms": null,
+        "first_visible_answer_status": "NOT_MEASURED"
+      }
+    }
+  ]
+}

@@ -33,6 +33,7 @@ class LocalRetrievalProfile(BaseModel):
     embedding_threads: int = Field(default=4, ge=1, le=32)
     embedding_allow_downloads: Literal[False] = False
     retrieval_strategy: Literal["version_rrf", "unit_rerank"] = "version_rrf"
+    retrieval_rerank_policy: Literal["complete_pool", "ranked_prefix"] = "ranked_prefix"
     retrieval_unit_candidates: int = Field(default=80, ge=8, le=1000)
     retrieval_seed_units: int = Field(default=16, ge=1, le=200)
     reranker_mode: Literal["disabled", "local"] = "disabled"

@@ -17,11 +17,14 @@ from . import providers
 from . import services as svc
 from .answer_packing import fits_context, pack_text
 from .answer_preview import previews
+from .answer_timing import AnswerTimings, persist_timings
+from .evidence_review import model_review_context, prepare_source_review, review_answer, review_warnings
 from .planning_cache import planning_cache, planning_cache_key, validated_plan
 from .query_context import compact_catalog, compact_evidence, graph_query_text
 from .query_cost import model_cost_hint
 from .query_path_cache import get_query_path, put_query_path
 from .reference_evidence import evidence_signature, reference_evidence
+from .retrieval_observation import observation_summary
 from .source_reading_policy import (
     build_reading_plan,
     check_primary_citations,
@@ -50,27 +53,30 @@ from .wiki_reader import (
     full_read_requests,
     index_lines,
     page_text,
+    planning_search_requests,
     read_requests,
     requests_catalog,
     search_requests,
-    planning_search_requests,
     section_read_requests,
 )
 from .wiki_section_reader import outline_text, read_scoped_pages, source_anchors
 
 
 def run_wiki_answer(dispatcher, job_id, attempt):
+    timings = AnswerTimings()
     try:
-        return _run_wiki_answer(dispatcher, job_id, attempt)
+        return _run_wiki_answer(dispatcher, job_id, attempt, timings=timings)
     finally:
         # Covers cancellation, stale leases, final validation and cleanup errors.
         previews.discard_job(job_id, attempt)
+        persist_timings(dispatcher, job_id, attempt, timings)
 
 
-def _run_wiki_answer(dispatcher, job_id, attempt):
+def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
     from .jobs import JobError
     from .wiki_answer_content import build_narrative_answer
 
+    timings = timings or AnswerTimings()
     path_started = time.monotonic()
     with dispatcher.session_factory.begin() as db:
         job = dispatcher._fence(db, job_id, attempt)
@@ -101,7 +107,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 and (event.details or {}).get("system_prompt_sha256") == SYSTEM_SHA256 for event in db.scalars(
                 select(m.AuditEvent).where(m.AuditEvent.object_id == job_id, m.AuditEvent.action == "answer.planning_completed")))
         run.state, run.error_code, run.completed_at, run.response = "RUNNING", None, None, None
-        run.model_snapshot = {**(run.model_snapshot or {}), "answer_engine": "wiki_reader",
+        run.model_snapshot = {**{key: value for key, value in (run.model_snapshot or {}).items()
+            if key != "evidence_review"}, "answer_engine": "wiki_reader",
             "prompt_version": prompt_version, "system_prompt_sha256": system_sha,
             "query_strategy": settings.wiki_query_strategy,
             "model_invoked": False, "model_request_count": previous_calls, "last_request": None,
@@ -124,6 +131,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
     # Reading scope follows actual source structure, not question wording.
     reference_requested, dependency_searches, group_rank_cache = {}, set(), {}
     context_report = None
+    source_review = None
     read_records, read_pages, notes = {}, set(), []
     unsent_records = {}
     full_requested, section_requested, discovered_anchors = set(), {}, {}
@@ -285,7 +293,9 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             # A provider completion is not a validated business answer. Do not
             # retain previews during subsequent reading or final validation.
             previews.discard(run_id, job_id=job_id, attempt=attempt)
-            model_elapsed_ms += (time.monotonic() - started) * 1000
+            elapsed = time.monotonic() - started
+            model_elapsed_ms += elapsed * 1000
+            timings.add("model_" + phase, elapsed)
 
     manager = getattr(dispatcher.vector_index,"model_runtime",None)
     if manager is not None and manager.supported:
@@ -297,7 +307,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             current = db.get(m.ConsultationRun,run_id)
             current.model_snapshot = {**current.model_snapshot,"retrieval_runtime":manager.snapshot()}
         try:
-            manager.ensure_ready(cancel_check=authority)
+            with timings.measure("local_model_preparation"):
+                manager.ensure_ready(cancel_check=authority)
         except ModelWarmupError as exc:
             with dispatcher.session_factory.begin() as db:
                 dispatcher._fence(db,job_id,attempt)
@@ -374,7 +385,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 "prompt_version": prompt_version, "system_prompt_sha256": system_sha})
 
     dispatcher._checkpoint(job_id, attempt, "LOADING_WIKI_CATALOG", {})
-    with dispatcher.read_session_factory() as db:
+    with timings.measure("catalog_and_policy"), dispatcher.read_session_factory() as db:
         job = db.get(m.Job, job_id)
         actor, _, _ = dispatcher._run_context(db, job, read_only=True)
         pages = build_catalog(db, actor, space_id, context, scope=scope)
@@ -429,6 +440,25 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         selected, pending_queries = [], list(queries)
         while pending_queries:
             current_queries, pending_queries = pending_queries, []
+            current_queries = list(dict.fromkeys(q.strip() for q in current_queries
+                if isinstance(q, str) and q.strip() and q.strip() not in searched))
+            prefetched = {}
+            vector = dispatcher.vector_index
+            if (universal and current_queries and vector is not None
+                    and getattr(vector.settings, "retrieval_strategy", None) == "unit_rerank"
+                    and callable(getattr(vector, "search_many", None))
+                    and callable(getattr(vector, "rerank_many", None))):
+                from .batch_retrieval import search_catalog_batch
+                # Follow-up and dependency searches get the same fresh three-
+                # boundary batch path as initial planning; no SQL transaction
+                # stays open over inference, and no query direction is removed.
+                with timings.measure("retrieval_and_navigation"):
+                    batch_results, batch_receipt = search_catalog_batch(authority(), space_id, current_queries,
+                        pages=pages, scope=scope, context=context, vector=vector,
+                        limit=settings.hybrid_candidate_limit, checkpoint=authority,
+                        session_factory=dispatcher.read_session_factory, inference_schedule="serial_equivalent")
+                prefetched = {q: {**result, "batch_execution": batch_receipt}
+                              for q, result in zip(current_queries, batch_results, strict=True)}
             merged, summaries = {}, []
             for query in current_queries:
                 query = query.strip()
@@ -439,10 +469,13 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                     coverage_queries.append(query)
                 authority()
                 dispatcher._checkpoint(job_id, attempt, "HYBRID_RETRIEVAL", {"retrieval_queries":len(searched)})
-                with dispatcher.read_session_factory() as db:
-                    user_id = authority()
-                    result = search_catalog(db, user_id, space_id, query, pages=pages, scope=scope,
-                        context=context, vector=dispatcher.vector_index, limit=settings.hybrid_candidate_limit)
+                if query in prefetched:
+                    result = prefetched[query]
+                else:
+                    with timings.measure("retrieval_and_navigation"), dispatcher.read_session_factory() as db:
+                        user_id = authority()
+                        result = search_catalog(db, user_id, space_id, query, pages=pages, scope=scope,
+                            context=context, vector=dispatcher.vector_index, limit=settings.hybrid_candidate_limit)
                 summaries.append(result)
                 for hit in result["hits"]:
                     pid = hit["page_id"]
@@ -452,7 +485,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 retrieval_history.append({**{key:result[key] for key in ("query","mode","catalog_pages",
                     "indexed_catalog_pages","total_candidates","returned","warnings","timing_ms")},
                     **({"batch_execution": result["batch_execution"]} if result.get("batch_execution") is not None else {}),
-                    "candidate_preview_stats": result.get("candidate_preview_stats", {})})
+                    "candidate_preview_stats": result.get("candidate_preview_stats", {}),
+                    "retrieval_observations": [observation_summary(result["retrieval_trace"])] if "retrieval_trace" in result else []})
                 with dispatcher.session_factory.begin() as db:
                     job = dispatcher._fence(db, job_id, attempt)
                     current = db.get(m.ConsultationRun, run_id)
@@ -517,13 +551,14 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         from .wiki_navigation import load_inline_navigation
         # Only identifier routes are reused. Current catalog, policy and source
         # verification are still rebuilt/rechecked for this actor and context.
-        path_key = svc.digest(["evidence-bundle-path-v2", actor.id, space_id, scope, question, context,
+        path_key = svc.digest(["evidence-bundle-path-v3", actor.id, space_id, scope, question, context,
             svc.primitive(svc.effective_date(context)),
             catalog_stamp, source_plan["policy_stamp"], prompt_version, system_sha,
             dispatcher.vector_index.embedding.fingerprint if dispatcher.vector_index else None,
             *([plan.get("search_queries"), settings.reranker_mode, settings.reranker_model, settings.reranker_revision,
                settings.reranker_max_tokens, settings.reranker_dtype, settings.reranker_instruction,
-               settings.retrieval_strategy, settings.retrieval_unit_candidates, settings.retrieval_seed_units] if universal else [])])
+               settings.retrieval_strategy, settings.retrieval_rerank_policy,
+               settings.retrieval_unit_candidates, settings.retrieval_seed_units] if universal else [])])
         searched.update(plan.get("search_queries", [question]) if universal else [question])
         graph_plan = get_query_path(path_key)
         cache_hit = graph_plan is not None
@@ -567,7 +602,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                     graph_plan = merge_primary_route(graph_plan, primary, primary_pages)
                     graph_plan["domain_retrieval"] = {"label": business["label"], "catalog_pages": len(primary_pages),
                         "returned": core_result["returned"], "query": primary_query,
-                        "timing_ms": core_result["timing_ms"], "warnings": core_result["warnings"]}
+                        "timing_ms": core_result["timing_ms"], "warnings": core_result["warnings"],
+                        "retrieval_observations": core_result.get("retrieval_observations", [])}
                     if not graph_plan["domain_primary_anchors"]:
                         graph_plan["warnings"].append("DOMAIN_CORE_NOT_LOCATED")
                     retrieval_ms = round((time.monotonic() - start) * 1000, 3)
@@ -582,7 +618,9 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 "indexed_catalog_pages", "total_candidates", "returned", "warnings", "timing_ms")},
                 **({"batch_execution": result["batch_execution"]} if result.get("batch_execution") is not None else {}),
                 "candidate_preview_stats": result.get("candidate_preview_stats", {}),
+                "retrieval_observations": result.get("retrieval_observations", []),
                 **({"searches": result.get("searches", [])} if universal else {})})
+        timings.add("retrieval_and_navigation", retrieval_ms / 1000)
         if business:
             from .business_reading import bind_primary_route
             bind_primary_route(source_plan, graph_plan, pages)
@@ -607,6 +645,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             "stats": graph_plan.get("stats", {}), "coverage_is_professional_verification": False,
             **({"domain_retrieval": graph_plan.get("domain_retrieval")} if business else {}),
             **({"reranker_model": settings.reranker_model, "reranker_revision": settings.reranker_revision,
+                "candidate_policy": settings.retrieval_rerank_policy,
                 "reading_plan_source": "model_public_plan"} if universal else {})}
         with dispatcher.read_session_factory() as db:
             query_path["model_cost_hint"] = model_cost_hint(db, authority(), choice, query_path["target_ms"], connection)
@@ -682,7 +721,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             or set(anchors.get(pid, ())) - {r["block_id"] for r in pages[pid].get("records", [])})]
         reading_progress("loading_sections", round=reading_round, requested_pages=len(fresh_ids),
                          current_batch=0, total_batches=0, completed_batches=0)
-        with dispatcher.read_session_factory() as db:
+        with timings.measure("source_reading"), dispatcher.read_session_factory() as db:
             fresh, unavailable, next_evidence, outlines = read_scoped_pages(db, authority(), space_id, pages, fresh_ids,
                 context=context, scope=scope, anchors=anchors, sections=section_requested,
                 full_pages=full_requested, next_evidence=next_evidence,
@@ -723,8 +762,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 "catalog_pages": len(pages), "whole_wiki_pages": True, "source_mode": "complete_sections"})
         ordered_pages = [pid for pid in pages if pid in read_pages]
         if universal:
-            from .evidence_context import context_plan, context_instructions, order_context_groups
-            from .evidence_coverage import reading_coverage, coverage_instructions
+            from .evidence_context import context_instructions, context_plan, order_context_groups
+            from .evidence_coverage import coverage_instructions, reading_coverage
             closure = context_plan(pages, read_pages, unavailable_pages)
             context_report = closure["report"]
             coverage = reading_coverage(coverage_queries, graph_plan.get("query_routes", {}), pages, read_pages,
@@ -774,11 +813,12 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
             verify(list(read_records.values()))
             # No DB transaction held across native model inference. Authority,
             # cancellation and source identities are rechecked after the wait.
-            ordered_pages, rank_receipt = order_context_groups(question, pages, read_pages,
-                [*closure["edges"], *((e["source"], e["target"]) for e in graph_plan.get("used_edges", [])
-                    if e.get("verification_status") == "REGISTERED_NOT_BUSINESS_VERIFIED"
-                    and e.get("origin") != "proposed" and e.get("type") in {"CITES", "REQUIRES", "DEPENDS_ON", "APPLIES_TO", "EXCEPTION_OF"})],
-                dispatcher.vector_index, group_rank_cache)
+            with timings.measure("context_reranking"):
+                ordered_pages, rank_receipt = order_context_groups(question, pages, read_pages,
+                    [*closure["edges"], *((e["source"], e["target"]) for e in graph_plan.get("used_edges", [])
+                        if e.get("verification_status") == "REGISTERED_NOT_BUSINESS_VERIFIED"
+                        and e.get("origin") != "proposed" and e.get("type") in {"CITES", "REQUIRES", "DEPENDS_ON", "APPLIES_TO", "EXCEPTION_OF"})],
+                    dispatcher.vector_index, group_rank_cache)
             authority()
             verify(list(read_records.values()))
             context_report["group_rerank"] = rank_receipt
@@ -789,9 +829,10 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 dispatcher._audit(db, job, "answer.context_completed", {"status": context_report["status"],
                     "gaps": context_report["gap_count"], "references": context_report["reference_count"],
                     "group_rerank_status": rank_receipt["status"], "dropped_pages": 0})
-        if business:
-            from .business_reading import primary_first
-            ordered_pages = primary_first(ordered_pages, source_plan)
+        from .business_reading import primary_first
+        ordered_pages = primary_first(ordered_pages, source_plan)
+        source_review = prepare_source_review(list(read_records.values()), source_plan=source_plan, context=context)
+        review_context = model_review_context(source_review)
         # Previously read material remains in direct synthesis whenever it fits.
         # For explicit very-large reads only NEW source sections need compiling;
         # do not restart a whole-handbook reading pass after every follow-up READ.
@@ -800,6 +841,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         if context_report is not None:
             body += context_instructions(context_report)
             body += coverage_instructions(context_report["reading_coverage"])
+        body += review_context
         if outlines:
             body += "\n" + outline_text(pages, outlines)
         if not body:
@@ -851,6 +893,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
                 if context_report is not None:
                     body += context_instructions(context_report)
                     body += coverage_instructions(context_report["reading_coverage"])
+                body += review_context
                 if outlines:
                     body += "\n" + outline_text(pages, outlines)
             note_instruction = "\n" + NOTES_INSTRUCTION
@@ -936,6 +979,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
     if context_report and context_report.get("direction_gap_count"):
         answer["quality_warnings"].append({"code": "READING_COVERAGE_GAPS", "message":
             f"仍有 {context_report['direction_gap_count']} 个查证方向尚未关联到实际已读原文；请核对阅读账本。已读状态本身也不代表结论获原文支持。"})
+    quality_review = review_answer(answer["narrative_markdown"], list(read_records.values()), source_review)
+    answer["quality_warnings"].extend(review_warnings(quality_review))
     dispatcher._validate_answer(answer, list(read_records.values()))
     with dispatcher.session_factory.begin() as db:
         job = dispatcher._fence(db, job_id, attempt)
@@ -965,7 +1010,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt):
         current.model_snapshot = {**current.model_snapshot, "validation_status": "review_required",
             "execution_mode": "wiki_reading", "answer_model_invoked": True, "evidence_count": len(answer["citations"]),
             "primary_source_coverage": primary_coverage, "source_authority_coverage": authority_coverage,
-            "source_authority_stamp": final_authority_stamp}
+            "source_authority_stamp": final_authority_stamp, "pipeline_timing": timings.snapshot(),
+            "evidence_review": quality_review}
         if citation_trace is not None:
             current.model_snapshot["citation_integrity"] = citation_trace
         if adaptive:

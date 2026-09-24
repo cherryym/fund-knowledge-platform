@@ -155,3 +155,342 @@ def test_forward_uses_last_token_logits_no_generation_left_padding(candidate):
     model._torch, model.device, model._tokenizer = torch, "cpu", Tokenizer()
     assert model._forward([[1, 2], [3, 4, 5]]) == [3.0, -5.0]
     assert calls[0]["attention_mask"].tolist() == [[0, 1, 1], [1, 1, 1]]
+
+
+def _padded_slots(batches):
+    return sum(len(batch) * max(map(len, batch)) for batch in batches)
+
+
+def test_counterexample_insertion_padding_and_positional_scatter(fake, monkeypatch):
+    """Executable reference for insertion-order batching, NOT the current scheduler.
+
+    The checkout already sorts by length. This witnesses both the work avoided
+    by that sort and the wrong answers produced if sorted scores are scattered
+    by arrival position instead of the original candidate mapping.
+    """
+    model, _ = fake
+    rows = {str(i): [i + 1] * length for i, length in enumerate((2, 100, 3, 101))}
+    monkeypatch.setattr(model, "_frames", lambda query, text:
+        [(rows[text], {"start_char": 0, "end_char": len(text)})])
+    batches = []
+
+    def forward(batch):
+        batches.append(batch)
+        return [-float(row[0]) for row in batch]
+
+    monkeypatch.setattr(model, "_forward", forward)
+    result = model.score("synthetic query", list(rows))
+    original = list(rows.values())
+    insertion = [original[:2], original[2:]]
+    assert sum(map(len, original)) == 206
+    assert _padded_slots(insertion) == 402  # 196 padding positions.
+    assert _padded_slots(batches) == 208  # 2 padding positions.
+    assert result == [-1.0, -2.0, -3.0, -4.0]
+    wrong_positional_scatter = [-float(row[0]) for batch in batches for row in batch]
+    assert wrong_positional_scatter == [-1.0, -3.0, -2.0, -4.0]
+    assert wrong_positional_scatter != result
+
+
+def test_counterexample_token_collision_must_not_merge_distinct_queries(fake, monkeypatch):
+    """A normalizing tokenizer can map different queries to identical token IDs."""
+    model, seen = fake
+    monkeypatch.setattr(model, "_frames", lambda query, text:
+        [([11, 12, 13], {"start_char": 0, "end_char": len(text)})])
+    result = model.score_many([("query", ["duplicate", "duplicate"]), ("QUERY", ["duplicate"])])
+    assert result == [[36.0, 36.0], [36.0]]
+    assert len(seen) == 2  # Exact duplicates within one query still share a row.
+    assert model.last_diagnostics["computed_window_count"] == 2
+    assert model.last_diagnostics["reused_window_count"] == 1
+
+
+def test_reordered_windows_keep_every_owner_and_negative_max(fake, monkeypatch):
+    model, _ = fake
+    rows = {
+        ("q1", "long"): [[5] * 8, [9] * 2, [1] * 5],
+        ("q1", "same-small"): [[9] * 2],
+        ("q2", "long"): [[5] * 8],
+        ("q2", "tail"): [[4] * 3],
+    }
+    monkeypatch.setattr(model, "_frames", lambda query, text:
+        [(row, {"start_char": i, "end_char": i + 1}) for i, row in enumerate(rows[query, text])])
+    batches = []
+
+    def forward(batch):
+        batches.append(batch)
+        return [-float(row[0]) for row in batch]
+
+    monkeypatch.setattr(model, "_forward", forward)
+    requests = [("q1", ["long", "same-small", "long"]), ("q2", ["long", "tail"]),
+                ("q1", ["long"]), ("empty", [])]
+    assert model.score_many(requests) == [[-1.0, -9.0, -1.0], [-5.0, -4.0], [-1.0], []]
+    diag = model.last_diagnostics
+    assert diag["window_count"] == 12 and diag["computed_window_count"] == 5
+    assert diag["reused_window_count"] == 7 and diag["pair_count"] == 6
+    assert diag["actual_useful_tokens"] == 26
+    assert diag["actual_padded_tokens"] == _padded_slots(batches) == 30
+    assert diag["actual_padding_tokens"] == 4 and diag["actual_batch_count"] == 3
+    assert diag["batching_strategy"] == "stable_token_length_ascending_v1"
+    assert diag["deduplication_strategy"] == "exact_query_and_token_ids_call_scoped"
+    assert [row[0] for batch in batches for row in batch] == [9, 4, 1, 5, 5]
+    assert [window["input_tokens"] for window in diag["requests"][0]["windows"][0]] == [8, 2, 5]
+    assert diag["requests"][3] == {"windows": [], "window_count": 0}
+
+
+@pytest.mark.parametrize("batch_size", [1, 2, 3, 20])
+def test_length_ties_deterministic_and_exact_tokens_preserved(fake, monkeypatch, batch_size):
+    model, _ = fake
+    model.batch_size = batch_size
+    texts = ["b" * 80, "x", "a" * 80, "y", "b" * 80]
+    frames = [model._frames("query", text)[0][0] for text in texts]
+    expected_order = sorted(dict.fromkeys(tuple(row) for row in frames), key=len)
+    calls = []
+
+    def forward(rows):
+        calls.extend(tuple(row) for row in rows)
+        return [-float(sum(row)) for row in rows]
+
+    monkeypatch.setattr(model, "_forward", forward)
+    expected = [-float(sum(row)) for row in frames]
+    assert model.score("query", texts) == expected
+    assert calls == expected_order
+    calls.clear()
+    assert model.score("query", texts) == expected
+    assert calls == expected_order  # No inference reuse leaks across calls.
+    assert model._token_memo is None
+
+
+@pytest.mark.parametrize("requests,expected", [([], []), ([("q", [])], [[]]),
+    ([("q", []), ("q2", [])], [[], []])])
+def test_empty_workload_diagnostics(candidate, requests, expected):
+    model = QwenReranker(candidate)
+    assert model.score_many(requests) == expected
+    diag = model.last_diagnostics
+    assert all(diag[key] == 0 for key in ("actual_useful_tokens", "actual_padded_tokens",
+        "actual_padding_tokens", "actual_batch_count", "computed_window_count", "reused_window_count"))
+    assert model._model is None and model._tokenizer is None
+
+
+def test_empty_text_still_has_full_query_and_frame(fake):
+    model, seen = fake
+    expected = model._frames("", "")[0][0]
+    assert model.score_many([("", ["", ""])]) == [[float(sum(expected) % 1000)] * 2]
+    assert seen == [tuple(expected)]
+    assert model.last_diagnostics["actual_useful_tokens"] == len(expected)
+    assert model.last_diagnostics["actual_padding_tokens"] == 0
+
+
+def test_diagnostics_have_no_query_document_path_or_token_ids(fake):
+    import json
+    model, _ = fake
+    model.score("PRIVATE_QUERY_CANARY", ["PRIVATE_DOCUMENT_CANARY"])
+    encoded = json.dumps(model.last_diagnostics)
+    assert all(secret not in encoded for secret in ("PRIVATE_QUERY_CANARY", "PRIVATE_DOCUMENT_CANARY",
+        str(model.path), model.instruction, "input_ids"))
+    for key in ("actual_useful_tokens", "actual_padded_tokens", "actual_padding_tokens", "actual_batch_count"):
+        assert type(model.last_diagnostics[key]) is int and model.last_diagnostics[key] >= 0
+
+
+def test_diagnostics_match_actual_forward_tensors(candidate):
+    import torch
+    model = QwenReranker(candidate)
+    actual = []
+
+    class Causal:
+        def __call__(self, input_ids, attention_mask, **kwargs):
+            assert kwargs["logits_to_keep"] == 1 and kwargs["use_cache"] is False
+            actual.append((int(attention_mask.sum()), input_ids.numel()))
+            logits = torch.zeros((len(input_ids), 1, 10000), dtype=torch.float32)
+            logits[:, 0, 9693] = -(input_ids * attention_mask).sum(dim=1).float()
+            return SimpleNamespace(logits=logits)
+
+    model._model, model._torch, model.device, model._tokenizer = Causal(), torch, "cpu", Tokenizer()
+    scores = model.score("query", ["x", "long" * 200, "short" * 15, "long" * 200])
+    diag = model.last_diagnostics
+    assert len(scores) == 4 and scores[1] == scores[3] and all(score < 0 for score in scores)
+    assert diag["actual_useful_tokens"] == sum(useful for useful, _ in actual)
+    assert diag["actual_padded_tokens"] == sum(padded for _, padded in actual)
+    assert diag["actual_padding_tokens"] == sum(padded - useful for useful, padded in actual)
+    assert diag["actual_batch_count"] == len(actual)
+
+
+@pytest.mark.parametrize("values", [[], [1.0, 2.0], [None], ["3.0"], [-float("inf")]])
+def test_invalid_forward_alignment_fails_closed(fake, monkeypatch, values):
+    model, _ = fake
+    monkeypatch.setattr(model, "_forward", lambda rows: values)
+    with pytest.raises(LocalEncoderError, match="RERANK_ALIGNMENT_FAILED"):
+        model.score("query", ["single"])
+    assert model._token_memo is None
+
+
+def test_missing_window_fails_closed(fake, monkeypatch):
+    model, _ = fake
+    monkeypatch.setattr(model, "_frames", lambda query, text: [])
+    with pytest.raises(LocalEncoderError, match="RERANK_ALIGNMENT_FAILED"):
+        model.score("query", ["single"])
+
+
+@pytest.fixture
+def padding_probe():
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[2] / "scripts" / "probe-qwen-padding.py"
+    spec = importlib.util.spec_from_file_location("test_qwen_padding_probe", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture
+def probe_fake(padding_probe, candidate, monkeypatch):
+    def fake_load(model):
+        model.device = "cpu"
+    monkeypatch.setattr(QwenReranker, "_load_model", fake_load)
+    monkeypatch.setattr(QwenReranker, "_load_tokenizer", lambda self: Tokenizer())
+    monkeypatch.setattr(QwenReranker, "_forward", lambda self, rows: [-float(sum(row) % 1000) for row in rows])
+    return padding_probe.ProbeReranker(candidate)
+
+
+def test_probe_pairing_with_synthetic_model_only(padding_probe, probe_fake):
+    import json
+    report = padding_probe.run_probe(probe_fake)
+    assert report["status"] == "PASS" and report["professional_accuracy"] == "NOT_EVALUATED"
+    assert report["pre_change_checkout_already_length_sorted"] is True
+    assert report["aggregation"] == "max_raw_logit_all_windows"
+    assert report["rounds"][0]["execution_order"] == padding_probe.STRATEGIES
+    assert report["rounds"][1]["execution_order"] == tuple(reversed(padding_probe.STRATEGIES))
+    for round_ in report["rounds"]:
+        comparison = round_["comparison"]
+        assert comparison["exact_token_and_mapping_match"] and comparison["complete_window_coverage"]
+        assert comparison["within_tolerance"] and comparison["same_full_ranking"]
+        assert comparison["max_abs_window_logit_delta"] == comparison["max_abs_candidate_logit_delta"] == 0
+        assert comparison["padded_token_reduction"] > 0
+        metrics = round_["strategies"]
+        assert len({item["actual_useful_tokens"] for item in metrics.values()}) == 1
+    risk = report["long_window_max_risk"]
+    assert risk["status"] == "REVIEW_REQUIRED" and risk["aggregation_changed"] is False
+    for strategy in risk["strategies"].values():
+        docs = strategy["candidates"]
+        assert len(docs) == 5 and docs[1]["window_count"] > 1
+        assert docs[1] == docs[4] and strategy["duplicate_candidate_max_delta"] == 0
+        assert all(doc["max"] == max(doc["window_scores"]) for doc in docs)
+    encoded = json.dumps(report, ensure_ascii=False, allow_nan=False)
+    requests, _, _ = padding_probe.synthetic_cases()
+    assert all(query not in encoded and all(text not in encoded for text in texts) for query, texts in requests)
+    assert str(probe_fake.path) not in encoded and "trace" not in report
+    assert probe_fake._model is None  # This test did not load real weights.
+
+
+def test_probe_pairing_rejects_token_or_mapping_changes(padding_probe, probe_fake):
+    import copy
+    before = probe_fake.measure([("q", ["synthetic"])], padding_probe.INSERTION_ORDER)
+    after = copy.deepcopy(before)
+    after["trace"] = (("different-query", before["trace"][0][1]),)
+    with pytest.raises(RuntimeError, match="TOKENS_OR_WINDOW_MAPPING_CHANGED"):
+        padding_probe._comparison(before, after, 0.05, 0.01)
+
+
+def test_probe_near_tie_rank_change_is_not_hidden_by_tolerance(padding_probe, probe_fake):
+    import copy
+    before = probe_fake.measure([("q", ["a", "b"])], padding_probe.INSERTION_ORDER)
+    after = copy.deepcopy(before)
+    before["scores"], after["scores"] = [[0.0, 0.001]], [[0.001, 0.0]]
+    for snapshot in (before, after):
+        for doc, score in zip(snapshot["documents"], snapshot["scores"][0], strict=True):
+            doc["window_scores"] = [score]
+            doc["max"] = doc["min"] = doc["mean"] = score
+    result = padding_probe._comparison(before, after, 0.05, 0.01)
+    assert result["within_tolerance"] is True
+    assert result["same_full_ranking"] is False and result["same_top1"] is False
+    assert result["max_abs_window_logit_delta"] == pytest.approx(0.001)
+
+
+def test_probe_unexercised_long_windows_are_inconclusive(padding_probe, probe_fake):
+    probe_fake.max_tokens = 32768
+    report = padding_probe.run_probe(probe_fake)
+    assert report["status"] == "INCONCLUSIVE"
+    assert report["long_window_max_risk"]["multi_window_test_exercised"] is False
+
+
+def test_probe_network_and_credentials_blocked(padding_probe):
+    import socket
+    import huggingface_hub
+    import huggingface_hub.utils._auth as auth
+    import huggingface_hub.utils._headers as headers
+    helper = padding_probe._script("prepare-universal-models")
+    with padding_probe.offline_guard(helper):
+        with socket.socket() as tcp, socket.socket(type=socket.SOCK_DGRAM) as udp:
+            calls = [lambda: tcp.connect(("192.0.2.1", 80)), lambda: tcp.connect_ex(("192.0.2.1", 80)),
+                lambda: socket.create_connection(("192.0.2.1", 80)),
+                lambda: socket.getaddrinfo("example.invalid", 80),
+                lambda: socket.gethostbyname("example.invalid"),
+                lambda: udp.sendto(b"synthetic", ("192.0.2.1", 80)),
+                huggingface_hub.get_token, auth.get_token, headers.get_token]
+            for call in calls:
+                with pytest.raises(RuntimeError, match="NETWORK_OR_TOKEN_ACCESS_FORBIDDEN"):
+                    call()
+
+
+def test_probe_help_never_loads_weights(padding_probe, monkeypatch, capsys):
+    def forbidden(*args):
+        pytest.fail("help attempted model loading")
+    monkeypatch.setattr(QwenReranker, "_load_model", forbidden)
+    with pytest.raises(SystemExit) as result:
+        padding_probe.main(["--help"])
+    assert result.value.code == 0
+    assert "--directory" in capsys.readouterr().out
+
+
+def test_probe_rejects_existing_output_before_model_or_environment(padding_probe, candidate, monkeypatch):
+    def forbidden(*args):
+        pytest.fail("rejected output reached setup")
+    monkeypatch.setattr(padding_probe, "_script", forbidden)
+    before = list(candidate.reranker_model_path.iterdir())
+    assert padding_probe.main(["--directory", str(candidate.reranker_model_path),
+        "--output", str(candidate.reranker_model_path)]) == 1
+    assert list(candidate.reranker_model_path.iterdir()) == before
+
+
+@pytest.mark.parametrize("where", ["model", "application-data", "dangling-symlink"])
+def test_probe_rejects_unsafe_output(padding_probe, tmp_path, monkeypatch, where):
+    directory = tmp_path / "model"
+    directory.mkdir()
+    monkeypatch.setattr(padding_probe, "ROOT", tmp_path)
+    output = {"model": directory / "new", "application-data": tmp_path / "data" / "new",
+              "dangling-symlink": tmp_path / "link"}[where]
+    if where == "dangling-symlink":
+        output.symlink_to(tmp_path / "missing")
+    assert padding_probe.main(["--directory", str(directory), "--output", str(output)]) == 1
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("option,value", [("--repeats", "1"), ("--repeats", "3"),
+    ("--batch-size", "0"), ("--max-tokens", "32769"), ("--atol", "nan"), ("--rtol", "-1")])
+def test_probe_rejects_invalid_numeric_options(padding_probe, tmp_path, option, value):
+    output = tmp_path / "never-created"
+    assert padding_probe.main(["--directory", str(tmp_path), "--output", str(output), option, value]) == 1
+    assert not output.exists()
+
+
+def test_probe_failure_report_redacts_exception_and_never_loads_weights(padding_probe, tmp_path, monkeypatch, capsys):
+    import json
+    import torch
+    directory, output = tmp_path / "weights", tmp_path / "report"
+    directory.mkdir()
+    # Isolate the probe's process-local environment changes in this unit test.
+    monkeypatch.setattr(padding_probe.os, "environ", {})
+    monkeypatch.setattr(torch, "set_num_threads", lambda count: None)
+    def fail(*args):
+        raise RuntimeError(f"PRIVATE_QUERY_CANARY {directory}")
+    def forbidden(*args):
+        pytest.fail("failure test attempted real weights")
+    monkeypatch.setattr(padding_probe, "run_probe", fail)
+    monkeypatch.setattr(QwenReranker, "_load_model", forbidden)
+    assert padding_probe.main(["--directory", str(directory), "--output", str(output), "--device", "cpu"]) == 1
+    report = json.loads((output / "report.json").read_text())
+    assert report["status"] == "FAIL" and report["error"] == "PROBE_EXECUTION_FAILED"
+    encoded = json.dumps(report) + capsys.readouterr().out
+    assert "PRIVATE_QUERY_CANARY" not in encoded and str(directory) not in encoded
+    assert padding_probe.os.environ["HF_HUB_OFFLINE"] == "1"
+    assert padding_probe.os.environ["TRANSFORMERS_OFFLINE"] == "1"
+    assert padding_probe.os.environ["HF_HOME"].startswith(str(output))
+    assert list(directory.iterdir()) == []

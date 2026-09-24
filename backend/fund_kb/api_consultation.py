@@ -141,6 +141,7 @@ def _run_projection(ctx, run):
         fail(409, "RUN_JOB_MISSING", "咨询任务记录不完整")
     answer, invalidated = run.response if run.state == "COMPLETED" else None, bool(run.invalidated_at)
     fresh_records = None
+    evidence_review = None
     try:
         ids = run_sources_readable(ctx, run)
         if (run.request or {}).get("answer_scope", "formal") == "reference":
@@ -186,6 +187,7 @@ def _run_projection(ctx, run):
         elif answer.get("format") == "wiki_markdown" and fresh_records is not None:
             # Re-render links from THIS run's frozen IDs, not today's catalog.
             # No model call, record mutation or invented generation timestamp.
+            from .evidence_review import prepare_source_review, review_answer, review_warnings
             from .wiki_answer_content import build_narrative_answer
             frozen_ids = {(row["version_id"], row["block_id"]): row["evidence_id"] for row in run.evidence_snapshot or []}
             records = [{**row, "evidence_id": frozen_ids[(row["version_id"], row["block_id"])]}
@@ -195,6 +197,11 @@ def _run_projection(ctx, run):
             retained_codes = {"SENSITIVE_INFORMATION_REDACTED", "PRIVATE_REASONING_REMOVED", "SYSTEM_ACTION_CLAIM_REMOVED", "MODEL_OUTPUT_INCOMPLETE", "PRIMARY_RULE_CITATION_MISSING", "SOURCE_AUTHORITY_COVERAGE_GAP", "SOURCE_CONTEXT_GAPS", "DOMAIN_CORE_CITATION_MISSING", "READING_COVERAGE_GAPS"}
             warnings = {warning["code"]: warning for warning in rendered["quality_warnings"]}
             warnings.update({warning["code"]: warning for warning in answer.get("quality_warnings", []) if warning["code"] in retained_codes})
+            source_review = prepare_source_review(records,
+                source_plan=(run.model_snapshot or {}).get("source_reading_plan"), context=(run.request or {}).get("context", {}))
+            evidence_review = review_answer(answer["narrative_markdown"], records, source_review)
+            evidence_review["observation_origin"] = "current_authorized_read_projection"
+            warnings.update({warning["code"]: warning for warning in review_warnings(evidence_review)})
             answer = {**answer, "citations": rendered["citations"], "grounding_status": rendered["grounding_status"],
                 "quality_warnings": list(warnings.values())}
         from .source_authority import historical_warning
@@ -218,7 +225,8 @@ def _run_projection(ctx, run):
         "question": (run.request or {}).get("question", ""), "context": (run.request or {}).get("context", {}),
         "created_at": primitive(run.created_at), "model_snapshot": {
             **{key: value for key, value in (run.model_snapshot or {}).items() if key != "public_preview"
-                and (not invalidated or key not in {"wiki_reading", "reading_progress", "hybrid_retrieval", "source_reading_plan", "primary_source_coverage", "query_path", "citation_integrity", "source_authority_coverage", "source_authority_stamp", "context_completion"})},
+                and (not invalidated or key not in {"wiki_reading", "reading_progress", "hybrid_retrieval", "source_reading_plan", "primary_source_coverage", "query_path", "citation_integrity", "source_authority_coverage", "source_authority_stamp", "context_completion", "pipeline_timing", "evidence_review"})},
+            **({"evidence_review": evidence_review} if evidence_review is not None and not invalidated else {}),
             **({"public_preview": preview} if preview is not None else {})}}
 
 

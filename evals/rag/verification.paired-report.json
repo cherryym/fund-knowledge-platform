@@ -1,0 +1,2617 @@
+{
+  "schema_version": "1.0",
+  "kind": "paired_evaluation_report",
+  "status": "FAIL",
+  "decision": "NO_AUTOMATIC_SUPERIORITY_CLAIM",
+  "expected_pair_count": 2,
+  "adoption_guard": {
+    "status": "BLOCKED",
+    "automatic_adoption_allowed": false,
+    "blocking_reasons": [
+      "CANDIDATE_PROFESSIONAL_CONFIRMATION_NOT_PASS",
+      "PERFORMANCE_MEASUREMENT_SCOPE_UNKNOWN"
+    ],
+    "slower_comparable_pair_count": 0,
+    "unknown_timing_pair_count": 0,
+    "explicit_adoption_approval_recorded": false
+  },
+  "present_on_both_count": 2,
+  "missing_on_either_count": 0,
+  "pairing": "DATASET_CASE_ID_AND_FROZEN_SAMPLE_ID",
+  "leakage_status": "PASS",
+  "stages": {
+    "candidate": {
+      "recall_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.0,
+        "increased": 0,
+        "decreased": 0,
+        "unchanged": 2
+      },
+      "group_reciprocal_rank_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.0,
+        "increased": 0,
+        "decreased": 0,
+        "unchanged": 2
+      },
+      "critical_full_coverage_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.0,
+        "increased": 0,
+        "decreased": 0,
+        "unchanged": 2
+      }
+    },
+    "final": {
+      "recall_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.5,
+        "increased": 2,
+        "decreased": 0,
+        "unchanged": 0
+      },
+      "group_reciprocal_rank_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.125,
+        "increased": 2,
+        "decreased": 0,
+        "unchanged": 0
+      },
+      "critical_full_coverage_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 1.0,
+        "increased": 2,
+        "decreased": 0,
+        "unchanged": 0
+      }
+    },
+    "read": {
+      "recall_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.5,
+        "increased": 2,
+        "decreased": 0,
+        "unchanged": 0
+      },
+      "group_reciprocal_rank_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 0.125,
+        "increased": 2,
+        "decreased": 0,
+        "unchanged": 0
+      },
+      "critical_full_coverage_delta": {
+        "expected_pair_count": 2,
+        "comparable_pair_count": 2,
+        "unknown_pair_count": 0,
+        "mean_candidate_minus_baseline": 1.0,
+        "increased": 2,
+        "decreased": 0,
+        "unchanged": 0
+      }
+    }
+  },
+  "latency": [
+    {
+      "split": "dev",
+      "baseline_cache_state": "cold",
+      "baseline_query_state": "first",
+      "candidate_cache_state": "cold",
+      "candidate_query_state": "first",
+      "baseline_measurement_scope": "unknown",
+      "candidate_measurement_scope": "unknown",
+      "baseline": {
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1400,
+        "p95_ms": 1400,
+        "percentile_method": "nearest_rank"
+      },
+      "candidate": {
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1000,
+        "p95_ms": 1000,
+        "percentile_method": "nearest_rank"
+      },
+      "paired_candidate_minus_baseline": {
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": -400,
+        "p95_ms": -400,
+        "percentile_method": "nearest_rank"
+      }
+    },
+    {
+      "split": "holdout",
+      "baseline_cache_state": "cold",
+      "baseline_query_state": "first",
+      "candidate_cache_state": "cold",
+      "candidate_query_state": "first",
+      "baseline_measurement_scope": "unknown",
+      "candidate_measurement_scope": "unknown",
+      "baseline": {
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1600,
+        "p95_ms": 1600,
+        "percentile_method": "nearest_rank"
+      },
+      "candidate": {
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1200,
+        "p95_ms": 1200,
+        "percentile_method": "nearest_rank"
+      },
+      "paired_candidate_minus_baseline": {
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": -400,
+        "p95_ms": -400,
+        "percentile_method": "nearest_rank"
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "case_id": "syn-dev",
+      "sample_id": "s1",
+      "split": "dev",
+      "baseline_present": true,
+      "candidate_present": true,
+      "stages": {
+        "candidate": {
+          "baseline_status": "PASS",
+          "candidate_status": "PASS",
+          "recall_delta": 0.0,
+          "group_reciprocal_rank_delta": 0.0,
+          "critical_full_coverage_delta": 0
+        },
+        "final": {
+          "baseline_status": "FAIL",
+          "candidate_status": "PASS",
+          "recall_delta": 0.5,
+          "group_reciprocal_rank_delta": 0.125,
+          "critical_full_coverage_delta": 1
+        },
+        "read": {
+          "baseline_status": "FAIL",
+          "candidate_status": "PASS",
+          "recall_delta": 0.5,
+          "group_reciprocal_rank_delta": 0.125,
+          "critical_full_coverage_delta": 1
+        }
+      },
+      "complete_response_ms_delta": -400,
+      "latency_failure_codes": [],
+      "baseline_semantic_status": "FAIL",
+      "candidate_semantic_status": "PASS",
+      "baseline_professional_status": "UNKNOWN",
+      "candidate_professional_status": "UNKNOWN"
+    },
+    {
+      "case_id": "syn-holdout",
+      "sample_id": "s1",
+      "split": "holdout",
+      "baseline_present": true,
+      "candidate_present": true,
+      "stages": {
+        "candidate": {
+          "baseline_status": "PASS",
+          "candidate_status": "PASS",
+          "recall_delta": 0.0,
+          "group_reciprocal_rank_delta": 0.0,
+          "critical_full_coverage_delta": 0
+        },
+        "final": {
+          "baseline_status": "FAIL",
+          "candidate_status": "PASS",
+          "recall_delta": 0.5,
+          "group_reciprocal_rank_delta": 0.125,
+          "critical_full_coverage_delta": 1
+        },
+        "read": {
+          "baseline_status": "FAIL",
+          "candidate_status": "PASS",
+          "recall_delta": 0.5,
+          "group_reciprocal_rank_delta": 0.125,
+          "critical_full_coverage_delta": 1
+        }
+      },
+      "complete_response_ms_delta": -400,
+      "latency_failure_codes": [],
+      "baseline_semantic_status": "FAIL",
+      "candidate_semantic_status": "PASS",
+      "baseline_professional_status": "UNKNOWN",
+      "candidate_professional_status": "UNKNOWN"
+    }
+  ],
+  "baseline": {
+    "schema_version": "1.0",
+    "kind": "evaluation_report",
+    "dataset_id": "synthetic-engineering-v1",
+    "run_id": "synthetic-baseline",
+    "evidence_domain": "synthetic",
+    "status": "FAIL",
+    "engineering_status": "FAIL",
+    "professional_status": "UNKNOWN",
+    "coverage": {
+      "scope_id": "synthetic-contract-only",
+      "selected_split": "all",
+      "dataset_case_count": 2,
+      "expected_case_count": 2,
+      "present_case_count": 2,
+      "expected_sample_count": 2,
+      "present_sample_count": 2,
+      "expert_confirmed_case_count": 0,
+      "pending_case_count": 0,
+      "zero_gold_case_count": 0,
+      "excluded_case_ids": [],
+      "missing_case_ids": [],
+      "missing_samples": [],
+      "scope_statement": "ONLY_FROZEN_LISTED_CASES_AND_EXPECTED_SAMPLES_NO_POPULATION_GENERALIZATION",
+      "source_bytes_rehashed": false,
+      "models_executed": false,
+      "all_corpus_recall": "NOT_EVALUATED"
+    },
+    "leakage": {
+      "status": "PASS",
+      "split_overlap_family_ids": [],
+      "exposed_holdout_family_ids": [],
+      "holdout_family_count": 1,
+      "exposure_attested": true,
+      "basis": "EXPLICIT_FAMILY_ASSIGNMENTS_AND_DECLARED_HISTORY_ONLY",
+      "external_or_semantic_leakage_independently_verified": false,
+      "failure_codes": []
+    },
+    "stages": {
+      "candidate": {
+        "status": "PASS",
+        "expected_sample_count": 2,
+        "known_sample_count": 2,
+        "unknown_sample_count": 0,
+        "known_only_macro_recall": 1.0,
+        "known_only_micro_recall": 1.0,
+        "known_group_denominator": 4,
+        "full_required_coverage_sample_count": 2,
+        "critical_evaluable_sample_count": 2,
+        "critical_unknown_sample_count": 0,
+        "critical_full_coverage_sample_count": 2,
+        "known_only_critical_full_coverage_rate": 1.0,
+        "known_only_mean_group_reciprocal_rank": 0.375
+      },
+      "final": {
+        "status": "FAIL",
+        "expected_sample_count": 2,
+        "known_sample_count": 2,
+        "unknown_sample_count": 0,
+        "known_only_macro_recall": 0.5,
+        "known_only_micro_recall": 0.5,
+        "known_group_denominator": 4,
+        "full_required_coverage_sample_count": 0,
+        "critical_evaluable_sample_count": 2,
+        "critical_unknown_sample_count": 0,
+        "critical_full_coverage_sample_count": 0,
+        "known_only_critical_full_coverage_rate": 0.0,
+        "known_only_mean_group_reciprocal_rank": 0.25
+      },
+      "read": {
+        "status": "FAIL",
+        "expected_sample_count": 2,
+        "known_sample_count": 2,
+        "unknown_sample_count": 0,
+        "known_only_macro_recall": 0.5,
+        "known_only_micro_recall": 0.5,
+        "known_group_denominator": 4,
+        "full_required_coverage_sample_count": 0,
+        "critical_evaluable_sample_count": 2,
+        "critical_unknown_sample_count": 0,
+        "critical_full_coverage_sample_count": 0,
+        "known_only_critical_full_coverage_rate": 0.0,
+        "known_only_mean_group_reciprocal_rank": 0.25
+      }
+    },
+    "semantic_status_counts": {
+      "FAIL": 2
+    },
+    "latency": [
+      {
+        "split": "dev",
+        "cache_state": "cold",
+        "query_state": "first",
+        "measurement_scope": "unknown",
+        "metric": "complete_response_ms",
+        "first_token_used_as_complete_response": false,
+        "case_count": 1,
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1400,
+        "p95_ms": 1400,
+        "percentile_method": "nearest_rank"
+      },
+      {
+        "split": "holdout",
+        "cache_state": "cold",
+        "query_state": "first",
+        "measurement_scope": "unknown",
+        "metric": "complete_response_ms",
+        "first_token_used_as_complete_response": false,
+        "case_count": 1,
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1600,
+        "p95_ms": 1600,
+        "percentile_method": "nearest_rank"
+      }
+    ],
+    "samples": [
+      {
+        "case_id": "syn-dev",
+        "family_id": "syn-family-dev",
+        "sample_id": "s1",
+        "split": "dev",
+        "review_status": "engineering_confirmed",
+        "prediction_present": true,
+        "stages": {
+          "candidate": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "final": {
+            "status": "FAIL",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 1,
+            "recall": 0.5,
+            "all_required_groups_covered": false,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": false,
+            "all_required_groups_rank": null,
+            "critical_groups_rank": null,
+            "mean_group_reciprocal_rank": 0.25,
+            "failure_codes": [
+              "REQUIRED_EVIDENCE_NOT_COVERED"
+            ],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 1,
+                          "MISMATCH_CONTENT_SHA256": 1
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3,
+                          "MISMATCH_RESOURCE_ID": 3,
+                          "MISMATCH_VERSION_ID": 3
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "FAIL",
+                "observed_fully_covered": false,
+                "first_full_rank": null,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "read": {
+            "status": "FAIL",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 1,
+            "recall": 0.5,
+            "all_required_groups_covered": false,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": false,
+            "all_required_groups_rank": null,
+            "critical_groups_rank": null,
+            "mean_group_reciprocal_rank": 0.25,
+            "failure_codes": [
+              "REQUIRED_EVIDENCE_NOT_COVERED"
+            ],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {},
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2,
+                          "MISMATCH_RESOURCE_ID": 2,
+                          "MISMATCH_VERSION_ID": 2
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "FAIL",
+                "observed_fully_covered": false,
+                "first_full_rank": null,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "semantic": {
+          "status": "FAIL",
+          "expected_claim_count": 2,
+          "human_reviewed_claim_count": 2,
+          "missing_claim_ids": [],
+          "human_label_counts": {
+            "supported": 1,
+            "partial": 1,
+            "contradicted": 0,
+            "insufficient": 0
+          },
+          "claim_outcomes": [
+            {
+              "claim_id": "claim-a",
+              "label": "supported",
+              "evidence_group_ids": [
+                "g-main"
+              ]
+            },
+            {
+              "claim_id": "claim-b",
+              "label": "partial",
+              "evidence_group_ids": [
+                "g-boundary"
+              ]
+            }
+          ],
+          "human_expert_reviewed": false,
+          "failure_codes": [
+            "HUMAN_FOUND_PARTIAL_OR_CONTRADICTED_CLAIM"
+          ]
+        },
+        "engineering_status": "FAIL",
+        "professional_status": "UNKNOWN",
+        "professional_failure_codes": [
+          "SYNTHETIC_IS_NOT_PROFESSIONAL_EVIDENCE",
+          "CASE_NOT_EXPERT_CONFIRMED",
+          "ANSWER_NOT_EXPERT_REVIEWED"
+        ],
+        "latency": {
+          "complete_response_ms": 1400,
+          "cache_state": "cold",
+          "query_state": "first",
+          "measurement_scope": "unknown",
+          "status": "KNOWN",
+          "failure_codes": []
+        },
+        "adapter_diagnostics": [],
+        "execution_observation": null,
+        "run_state": "UNKNOWN",
+        "adapter_provenance": null,
+        "retrieval_observation": null
+      },
+      {
+        "case_id": "syn-holdout",
+        "family_id": "syn-family-holdout",
+        "sample_id": "s1",
+        "split": "holdout",
+        "review_status": "engineering_confirmed",
+        "prediction_present": true,
+        "stages": {
+          "candidate": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "final": {
+            "status": "FAIL",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 1,
+            "recall": 0.5,
+            "all_required_groups_covered": false,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": false,
+            "all_required_groups_rank": null,
+            "critical_groups_rank": null,
+            "mean_group_reciprocal_rank": 0.25,
+            "failure_codes": [
+              "REQUIRED_EVIDENCE_NOT_COVERED"
+            ],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 1,
+                          "MISMATCH_CONTENT_SHA256": 1
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3,
+                          "MISMATCH_RESOURCE_ID": 3,
+                          "MISMATCH_VERSION_ID": 3
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "FAIL",
+                "observed_fully_covered": false,
+                "first_full_rank": null,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "read": {
+            "status": "FAIL",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 1,
+            "recall": 0.5,
+            "all_required_groups_covered": false,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": false,
+            "all_required_groups_rank": null,
+            "critical_groups_rank": null,
+            "mean_group_reciprocal_rank": 0.25,
+            "failure_codes": [
+              "REQUIRED_EVIDENCE_NOT_COVERED"
+            ],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {},
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2,
+                          "MISMATCH_RESOURCE_ID": 2,
+                          "MISMATCH_VERSION_ID": 2
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "FAIL",
+                "observed_fully_covered": false,
+                "first_full_rank": null,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "semantic": {
+          "status": "FAIL",
+          "expected_claim_count": 2,
+          "human_reviewed_claim_count": 2,
+          "missing_claim_ids": [],
+          "human_label_counts": {
+            "supported": 1,
+            "partial": 1,
+            "contradicted": 0,
+            "insufficient": 0
+          },
+          "claim_outcomes": [
+            {
+              "claim_id": "claim-a",
+              "label": "supported",
+              "evidence_group_ids": [
+                "g-main"
+              ]
+            },
+            {
+              "claim_id": "claim-b",
+              "label": "partial",
+              "evidence_group_ids": [
+                "g-boundary"
+              ]
+            }
+          ],
+          "human_expert_reviewed": false,
+          "failure_codes": [
+            "HUMAN_FOUND_PARTIAL_OR_CONTRADICTED_CLAIM"
+          ]
+        },
+        "engineering_status": "FAIL",
+        "professional_status": "UNKNOWN",
+        "professional_failure_codes": [
+          "SYNTHETIC_IS_NOT_PROFESSIONAL_EVIDENCE",
+          "CASE_NOT_EXPERT_CONFIRMED",
+          "ANSWER_NOT_EXPERT_REVIEWED"
+        ],
+        "latency": {
+          "complete_response_ms": 1600,
+          "cache_state": "cold",
+          "query_state": "first",
+          "measurement_scope": "unknown",
+          "status": "KNOWN",
+          "failure_codes": []
+        },
+        "adapter_diagnostics": [],
+        "execution_observation": null,
+        "run_state": "UNKNOWN",
+        "adapter_provenance": null,
+        "retrieval_observation": null
+      }
+    ],
+    "privacy": {
+      "query_text_included": false,
+      "source_text_included": false,
+      "answer_text_included": false,
+      "reviewer_rationale_included": false
+    }
+  },
+  "candidate": {
+    "schema_version": "1.0",
+    "kind": "evaluation_report",
+    "dataset_id": "synthetic-engineering-v1",
+    "run_id": "synthetic-candidate",
+    "evidence_domain": "synthetic",
+    "status": "PASS",
+    "engineering_status": "PASS",
+    "professional_status": "UNKNOWN",
+    "coverage": {
+      "scope_id": "synthetic-contract-only",
+      "selected_split": "all",
+      "dataset_case_count": 2,
+      "expected_case_count": 2,
+      "present_case_count": 2,
+      "expected_sample_count": 2,
+      "present_sample_count": 2,
+      "expert_confirmed_case_count": 0,
+      "pending_case_count": 0,
+      "zero_gold_case_count": 0,
+      "excluded_case_ids": [],
+      "missing_case_ids": [],
+      "missing_samples": [],
+      "scope_statement": "ONLY_FROZEN_LISTED_CASES_AND_EXPECTED_SAMPLES_NO_POPULATION_GENERALIZATION",
+      "source_bytes_rehashed": false,
+      "models_executed": false,
+      "all_corpus_recall": "NOT_EVALUATED"
+    },
+    "leakage": {
+      "status": "PASS",
+      "split_overlap_family_ids": [],
+      "exposed_holdout_family_ids": [],
+      "holdout_family_count": 1,
+      "exposure_attested": true,
+      "basis": "EXPLICIT_FAMILY_ASSIGNMENTS_AND_DECLARED_HISTORY_ONLY",
+      "external_or_semantic_leakage_independently_verified": false,
+      "failure_codes": []
+    },
+    "stages": {
+      "candidate": {
+        "status": "PASS",
+        "expected_sample_count": 2,
+        "known_sample_count": 2,
+        "unknown_sample_count": 0,
+        "known_only_macro_recall": 1.0,
+        "known_only_micro_recall": 1.0,
+        "known_group_denominator": 4,
+        "full_required_coverage_sample_count": 2,
+        "critical_evaluable_sample_count": 2,
+        "critical_unknown_sample_count": 0,
+        "critical_full_coverage_sample_count": 2,
+        "known_only_critical_full_coverage_rate": 1.0,
+        "known_only_mean_group_reciprocal_rank": 0.375
+      },
+      "final": {
+        "status": "PASS",
+        "expected_sample_count": 2,
+        "known_sample_count": 2,
+        "unknown_sample_count": 0,
+        "known_only_macro_recall": 1.0,
+        "known_only_micro_recall": 1.0,
+        "known_group_denominator": 4,
+        "full_required_coverage_sample_count": 2,
+        "critical_evaluable_sample_count": 2,
+        "critical_unknown_sample_count": 0,
+        "critical_full_coverage_sample_count": 2,
+        "known_only_critical_full_coverage_rate": 1.0,
+        "known_only_mean_group_reciprocal_rank": 0.375
+      },
+      "read": {
+        "status": "PASS",
+        "expected_sample_count": 2,
+        "known_sample_count": 2,
+        "unknown_sample_count": 0,
+        "known_only_macro_recall": 1.0,
+        "known_only_micro_recall": 1.0,
+        "known_group_denominator": 4,
+        "full_required_coverage_sample_count": 2,
+        "critical_evaluable_sample_count": 2,
+        "critical_unknown_sample_count": 0,
+        "critical_full_coverage_sample_count": 2,
+        "known_only_critical_full_coverage_rate": 1.0,
+        "known_only_mean_group_reciprocal_rank": 0.375
+      }
+    },
+    "semantic_status_counts": {
+      "PASS": 2
+    },
+    "latency": [
+      {
+        "split": "dev",
+        "cache_state": "cold",
+        "query_state": "first",
+        "measurement_scope": "unknown",
+        "metric": "complete_response_ms",
+        "first_token_used_as_complete_response": false,
+        "case_count": 1,
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1000,
+        "p95_ms": 1000,
+        "percentile_method": "nearest_rank"
+      },
+      {
+        "split": "holdout",
+        "cache_state": "cold",
+        "query_state": "first",
+        "measurement_scope": "unknown",
+        "metric": "complete_response_ms",
+        "first_token_used_as_complete_response": false,
+        "case_count": 1,
+        "expected_sample_count": 1,
+        "measured_sample_count": 1,
+        "unknown_sample_count": 0,
+        "p50_ms": 1200,
+        "p95_ms": 1200,
+        "percentile_method": "nearest_rank"
+      }
+    ],
+    "samples": [
+      {
+        "case_id": "syn-dev",
+        "family_id": "syn-family-dev",
+        "sample_id": "s1",
+        "split": "dev",
+        "review_status": "engineering_confirmed",
+        "prediction_present": true,
+        "stages": {
+          "candidate": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "final": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "read": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "semantic": {
+          "status": "PASS",
+          "expected_claim_count": 2,
+          "human_reviewed_claim_count": 2,
+          "missing_claim_ids": [],
+          "human_label_counts": {
+            "supported": 2,
+            "partial": 0,
+            "contradicted": 0,
+            "insufficient": 0
+          },
+          "claim_outcomes": [
+            {
+              "claim_id": "claim-a",
+              "label": "supported",
+              "evidence_group_ids": [
+                "g-main"
+              ]
+            },
+            {
+              "claim_id": "claim-b",
+              "label": "supported",
+              "evidence_group_ids": [
+                "g-boundary"
+              ]
+            }
+          ],
+          "human_expert_reviewed": false,
+          "failure_codes": []
+        },
+        "engineering_status": "PASS",
+        "professional_status": "UNKNOWN",
+        "professional_failure_codes": [
+          "SYNTHETIC_IS_NOT_PROFESSIONAL_EVIDENCE",
+          "CASE_NOT_EXPERT_CONFIRMED",
+          "ANSWER_NOT_EXPERT_REVIEWED"
+        ],
+        "latency": {
+          "complete_response_ms": 1000,
+          "cache_state": "cold",
+          "query_state": "first",
+          "measurement_scope": "unknown",
+          "status": "KNOWN",
+          "failure_codes": []
+        },
+        "adapter_diagnostics": [],
+        "execution_observation": null,
+        "run_state": "UNKNOWN",
+        "adapter_provenance": null,
+        "retrieval_observation": null
+      },
+      {
+        "case_id": "syn-holdout",
+        "family_id": "syn-family-holdout",
+        "sample_id": "s1",
+        "split": "holdout",
+        "review_status": "engineering_confirmed",
+        "prediction_present": true,
+        "stages": {
+          "candidate": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "final": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "read": {
+            "status": "PASS",
+            "stage_present": true,
+            "stage_complete": true,
+            "observation_scope": "frozen_export",
+            "rank_basis": "export_rank",
+            "required_group_count": 2,
+            "observed_covered_group_count": 2,
+            "recall": 1.0,
+            "all_required_groups_covered": true,
+            "critical_group_count": 2,
+            "all_critical_groups_covered": true,
+            "all_required_groups_rank": 4,
+            "critical_groups_rank": 4,
+            "mean_group_reciprocal_rank": 0.375,
+            "failure_codes": [],
+            "groups": [
+              {
+                "group_id": "g-main",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 2,
+                "alternatives": [
+                  {
+                    "alternative_id": "canonical",
+                    "fully_covered": true,
+                    "first_full_rank": 2,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-a",
+                          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 2,
+                          "end": 12
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 10,
+                        "fully_covered": true,
+                        "first_full_rank": 2,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 2,
+                          "MISMATCH_CONTENT_SHA256": 2
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  },
+                  {
+                    "alternative_id": "equivalent",
+                    "fully_covered": false,
+                    "first_full_rank": null,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-equivalent",
+                          "version_id": "syn-v2",
+                          "block_id": "syn-alt",
+                          "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 3,
+                          "end": 13
+                        },
+                        "required_chars": 10,
+                        "covered_chars": 0,
+                        "fully_covered": false,
+                        "first_full_rank": null,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 4,
+                          "MISMATCH_CONTENT_SHA256": 4,
+                          "MISMATCH_RESOURCE_ID": 4,
+                          "MISMATCH_VERSION_ID": 4
+                        },
+                        "failure_codes": [
+                          "NO_MATCHING_SPAN"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group_id": "g-boundary",
+                "critical": true,
+                "status": "PASS",
+                "observed_fully_covered": true,
+                "first_full_rank": 4,
+                "alternatives": [
+                  {
+                    "alternative_id": "joint-spans",
+                    "fully_covered": true,
+                    "first_full_rank": 4,
+                    "spans": [
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-b",
+                          "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 0,
+                          "end": 8
+                        },
+                        "required_chars": 8,
+                        "covered_chars": 8,
+                        "fully_covered": true,
+                        "first_full_rank": 3,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      },
+                      {
+                        "source": {
+                          "resource_id": "syn-resource",
+                          "version_id": "syn-v1",
+                          "block_id": "syn-block-c",
+                          "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                          "valid_from": "2026-01-01",
+                          "valid_to": "2027-01-01"
+                        },
+                        "required_span": {
+                          "start": 10,
+                          "end": 16
+                        },
+                        "required_chars": 6,
+                        "covered_chars": 6,
+                        "fully_covered": true,
+                        "first_full_rank": 4,
+                        "mismatch_counts": {
+                          "MISMATCH_BLOCK_ID": 3,
+                          "MISMATCH_CONTENT_SHA256": 3
+                        },
+                        "failure_codes": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "semantic": {
+          "status": "PASS",
+          "expected_claim_count": 2,
+          "human_reviewed_claim_count": 2,
+          "missing_claim_ids": [],
+          "human_label_counts": {
+            "supported": 2,
+            "partial": 0,
+            "contradicted": 0,
+            "insufficient": 0
+          },
+          "claim_outcomes": [
+            {
+              "claim_id": "claim-a",
+              "label": "supported",
+              "evidence_group_ids": [
+                "g-main"
+              ]
+            },
+            {
+              "claim_id": "claim-b",
+              "label": "supported",
+              "evidence_group_ids": [
+                "g-boundary"
+              ]
+            }
+          ],
+          "human_expert_reviewed": false,
+          "failure_codes": []
+        },
+        "engineering_status": "PASS",
+        "professional_status": "UNKNOWN",
+        "professional_failure_codes": [
+          "SYNTHETIC_IS_NOT_PROFESSIONAL_EVIDENCE",
+          "CASE_NOT_EXPERT_CONFIRMED",
+          "ANSWER_NOT_EXPERT_REVIEWED"
+        ],
+        "latency": {
+          "complete_response_ms": 1200,
+          "cache_state": "cold",
+          "query_state": "first",
+          "measurement_scope": "unknown",
+          "status": "KNOWN",
+          "failure_codes": []
+        },
+        "adapter_diagnostics": [],
+        "execution_observation": null,
+        "run_state": "UNKNOWN",
+        "adapter_provenance": null,
+        "retrieval_observation": null
+      }
+    ],
+    "privacy": {
+      "query_text_included": false,
+      "source_text_included": false,
+      "answer_text_included": false,
+      "reviewer_rationale_included": false
+    }
+  }
+}

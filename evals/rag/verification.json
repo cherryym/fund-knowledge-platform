@@ -1,0 +1,227 @@
+{
+  "schema_version": "1.0",
+  "kind": "offline_rag_engineering_verification",
+  "verified_at": "2026-09-24T00:20:39.356897+08:00",
+  "user_supplied_baseline": "ed78114",
+  "baseline_verified_with_git": false,
+  "engineering_status": "PASS",
+  "professional_business_accuracy": "UNKNOWN",
+  "test_results": {
+    "passed": 132,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "new_evaluator_tests": 116,
+    "existing_related_contract_tests": 16,
+    "by_module": {
+      "tests.test_rag_evaluation": 116,
+      "tests.test_retrieval_observation": 10,
+      "tests.test_answer_timing": 3,
+      "tests.test_citation_map": 3
+    },
+    "duration_seconds": 1.219,
+    "command": "PYTHONDONTWRITEBYTECODE=1 backend/.venv/bin/python -B -m pytest backend/tests/test_rag_evaluation.py backend/tests/test_retrieval_observation.py backend/tests/test_answer_timing.py backend/tests/test_citation_map.py -o addopts='' -p no:cacheprovider --basetemp=evals/rag/.pytest-offline --junitxml=evals/rag/verification.junit.xml -q"
+  },
+  "lint": {
+    "status": "PASS",
+    "command": "backend/.venv/bin/python -B -m ruff check --no-cache backend/fund_kb/rag_evaluation.py backend/tests/test_rag_evaluation.py scripts/evaluate-rag.py"
+  },
+  "input_contract_files_validated": 10,
+  "cli_checks": [
+    {
+      "name": "adapter",
+      "command": "backend/.venv/bin/python -B scripts/evaluate-rag.py adapt --dataset evals/rag/fixtures/synthetic.dataset.json --capture evals/rag/fixtures/native-search.synthetic.capture.json --source-manifest evals/rag/fixtures/native-search.synthetic.source-manifest.json --output evals/rag/verification.adapted-predictions.json",
+      "expected_exit_code": 0,
+      "actual_exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "adapted_evaluation",
+      "command": "backend/.venv/bin/python -B scripts/evaluate-rag.py evaluate --dataset evals/rag/fixtures/synthetic.dataset.json --predictions evals/rag/verification.adapted-predictions.json --judgments evals/rag/fixtures/synthetic.candidate-judgments.json --output evals/rag/verification.synthetic-report.json",
+      "expected_exit_code": 0,
+      "actual_exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "paired",
+      "command": "backend/.venv/bin/python -B scripts/evaluate-rag.py evaluate --dataset evals/rag/fixtures/synthetic.dataset.json --baseline evals/rag/fixtures/synthetic.baseline.json --baseline-judgments evals/rag/fixtures/synthetic.baseline-judgments.json --predictions evals/rag/fixtures/synthetic.candidate.json --judgments evals/rag/fixtures/synthetic.candidate-judgments.json --output evals/rag/verification.paired-report.json",
+      "expected_exit_code": 1,
+      "actual_exit_code": 1,
+      "status": "PASS"
+    },
+    {
+      "name": "pending_40",
+      "command": "backend/.venv/bin/python -B scripts/evaluate-rag.py evaluate --dataset evals/rag/valuation-40.candidate-template.json --predictions evals/rag/fixtures/template-not-executed.predictions.json --output evals/rag/verification.pending-40-report.json",
+      "expected_exit_code": 3,
+      "actual_exit_code": 3,
+      "status": "PASS"
+    },
+    {
+      "name": "failed_adapter",
+      "command": "backend/.venv/bin/python -B scripts/evaluate-rag.py adapt --dataset evals/rag/fixtures/synthetic.dataset.json --capture evals/rag/fixtures/planning-failed.synthetic.capture.json --output evals/rag/verification.planning-failed.predictions.json",
+      "expected_exit_code": 0,
+      "actual_exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "failed_evaluation",
+      "command": "backend/.venv/bin/python -B scripts/evaluate-rag.py evaluate --dataset evals/rag/fixtures/synthetic.dataset.json --predictions evals/rag/verification.planning-failed.predictions.json --split dev --output evals/rag/verification.planning-failed-report.json",
+      "expected_exit_code": 3,
+      "actual_exit_code": 3,
+      "status": "PASS"
+    }
+  ],
+  "candidate_template": {
+    "case_count": 40,
+    "dev_count": 20,
+    "holdout_count": 20,
+    "pending_count": 40,
+    "expert_confirmed_count": 0,
+    "required_gold_group_count": 0,
+    "verification_tasks": 160,
+    "misleading_source_types": 80,
+    "pending_source_slots": 120,
+    "missing_prediction_case_count": 40,
+    "evaluation_status": "UNKNOWN"
+  },
+  "synthetic_findings": {
+    "source": "SYNTHETIC_FIXTURES_ONLY",
+    "positive_engineering_status": "PASS",
+    "professional_status": "UNKNOWN",
+    "paired_expected_sample_count": 2,
+    "paired_read_recall_delta": 0.5,
+    "paired_fixture_status": "FAIL",
+    "paired_status_reason": "BASELINE_INTENTIONALLY_FAILS;_CANDIDATE_PASSES_ENGINEERING_ONLY",
+    "failed_planning_candidate_stage": "UNKNOWN",
+    "failed_planning_final_stage": "UNKNOWN",
+    "failed_planning_read_stage": "UNKNOWN",
+    "failed_planning_complete_response_timing_sample_count": 0,
+    "no_automatic_adoption": true
+  },
+  "side_effects": {
+    "real_model_calls": 0,
+    "real_consultation_calls": 0,
+    "network_calls": 0,
+    "real_data_accessed": false,
+    "credentials_accessed": false,
+    "services_changed": false,
+    "main_pipeline_or_frontend_modified": false,
+    "git_commands_executed": false
+  },
+  "scope": {
+    "file_count_including_this_manifest": 24,
+    "allowed_paths": [
+      "backend/fund_kb/rag_evaluation.py",
+      "backend/tests/test_rag_evaluation.py",
+      "scripts/evaluate-rag.py",
+      "evals/rag/*",
+      "docs/rag-evaluation.md"
+    ],
+    "full_backend_frontend_qa_performed": false
+  },
+  "limitations": [
+    "仅完成独占范围的离线工程验收；不将合成测试、fixture判断桩或结构audit当作专家专业确认。",
+    "候选40题无已确认gold，未执行真实业务咨询，未重哈希真实原文。",
+    "adapter逐样本接收单次search完整trace；摘要或缺失阶段保留UNKNOWN，不自动合并多轮咨询轨迹。",
+    "family查验依赖冻结分组与声明的开发暴露史，不独立证明外部语义或训练数据无泄漏。",
+    "完整答复耗时按样本及测量范围分组，失败耗时不替代完整答复；没有进行真实性能或上线验收。",
+    "adoption_guard禁止自动采纳；缺确认、失败/不完整样本、未排除泄漏、可比样本性能回退及未知性能范围均保留阻断原因。"
+  ],
+  "files_sha256": [
+    {
+      "path": "backend/fund_kb/rag_evaluation.py",
+      "sha256": "0e0f6a115ba3d0c8bd2826b74fc9fd50ae4ff1f5c5f41e65e21d6aaf86db9151"
+    },
+    {
+      "path": "backend/tests/test_rag_evaluation.py",
+      "sha256": "452780cbc2a80db8878a9836e2f69bc769fae09577cc448afdfdcfb8edec34e2"
+    },
+    {
+      "path": "scripts/evaluate-rag.py",
+      "sha256": "128245864133bdc3e1ebe8f29497583e3971946d163bc468a8e72359b4fe1b07"
+    },
+    {
+      "path": "docs/rag-evaluation.md",
+      "sha256": "1888c66ba90ecc803624adca7b9b856cc58974f8e32bccde9a2590dfe76d9d5e"
+    },
+    {
+      "path": "evals/rag/README.md",
+      "sha256": "fdfb4252800e68186b0f15c73dc566ba4466f80ea34bb4bffcd62dd043f5a030"
+    },
+    {
+      "path": "evals/rag/fixtures/native-search.synthetic.capture.json",
+      "sha256": "b3cfce33082eeb97611f699c0bc7efe24cc2a5053c06a2bd441ce50e4388e72f"
+    },
+    {
+      "path": "evals/rag/fixtures/native-search.synthetic.source-manifest.json",
+      "sha256": "acb4ce27a61d6ad93a546cbb88c765d1a910d4dd0a47d53c3ba4bef7a5a86024"
+    },
+    {
+      "path": "evals/rag/fixtures/planning-failed.synthetic.capture.json",
+      "sha256": "f7ee2fd619f93b85a638341693e185a33d2fa7fc2152edfb46a2083e3a3c648b"
+    },
+    {
+      "path": "evals/rag/fixtures/synthetic.baseline-judgments.json",
+      "sha256": "6585b08245683834f76692ec2b6fcec0d982dc5d6260e63c3591316a2e39802b"
+    },
+    {
+      "path": "evals/rag/fixtures/synthetic.baseline.json",
+      "sha256": "89e841d071b7a71feac1e289566cad585f9c86fdeb2a1ea22e829dcb422f8f45"
+    },
+    {
+      "path": "evals/rag/fixtures/synthetic.candidate-judgments.json",
+      "sha256": "ecf82a91bf09e83ee28607c98824e1822522c73be309f06e61e28bd9da545048"
+    },
+    {
+      "path": "evals/rag/fixtures/synthetic.candidate.json",
+      "sha256": "ad1e9584ab8e830b3143c3a5b0e83b5cb5afbf9488ebdac1903ce889f13cc1c9"
+    },
+    {
+      "path": "evals/rag/fixtures/synthetic.dataset.json",
+      "sha256": "18ae6613341874ec1b6f05da6ab9ed1c027a039bab6e883b6a12deea266e5090"
+    },
+    {
+      "path": "evals/rag/fixtures/template-not-executed.predictions.json",
+      "sha256": "5321e937487448cf12a81f56e6423682ee7b0d28cee773b8b364abd0c9a338aa"
+    },
+    {
+      "path": "evals/rag/schema.json",
+      "sha256": "4f6644bf26f15312bb17a38cf38206dd77ef52054117212ceb423ec60ebcce50"
+    },
+    {
+      "path": "evals/rag/valuation-40.candidate-template.json",
+      "sha256": "de00ed7441c40f54fe53c2ba8ff877cd08e338d8247682f4c6ae1c481de903f1"
+    },
+    {
+      "path": "evals/rag/verification.adapted-predictions.json",
+      "sha256": "f7accea88452fa1af17ec99c6bbd68bf86a02d3d2845833005a3effbc0a789aa"
+    },
+    {
+      "path": "evals/rag/verification.junit.xml",
+      "sha256": "361ad6643635a880c9b08bdbd91efc7c89ba969037306d1299bd0905e34b094e"
+    },
+    {
+      "path": "evals/rag/verification.paired-report.json",
+      "sha256": "fbef5618e02d372cec42a8b7e33e81f17b90d5341f2fa3310cea726a63e60709"
+    },
+    {
+      "path": "evals/rag/verification.pending-40-report.json",
+      "sha256": "963cf3877b20aa3909cd052e81257c9b3ad533372a513d937bfe48436a3c5117"
+    },
+    {
+      "path": "evals/rag/verification.planning-failed-report.json",
+      "sha256": "8c47600909635637156d321b80166f43b95b891558c813a3db31ba2733c805e6"
+    },
+    {
+      "path": "evals/rag/verification.planning-failed.predictions.json",
+      "sha256": "fa9b7b8831e0e027ac04dd9a16ac96918598d96b57b6f5ac298477b03a75d680"
+    },
+    {
+      "path": "evals/rag/verification.synthetic-report.json",
+      "sha256": "2489f4be594a1ed1d7b59a3b52269cd6b5265c7e44bce9077c79321d55b2f745"
+    }
+  ],
+  "manifest_self_hash_omitted": true
+}

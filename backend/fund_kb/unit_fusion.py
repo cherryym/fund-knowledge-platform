@@ -35,4 +35,6 @@ def fuse_units(query, units_by_channel, catalog_versions):
         if unit["version_id"] in catalog_rank:
             unit["score"] += weights["catalog"] / (60 + catalog_rank[unit["version_id"]])
             unit["channels"].append("catalog")
-    return sorted(merged.values(), key=lambda u: (-u["score"], u["unit_id"])), weights
+            unit["channel_ranks"]["catalog"] = catalog_rank[unit["version_id"]]
+    ordered = sorted(merged.values(), key=lambda u: (-u["score"], u["unit_id"]))
+    return [{**unit, "fusion_rank": rank} for rank, unit in enumerate(ordered, 1)], weights

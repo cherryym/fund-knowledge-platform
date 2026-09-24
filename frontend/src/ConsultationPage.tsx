@@ -19,9 +19,13 @@ import {
 import { allPages, api, del, get, post, query } from "./api";
 import { ModelPicker } from "./ModelPicker";
 import { useConsultationModelPreference } from "./consultationModelPreference";
+import { ConsultationHistoryResizeHandle } from "./ConsultationHistoryResizeHandle";
 import { RetrievalProfilePicker, useRetrievalProfile } from "./retrievalProfiles";
 import { BrandIcon } from "./BrandIcon";
 import { WikiAnswerMarkdown, wikiPreviewHtml } from "./WikiAnswerMarkdown";
+import { AnswerTimingDetails, RetrievalDiagnostics } from "./RetrievalDiagnostics";
+import { EvidenceReviewNotice, type EvidenceReviewReport } from "./EvidenceReview";
+import { citationDescription, sourceLabel } from "./citationPresentation";
 import type {
   Answer,
   Evidence,
@@ -119,7 +123,7 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
   const dependencyLabels: Record<string, string> = {resolved: "已精确定位", pending: "待补读",
     broader_context: "已补读所在整条，具体款待核对", ambiguous: "存在多个可能位置", unresolved: "未定位",
     external: "外部引用待核对", unavailable: "当前不可读取", locator_required: "缺少章节定位",
-    not_in_authorized_catalog: "当前授权目录未找到"};
+    not_in_authorized_catalog: "当前授权目录未找到", stale_receipt: "目标未读或回执版本已变化，须重新查证"};
   const batchesKnown = !!progress && isRecordedCount(progress.total_batches) && progress.total_batches! > 0
     && isRecordedCount(progress.completed_batches) && progress.completed_batches! <= progress.total_batches!;
   const readingStages: Record<string, string> = {loading_sections: "正在定位完整知识页与原文小节",
@@ -169,9 +173,6 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
           <Badge value={run.state} />
         )}
       </div>
-      <p className="retrieval-scheme-used">{snapshot?.retrieval_selection
-        ? <>本次检索：{snapshot.retrieval_selection.model} · {snapshot.retrieval_selection.dimensions.toLocaleString()} 维 · BM25 混合召回</>
-        : "本轮检索方案未记录"}</p>
       {progress && ["QUEUED", "RUNNING"].includes(run.state) && <div className="consultation-reading-progress" role="status" aria-live="polite">
         <div><strong>{readingStages[progress.stage] ?? "正在处理已选择的资料"}</strong>
           {batchesKnown && <span>已完成 {progress.completed_batches} / {progress.total_batches} 批
@@ -181,8 +182,11 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
         {isRecordedCount(snapshot?.wiki_reading?.source_sections) && <small>原文按完整小节核对：{snapshot!.wiki_reading!.source_sections} 个
           {snapshot?.wiki_reading?.scoped_source_pages ? " · 未展开的其他章节不代表已读" : ""}</small>}
       </div>}
-      <details className="consultation-run-details">
+      <details className="consultation-run-details" data-run-execution="technical">
         <summary>执行记录</summary>
+        <p className="retrieval-scheme-used">{snapshot?.retrieval_selection
+          ? <>本次检索：{snapshot.retrieval_selection.model} · {snapshot.retrieval_selection.dimensions.toLocaleString()} 维 · BM25 混合召回</>
+          : "本轮检索方案未记录"}</p>
         <div className="consultation-execution-details">
           {snapshot?.retrieval_selection && <span>检索方案：{snapshot.retrieval_selection.profile_id} · 指纹：{snapshot.retrieval_selection.fingerprint}</span>}
           {run.phase && <span>当前阶段：{phaseLabel(run)}</span>}
@@ -207,7 +211,8 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
             {scored: "已评分，保留全部依赖", not_needed: "仅一组，无须重排", not_enabled: "未启用，保留原序",
               unavailable_preserved_order: "重排不可用，保留原序与全部证据"}[contextCompletion.group_rerank.status] ?? "状态待核对"}</span>}
           {lastRetrieval && <span>知识检索：Wiki + RAG · {retrievalQueries!.length} 次检索 · 最近返回 {lastRetrieval.returned} 个候选页（候选不等于依据）</span>}
-          {lastRetrieval && <span>最近检索：{lastRetrieval.mode === "hybrid" ? "关键词与语义融合" : "Wiki 目录回退"} · 当前已索引 {lastRetrieval.indexed_catalog_pages} / {lastRetrieval.catalog_pages} 页</span>}
+          {lastRetrieval && <span>最近检索：{["hybrid", "hybrid_unit_rerank", "universal_unit_retrieval"].includes(lastRetrieval.mode)
+            ? "关键词与语义融合" : ["wiki", "wiki_fallback"].includes(lastRetrieval.mode) ? "Wiki 目录回退" : "检索方式未确认"} · 当前已索引 {lastRetrieval.indexed_catalog_pages} / {lastRetrieval.catalog_pages} 页</span>}
           {lastRetrieval?.warnings?.length ? <span>检索提示：{lastRetrieval.warnings.join("、")}；仍可查阅完整授权目录。</span> : null}
           {request?.usage && isRecordedCount(request.usage.completion_tokens) && <span>实际输出用量：{request.usage.completion_tokens.toLocaleString()} tokens{
             isRecordedCount(request.usage.reasoning_tokens) ? `（其中思考 ${request.usage.reasoning_tokens.toLocaleString()}）` : ""}</span>}
@@ -230,7 +235,9 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
             {answerScopes[run.answer_scope].note}
           </p>
         )}
-      </details>
+      {!run.invalidated && snapshot?.pipeline_timing && <AnswerTimingDetails timing={snapshot.pipeline_timing} />}
+      {!run.invalidated && lastRetrieval?.retrieval_observations?.map((trace, index) =>
+        <RetrievalDiagnostics key={`${trace.query_sha256 ?? "query"}:${index}`} trace={trace} />)}
       {contextCompletion?.reading_coverage && <details className="consultation-run-details" data-reading-coverage="ledger">
         <summary>查证方向与原文阅读 · {contextCompletion.reading_coverage.gap_count ? "仍有阅读缺口" : "各方向已关联原文"}</summary>
         <p className="muted">记录计划查证方向是否读到了原文，不代表该段支持结论、规则适用或全部业务事项已解决。仅命中候选或 Wiki 不算原文已读。</p>
@@ -251,6 +258,7 @@ const RunStatus = memo(function RunStatus({ run, finalRead, readFailed }: { run:
         <summary>本轮查阅的知识与来源（{snapshot.wiki_reading.loaded_pages}）</summary>
         <ul>{snapshot.wiki_reading.page_titles.map((title,i)=><li key={i}>{title}</li>)}</ul>
       </details> : null}
+      </details>
       {run.question_analysis?.source === "model_prior_knowledge_unverified" && !run.invalidated && (
         <details className="answer-initial-analysis" open={run.state === "RUNNING"}>
           <summary>模型的初步问题研判 · 尚未核对本地依据</summary>
@@ -351,13 +359,14 @@ function EvidenceLinks({
         const source = citations.find((c) => c.id === id);
         return source ? (
           <button
-            className="citation-chip"
+            className="citation-chip citation-doc-chip"
             key={id}
-            title={source.source_title}
+            title={citationDescription([source])}
+            aria-label={`查看来源：${source.source_title} · ${id}`}
             onClick={() => app.openVersion(source.version_id, source.block_id)}
           >
-            <Link size={12} />
-            {id}
+            <FileText size={12} aria-hidden="true" />
+            <span className="citation-doc-name">{sourceLabel(source.source_title)}</span>
           </button>
         ) : (
           <span className="text-red" key={id}>
@@ -368,7 +377,7 @@ function EvidenceLinks({
     </span>
   );
 }
-const AnswerView = memo(function AnswerView({ answer }: { answer: Answer }) {
+const AnswerView = memo(function AnswerView({ answer, evidenceReview }: { answer: Answer; evidenceReview?: EvidenceReviewReport }) {
   const app = useApp();
   const sources = new Map<string, Evidence[]>();
   for (const citation of answer.citations) {
@@ -390,6 +399,7 @@ const AnswerView = memo(function AnswerView({ answer }: { answer: Answer }) {
       {answer.format === "wiki_markdown" ? <>
         <p className="muted">{answer.grounding_status === "SOURCE_LINKED" ? "引用已关联到本地原文；关联不代表结论已通过专业复核。" : "本答复未绑定可核对的本地引用，属于模型一般分析，不能当作已验证业务结论。"}</p>
         {answer.server_notice && <p className="consultation-scope-note">{answer.server_notice}</p>}
+        <EvidenceReviewNotice report={evidenceReview}/>
         <WikiAnswerMarkdown text={answer.narrative_markdown ?? answer.summary} citations={answer.citations}/>
         {(answer.quality_warnings?.length ?? 0)>0 && <details className="answer-quality-warnings"><summary>核对提示（{answer.quality_warnings!.length}）</summary>
           <ul>{answer.quality_warnings!.map((warning,i)=><li key={i}>{warning.message}</li>)}</ul>
@@ -569,6 +579,7 @@ function ConsultationWorkspace({ initialResource }: { initialResource?: Resource
   const composing = useRef(false);
   const compositionEndedAt = useRef(Number.NEGATIVE_INFINITY);
   const composerHintId = useId();
+  const historyPanelId = useId();
   const [mode, setMode] = useState("auto");
   const [context, setContext] = useState<Record<string, string>>({});
   const [showContext, setShowContext] = useState(false);
@@ -791,7 +802,7 @@ function ConsultationWorkspace({ initialResource }: { initialResource?: Resource
         </div>
       </header>
       <div className="consultation-layout">
-        <aside className="conversation-history">
+        <aside className="conversation-history" id={historyPanelId}>
           <button
             className="new-conversation"
             disabled={task.busy}
@@ -858,6 +869,7 @@ function ConsultationWorkspace({ initialResource }: { initialResource?: Resource
           {history.data?.filter((t) => t.space_id === app.space.id).length ===
             0 && <p className="muted">你的咨询记录会保存在这里。</p>}
         </aside>
+        <ConsultationHistoryResizeHandle ownerId={app.me.id} spaceId={app.space.id} panelId={historyPanelId} />
         <section className="conversation-main">
           <div className="conversation-scroll">
             <ErrorBox error={loaded.error} retry={loaded.reload} />
@@ -940,7 +952,7 @@ function ConsultationWorkspace({ initialResource }: { initialResource?: Resource
                     <p>{run.failure_diagnostic.next_step}</p>
                   </section>}
                   {run.answer ? (
-                    <AnswerView answer={run.answer} />
+                    <AnswerView answer={run.answer} evidenceReview={run.invalidated ? undefined : run.model_snapshot?.evidence_review} />
                   ) : (
                     !["QUEUED", "RUNNING"].includes(run.state) && !(run.failure_diagnostic && !run.invalidated) && (
                       <p className="muted">

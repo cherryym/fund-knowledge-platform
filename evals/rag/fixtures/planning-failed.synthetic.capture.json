@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "kind": "capture",
+  "dataset_id": "synthetic-engineering-v1",
+  "run_id": "synthetic-planning-failed",
+  "exposure": {
+    "attestation": "declared",
+    "development_case_ids": [
+      "syn-dev"
+    ],
+    "development_family_ids": []
+  },
+  "records": [
+    {
+      "case_id": "syn-dev",
+      "sample_id": "s1",
+      "as_of": "2026-01-15",
+      "run_state": "FAILED",
+      "answer_complete": false,
+      "claims": [],
+      "model_snapshot": {
+        "pipeline_timing": {
+          "version": "answer_timing_v1",
+          "execution_elapsed_ms": 10000,
+          "phases": {
+            "model_planning": {
+              "elapsed_ms": 10000,
+              "calls": 1
+            }
+          },
+          "scope": "execution_observation_not_deadline",
+          "durations_additive": false,
+          "first_visible_answer_ms": null,
+          "first_visible_answer_status": "NOT_MEASURED",
+          "model_phase_includes_network_queue_and_rechecks": true
+        }
+      },
+      "cache_state": "unknown",
+      "query_state": "first"
+    }
+  ]
+}

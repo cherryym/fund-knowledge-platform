@@ -16,6 +16,45 @@ def _title(value):
     return re.sub(r"\s+", "", unicodedata.normalize("NFKC", value)).strip("《》")
 
 
+def bind_context_receipts(page, incoming, sections, records):
+    """Bind a pure locator result to exact records actually selected for reading.
+
+    This is provenance bookkeeping, not a substitute for the caller's source
+    authorization/hash checks. Unresolved locators never acquire resolved proof.
+    """
+    sections = {section["section_id"]: section for section in sections}
+    rows = {row["block_id"]: row for row in records if
+            row.get("resource_id") == page.get("resource_id") and row.get("version_id") == page.get("version_id")}
+    result = {}
+    for locator, receipt in incoming.items():
+        bids = list(dict.fromkeys([*receipt.get("target_block_ids", []),
+            *(bid for sid in receipt.get("target_section_ids", []) for bid in sections.get(sid, {}).get("block_ids", []))]))
+        result[locator] = {**receipt, "source_binding": {"resource_id": page.get("resource_id"),
+            "version_id": page.get("version_id"), "catalog_signature": page.get("_metadata_signature"), "blocks": [{"block_id": bid,
+                "content_sha256": rows[bid]["content_sha256"]} for bid in bids if bid in rows],
+            "complete": bool(bids) and all(bid in rows for bid in bids)}}
+    return result
+
+
+def _current_receipt(page, receipt):
+    binding = receipt.get("source_binding", {})
+    if (not isinstance(binding, dict) or not page.get("version_id") or not page.get("resource_id") or
+            any(binding.get(key) != page[key] for key in ("version_id", "resource_id"))
+            or binding.get("catalog_signature") != page.get("_metadata_signature")
+            or binding.get("complete") is not True or not isinstance(binding.get("blocks"), list)
+            or not binding["blocks"] or any(not isinstance(block, dict) for block in binding["blocks"])):
+        return False
+    records = {row.get("block_id"): row for row in page.get("records", []) if
+        row.get("resource_id") == page["resource_id"] and row.get("version_id") == page["version_id"]}
+    for block in binding["blocks"]:
+        row = records.get(block.get("block_id"))
+        if (row is None or row.get("content_sha256") != block.get("content_sha256")
+                or not isinstance(row.get("text"), str)
+                or hashlib.sha256(row["text"].encode()).hexdigest() != block.get("content_sha256")):
+            return False
+    return True
+
+
 def context_plan(pages, read_pages, unavailable=()):
     titles = {}
     for pid, page in pages.items():
@@ -43,6 +82,12 @@ def context_plan(pages, read_pages, unavailable=()):
                     elif resolved is None:
                         ref["status"] = "pending"
                         requests.setdefault(target, set()).add(ref["locator"])
+                    elif resolved.get("status") == "resolved" and (target not in read_pages
+                            or not _current_receipt(pages[target], resolved)):
+                        # Do not close a dependency from a stale/unbound receipt
+                        # or loop on that receipt forever. Keep an explicit gap;
+                        # a fresh authorized READ may establish a new binding.
+                        ref["status"] = "stale_receipt"
                     else:
                         ref.update(resolved)
                 else:
@@ -55,7 +100,7 @@ def context_plan(pages, read_pages, unavailable=()):
             references.append(ref)
     gaps = [r for r in references if r["status"] not in {"resolved", "pending"}]
     return {"requests": requests, "searches": list(dict.fromkeys(searches)), "edges": list(dict.fromkeys(edges)),
-            "report": {"version": "source_context_v2", "scope": "observed_explicit_dependencies",
+            "report": {"version": "source_context_v3", "scope": "observed_explicit_dependencies",
                 "status": "PENDING" if requests else "GAPS_REMAIN" if gaps else "OBSERVED_REFERENCES_CLOSED",
                 "professional_completeness": "NOT_EVALUATED", "structural_groups_added": additions,
                 "reference_count": len(references), "resolved_count": sum(r["status"] == "resolved" for r in references),
@@ -135,7 +180,7 @@ def order_context_groups(question, pages, read_pages, edges, vector, cache):
                 ordered = list(dict.fromkeys(pid for i in ranking for pid in groups[i]))
                 receipt.update(status="scored", scores=scores, scored_sources=len(missing),
                     reused_source_scores=len(keys) - len(missing))
-        except Exception:
+        except Exception:  # noqa: BLE001 - preserve all evidence; authority fences remain outside this fallback.
             # No source/credential/backend exception text is exported. Authority
             # fences are outside this fallback, so cancellation is NOT swallowed.
             receipt["status"] = "unavailable_preserved_order"

@@ -246,6 +246,8 @@ export type Run = {
     answer_model_invoked?: boolean;
     model_request_count?: number;
     retrieval_runtime?: {state: string; phase: string; self_tested: boolean; process_id: number; runtime_id: string; error_code?: string | null};
+    pipeline_timing?: import("./RetrievalDiagnostics").PipelineTiming;
+    evidence_review?: import("./EvidenceReview").EvidenceReviewReport;
     validation_status?: "pending" | "passed" | "failed" | "review_required";
     context_completion?: {status: string; reference_count: number; resolved_count: number; gap_count: number;
       structural_groups_added: number; additional_searches?: number; professional_completeness: string;
@@ -264,7 +266,8 @@ export type Run = {
       requested_pages?: number; updated_at?: string};
     hybrid_retrieval?: {strategy: "wiki_rag_rrf"; source_bodies_loaded_for_discovery: number; full_catalog_available: boolean;
       queries: {query: string; mode: string; catalog_pages: number; indexed_catalog_pages: number;
-        total_candidates: number; returned: number; warnings: string[]; timing_ms: number}[]};
+        total_candidates: number; returned: number; warnings: string[]; timing_ms: number;
+        retrieval_observations?: import("./RetrievalDiagnostics").CandidateTrace[]}[]};
     last_request?: {
       phase: "planning" | "synthesis" | "wiki_index" | "wiki_notes";
       state: "waiting" | "received" | "failed";

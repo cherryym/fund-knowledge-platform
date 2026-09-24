@@ -61,6 +61,24 @@ def test_primary_route_is_retained_without_discarding_secondary_evidence():
     assert primary_first(["trade", "rule"], {"sources": [{"page_id": "rule", "role": "domain_core"}]}) == ["rule", "trade"]
 
 
+def test_explicit_owner_standard_precedes_broad_core_candidates_without_dropping_any_page():
+    plan={"sources":[{"page_id":"candidate","role":"domain_core"},
+        {"page_id":"required","role":"valuation_rule"}, {"page_id":"required","role":"domain_core"},
+        {"page_id":"base","role":"domain_foundation"}]}
+    assert primary_first(["candidate","base","extra","required"],plan)==["required","candidate","base","extra"]
+
+
+def test_plan_text_distinguishes_required_sources_from_alternative_core_candidates():
+    from fund_kb.source_reading_policy import plan_instructions
+    plan={"matched_rules":["configured"],"warnings":[],"sources":[
+        {"page_id":"W1","title":"指定规则","role":"valuation_rule"},
+        {"page_id":"W2","title":"另一主体参考","role":"domain_core"}]}
+    text=plan_instructions(plan)
+    assert "必须核对 W1" in text
+    assert "核心目录检索候选 W2" in text
+    assert "必须核对 W2" not in text
+
+
 def test_core_candidate_pool_does_not_force_citation_stuffing():
     plan = {"matched_rules": ["business-core-retrieval"], "warnings": [], "sources": [
         {"resource_id": rid, "version_id": rid, "topic_block_ids": [rid], "role": "domain_core"} for rid in ("A", "B")]}

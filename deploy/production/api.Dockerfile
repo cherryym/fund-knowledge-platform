@@ -6,6 +6,8 @@ COPY backend/fund_kb /app/backend/fund_kb
 COPY backend/alembic.ini /app/backend/alembic.ini
 COPY backend/migrations /app/backend/migrations
 COPY contracts /app/contracts
+COPY evals/rag/schema.json /app/evals/rag/schema.json
+COPY scripts/evaluate-rag.py /app/scripts/evaluate-rag.py
 COPY deploy/production/ops /app/ops
 ENV UV_CACHE_DIR=/tmp/uv-cache PYTHONPATH=/app/backend:/app/ops PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN uv sync --frozen --no-dev --extra semantic --extra local-models && mkdir -p /app/data && chown appuser:appuser /app/data

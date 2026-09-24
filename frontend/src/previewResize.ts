@@ -1,7 +1,12 @@
 /** Direct split resizing: one layout write per animation frame, never per mouse event. */
-export type PreviewResizeMode = "dock" | "drawer" | "wiki-navigation" | "document-navigation";
+export type PreviewResizeMode = "dock" | "drawer" | "wiki-navigation" | "document-navigation" | "consultation-history";
 export function previewResizeLimits(mode: PreviewResizeMode, available: number, hasPreview = false) {
   const width = Number.isFinite(available) ? Math.max(0, available) : 0;
+  if (mode === "consultation-history") {
+    // Keep the answer/composer usable even with a wider history panel.
+    const max = Math.max(0, Math.min(480, width - 360));
+    return { min: Math.min(160, max), max, defaultWidth: 200 };
+  }
   if (mode === "document-navigation") {
     // The dock also needs its own minimum (280px), in addition to the list (320px).
     const max = Math.max(0, Math.min(520, width - (hasPreview ? 600 : 480)));
@@ -19,8 +24,8 @@ export function clampPreviewWidth(value: number, limits: ReturnType<typeof previ
 }
 
 export function attachPreviewResize(handle: HTMLElement, host: HTMLElement, mode: PreviewResizeMode, storageKey: string) {
-  const navigation = mode === "wiki-navigation" || mode === "document-navigation";
-  const property = mode === "document-navigation" ? "--document-category-width" : mode === "wiki-navigation" ? "--wiki-navigation-width" : mode === "dock" ? "--document-preview-width" : "--preview-drawer-width";
+  const navigation = mode === "wiki-navigation" || mode === "document-navigation" || mode === "consultation-history";
+  const property = mode === "consultation-history" ? "--consultation-history-width" : mode === "document-navigation" ? "--document-category-width" : mode === "wiki-navigation" ? "--wiki-navigation-width" : mode === "dock" ? "--document-preview-width" : "--preview-drawer-width";
   const direction = navigation ? 1 : -1;
   const availableWidth = () => mode === "drawer" ? window.innerWidth : host.clientWidth;
   const workspace = mode === "document-navigation" ? host.querySelector<HTMLElement>(":scope > .resource-workspace") : null;

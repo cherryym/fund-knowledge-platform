@@ -1,0 +1,4973 @@
+{
+  "schema_version": "1.0",
+  "kind": "evaluation_report",
+  "dataset_id": "fund-valuation-candidate-40-v1",
+  "run_id": "not-executed",
+  "evidence_domain": "professional",
+  "status": "UNKNOWN",
+  "engineering_status": "UNKNOWN",
+  "professional_status": "UNKNOWN",
+  "coverage": {
+    "scope_id": "valuation-candidate-40-pending",
+    "selected_split": "all",
+    "dataset_case_count": 40,
+    "expected_case_count": 40,
+    "present_case_count": 0,
+    "expected_sample_count": 40,
+    "present_sample_count": 0,
+    "expert_confirmed_case_count": 0,
+    "pending_case_count": 40,
+    "zero_gold_case_count": 40,
+    "excluded_case_ids": [],
+    "missing_case_ids": [
+      "valuation-dev-01",
+      "valuation-dev-02",
+      "valuation-dev-03",
+      "valuation-dev-04",
+      "valuation-dev-05",
+      "valuation-dev-06",
+      "valuation-dev-07",
+      "valuation-dev-08",
+      "valuation-dev-09",
+      "valuation-dev-10",
+      "valuation-dev-11",
+      "valuation-dev-12",
+      "valuation-dev-13",
+      "valuation-dev-14",
+      "valuation-dev-15",
+      "valuation-dev-16",
+      "valuation-dev-17",
+      "valuation-dev-18",
+      "valuation-dev-19",
+      "valuation-dev-20",
+      "valuation-holdout-01",
+      "valuation-holdout-02",
+      "valuation-holdout-03",
+      "valuation-holdout-04",
+      "valuation-holdout-05",
+      "valuation-holdout-06",
+      "valuation-holdout-07",
+      "valuation-holdout-08",
+      "valuation-holdout-09",
+      "valuation-holdout-10",
+      "valuation-holdout-11",
+      "valuation-holdout-12",
+      "valuation-holdout-13",
+      "valuation-holdout-14",
+      "valuation-holdout-15",
+      "valuation-holdout-16",
+      "valuation-holdout-17",
+      "valuation-holdout-18",
+      "valuation-holdout-19",
+      "valuation-holdout-20"
+    ],
+    "missing_samples": [
+      {
+        "case_id": "valuation-dev-01",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-02",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-03",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-04",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-05",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-06",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-07",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-08",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-09",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-10",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-11",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-12",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-13",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-14",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-15",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-16",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-17",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-18",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-19",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-dev-20",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-01",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-02",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-03",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-04",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-05",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-06",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-07",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-08",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-09",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-10",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-11",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-12",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-13",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-14",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-15",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-16",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-17",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-18",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-19",
+        "sample_id": "s1"
+      },
+      {
+        "case_id": "valuation-holdout-20",
+        "sample_id": "s1"
+      }
+    ],
+    "scope_statement": "ONLY_FROZEN_LISTED_CASES_AND_EXPECTED_SAMPLES_NO_POPULATION_GENERALIZATION",
+    "source_bytes_rehashed": false,
+    "models_executed": false,
+    "all_corpus_recall": "NOT_EVALUATED"
+  },
+  "leakage": {
+    "status": "UNKNOWN",
+    "split_overlap_family_ids": [],
+    "exposed_holdout_family_ids": [],
+    "holdout_family_count": 20,
+    "exposure_attested": false,
+    "basis": "EXPLICIT_FAMILY_ASSIGNMENTS_AND_DECLARED_HISTORY_ONLY",
+    "external_or_semantic_leakage_independently_verified": false,
+    "failure_codes": [
+      "EXPOSURE_HISTORY_UNKNOWN"
+    ]
+  },
+  "stages": {
+    "candidate": {
+      "status": "UNKNOWN",
+      "expected_sample_count": 40,
+      "known_sample_count": 0,
+      "unknown_sample_count": 40,
+      "known_only_macro_recall": null,
+      "known_only_micro_recall": null,
+      "known_group_denominator": 0,
+      "full_required_coverage_sample_count": 0,
+      "critical_evaluable_sample_count": 0,
+      "critical_unknown_sample_count": 40,
+      "critical_full_coverage_sample_count": 0,
+      "known_only_critical_full_coverage_rate": null,
+      "known_only_mean_group_reciprocal_rank": null
+    },
+    "final": {
+      "status": "UNKNOWN",
+      "expected_sample_count": 40,
+      "known_sample_count": 0,
+      "unknown_sample_count": 40,
+      "known_only_macro_recall": null,
+      "known_only_micro_recall": null,
+      "known_group_denominator": 0,
+      "full_required_coverage_sample_count": 0,
+      "critical_evaluable_sample_count": 0,
+      "critical_unknown_sample_count": 40,
+      "critical_full_coverage_sample_count": 0,
+      "known_only_critical_full_coverage_rate": null,
+      "known_only_mean_group_reciprocal_rank": null
+    },
+    "read": {
+      "status": "UNKNOWN",
+      "expected_sample_count": 40,
+      "known_sample_count": 0,
+      "unknown_sample_count": 40,
+      "known_only_macro_recall": null,
+      "known_only_micro_recall": null,
+      "known_group_denominator": 0,
+      "full_required_coverage_sample_count": 0,
+      "critical_evaluable_sample_count": 0,
+      "critical_unknown_sample_count": 40,
+      "critical_full_coverage_sample_count": 0,
+      "known_only_critical_full_coverage_rate": null,
+      "known_only_mean_group_reciprocal_rank": null
+    }
+  },
+  "semantic_status_counts": {
+    "UNKNOWN": 40
+  },
+  "latency": [
+    {
+      "split": "dev",
+      "cache_state": "unknown",
+      "query_state": "unknown",
+      "measurement_scope": "unknown",
+      "metric": "complete_response_ms",
+      "first_token_used_as_complete_response": false,
+      "case_count": 20,
+      "expected_sample_count": 20,
+      "measured_sample_count": 0,
+      "unknown_sample_count": 20,
+      "p50_ms": null,
+      "p95_ms": null,
+      "percentile_method": "nearest_rank"
+    },
+    {
+      "split": "holdout",
+      "cache_state": "unknown",
+      "query_state": "unknown",
+      "measurement_scope": "unknown",
+      "metric": "complete_response_ms",
+      "first_token_used_as_complete_response": false,
+      "case_count": 20,
+      "expected_sample_count": 20,
+      "measured_sample_count": 0,
+      "unknown_sample_count": 20,
+      "p50_ms": null,
+      "p95_ms": null,
+      "percentile_method": "nearest_rank"
+    }
+  ],
+  "samples": [
+    {
+      "case_id": "valuation-dev-01",
+      "family_id": "equity-suspension",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-02",
+      "family_id": "equity-inactive-market",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-03",
+      "family_id": "ipo-before-listing",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-04",
+      "family_id": "equity-restricted-lockup",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-05",
+      "family_id": "equity-ex-rights",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-06",
+      "family_id": "equity-cash-dividend",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-07",
+      "family_id": "bond-price-interest",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-08",
+      "family_id": "bond-credit-event",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-09",
+      "family_id": "vendor-missing-price",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-10",
+      "family_id": "vendor-price-anomaly",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-11",
+      "family_id": "market-calendar",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-12",
+      "family_id": "fx-source-date",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-13",
+      "family_id": "overseas-timezone",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-14",
+      "family_id": "etf-iopv-versus-nav",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-15",
+      "family_id": "money-fund-method-check",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-16",
+      "family_id": "reit-share-underlying",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-17",
+      "family_id": "futures-settlement",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-18",
+      "family_id": "otc-derivative-model",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-19",
+      "family_id": "fixed-fee-accrual",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-dev-20",
+      "family_id": "nav-rounding",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-01",
+      "family_id": "negotiated-deposit",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-02",
+      "family_id": "repo-contract-legs",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-03",
+      "family_id": "abs-tranche",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-04",
+      "family_id": "convertible-conversion",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-05",
+      "family_id": "securities-lending-rights",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-06",
+      "family_id": "fof-underlying-nav-lag",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-07",
+      "family_id": "share-class-allocation",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-08",
+      "family_id": "flow-related-valuation-adjustment",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-09",
+      "family_id": "side-pocket-segregation",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-10",
+      "family_id": "liquidation-basis",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-11",
+      "family_id": "nav-error-correction",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-12",
+      "family_id": "performance-fee",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-13",
+      "family_id": "tax-in-valuation",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-14",
+      "family_id": "clearing-reconciliation",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-15",
+      "family_id": "unsettled-trade-recognition",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-16",
+      "family_id": "derivative-collateral",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-17",
+      "family_id": "bankruptcy-recovery-rights",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-18",
+      "family_id": "delisting-transfer",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-19",
+      "family_id": "fund-distribution-nav",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    },
+    {
+      "case_id": "valuation-holdout-20",
+      "family_id": "valuation-override-governance",
+      "sample_id": "s1",
+      "split": "holdout",
+      "review_status": "pending",
+      "prediction_present": false,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 0,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 0,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_PREDICTION",
+            "MISSING_STAGE",
+            "ZERO_GOLD_GROUPS"
+          ],
+          "groups": []
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "MISSING_PREDICTION",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "unknown",
+        "measurement_scope": "unknown",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [],
+      "execution_observation": null,
+      "run_state": "UNKNOWN",
+      "adapter_provenance": null,
+      "retrieval_observation": null
+    }
+  ],
+  "privacy": {
+    "query_text_included": false,
+    "source_text_included": false,
+    "answer_text_included": false,
+    "reviewer_rationale_included": false
+  }
+}

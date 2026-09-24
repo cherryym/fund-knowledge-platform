@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 
 from . import hybrid_retrieval
+from .retrieval_observation import observation_summary
 
 
 def search_many_catalog(db, user, space_id, queries, *, pages, vector=None, scope="reference",
@@ -75,5 +76,6 @@ def _merge_results(queries, results, pages, scope, started):
         "timing_ms": round((time.monotonic() - started) * 1000, 3), "evidence_preview": False,
         "candidate_preview_stats": {"verified_snippets": len({u["unit_id"] for u in units}),
             "source_blocks_checked": sum(r.get("candidate_preview_stats", {}).get("source_blocks_checked", 0) for r in results)},
+        "retrieval_observations": [observation_summary(r["retrieval_trace"]) for r in results if "retrieval_trace" in r],
         "searches": [{key: r[key] for key in ("query", "mode", "timing_ms", "timing_scope", "warnings", "returned", "reranking", "fusion_weights") if key in r}
                      for r in results]}

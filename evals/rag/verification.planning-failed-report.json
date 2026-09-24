@@ -1,0 +1,633 @@
+{
+  "schema_version": "1.0",
+  "kind": "evaluation_report",
+  "dataset_id": "synthetic-engineering-v1",
+  "run_id": "synthetic-planning-failed",
+  "evidence_domain": "synthetic",
+  "status": "UNKNOWN",
+  "engineering_status": "UNKNOWN",
+  "professional_status": "UNKNOWN",
+  "coverage": {
+    "scope_id": "synthetic-contract-only",
+    "selected_split": "dev",
+    "dataset_case_count": 2,
+    "expected_case_count": 1,
+    "present_case_count": 1,
+    "expected_sample_count": 1,
+    "present_sample_count": 1,
+    "expert_confirmed_case_count": 0,
+    "pending_case_count": 0,
+    "zero_gold_case_count": 0,
+    "excluded_case_ids": [
+      "syn-holdout"
+    ],
+    "missing_case_ids": [],
+    "missing_samples": [],
+    "scope_statement": "ONLY_FROZEN_LISTED_CASES_AND_EXPECTED_SAMPLES_NO_POPULATION_GENERALIZATION",
+    "source_bytes_rehashed": false,
+    "models_executed": false,
+    "all_corpus_recall": "NOT_EVALUATED"
+  },
+  "leakage": {
+    "status": "PASS",
+    "split_overlap_family_ids": [],
+    "exposed_holdout_family_ids": [],
+    "holdout_family_count": 1,
+    "exposure_attested": true,
+    "basis": "EXPLICIT_FAMILY_ASSIGNMENTS_AND_DECLARED_HISTORY_ONLY",
+    "external_or_semantic_leakage_independently_verified": false,
+    "failure_codes": []
+  },
+  "stages": {
+    "candidate": {
+      "status": "UNKNOWN",
+      "expected_sample_count": 1,
+      "known_sample_count": 0,
+      "unknown_sample_count": 1,
+      "known_only_macro_recall": null,
+      "known_only_micro_recall": null,
+      "known_group_denominator": 0,
+      "full_required_coverage_sample_count": 0,
+      "critical_evaluable_sample_count": 0,
+      "critical_unknown_sample_count": 1,
+      "critical_full_coverage_sample_count": 0,
+      "known_only_critical_full_coverage_rate": null,
+      "known_only_mean_group_reciprocal_rank": null
+    },
+    "final": {
+      "status": "UNKNOWN",
+      "expected_sample_count": 1,
+      "known_sample_count": 0,
+      "unknown_sample_count": 1,
+      "known_only_macro_recall": null,
+      "known_only_micro_recall": null,
+      "known_group_denominator": 0,
+      "full_required_coverage_sample_count": 0,
+      "critical_evaluable_sample_count": 0,
+      "critical_unknown_sample_count": 1,
+      "critical_full_coverage_sample_count": 0,
+      "known_only_critical_full_coverage_rate": null,
+      "known_only_mean_group_reciprocal_rank": null
+    },
+    "read": {
+      "status": "UNKNOWN",
+      "expected_sample_count": 1,
+      "known_sample_count": 0,
+      "unknown_sample_count": 1,
+      "known_only_macro_recall": null,
+      "known_only_micro_recall": null,
+      "known_group_denominator": 0,
+      "full_required_coverage_sample_count": 0,
+      "critical_evaluable_sample_count": 0,
+      "critical_unknown_sample_count": 1,
+      "critical_full_coverage_sample_count": 0,
+      "known_only_critical_full_coverage_rate": null,
+      "known_only_mean_group_reciprocal_rank": null
+    }
+  },
+  "semantic_status_counts": {
+    "UNKNOWN": 1
+  },
+  "latency": [
+    {
+      "split": "dev",
+      "cache_state": "unknown",
+      "query_state": "first",
+      "measurement_scope": "server_execution_to_completed_answer",
+      "metric": "complete_response_ms",
+      "first_token_used_as_complete_response": false,
+      "case_count": 1,
+      "expected_sample_count": 1,
+      "measured_sample_count": 0,
+      "unknown_sample_count": 1,
+      "p50_ms": null,
+      "p95_ms": null,
+      "percentile_method": "nearest_rank"
+    }
+  ],
+  "samples": [
+    {
+      "case_id": "syn-dev",
+      "family_id": "syn-family-dev",
+      "sample_id": "s1",
+      "split": "dev",
+      "review_status": "engineering_confirmed",
+      "prediction_present": true,
+      "stages": {
+        "candidate": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 2,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 2,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_STAGE"
+          ],
+          "groups": [
+            {
+              "group_id": "g-main",
+              "critical": true,
+              "status": "UNKNOWN",
+              "observed_fully_covered": false,
+              "first_full_rank": null,
+              "alternatives": [
+                {
+                  "alternative_id": "canonical",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-a",
+                        "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 2,
+                        "end": 12
+                      },
+                      "required_chars": 10,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "alternative_id": "equivalent",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-equivalent",
+                        "version_id": "syn-v2",
+                        "block_id": "syn-alt",
+                        "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 3,
+                        "end": 13
+                      },
+                      "required_chars": 10,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "group_id": "g-boundary",
+              "critical": true,
+              "status": "UNKNOWN",
+              "observed_fully_covered": false,
+              "first_full_rank": null,
+              "alternatives": [
+                {
+                  "alternative_id": "joint-spans",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-b",
+                        "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 0,
+                        "end": 8
+                      },
+                      "required_chars": 8,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    },
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-c",
+                        "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 10,
+                        "end": 16
+                      },
+                      "required_chars": 6,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "final": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 2,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 2,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_STAGE"
+          ],
+          "groups": [
+            {
+              "group_id": "g-main",
+              "critical": true,
+              "status": "UNKNOWN",
+              "observed_fully_covered": false,
+              "first_full_rank": null,
+              "alternatives": [
+                {
+                  "alternative_id": "canonical",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-a",
+                        "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 2,
+                        "end": 12
+                      },
+                      "required_chars": 10,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "alternative_id": "equivalent",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-equivalent",
+                        "version_id": "syn-v2",
+                        "block_id": "syn-alt",
+                        "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 3,
+                        "end": 13
+                      },
+                      "required_chars": 10,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "group_id": "g-boundary",
+              "critical": true,
+              "status": "UNKNOWN",
+              "observed_fully_covered": false,
+              "first_full_rank": null,
+              "alternatives": [
+                {
+                  "alternative_id": "joint-spans",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-b",
+                        "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 0,
+                        "end": 8
+                      },
+                      "required_chars": 8,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    },
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-c",
+                        "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 10,
+                        "end": 16
+                      },
+                      "required_chars": 6,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "read": {
+          "status": "UNKNOWN",
+          "stage_present": false,
+          "stage_complete": false,
+          "observation_scope": null,
+          "rank_basis": null,
+          "required_group_count": 2,
+          "observed_covered_group_count": 0,
+          "recall": null,
+          "all_required_groups_covered": null,
+          "critical_group_count": 2,
+          "all_critical_groups_covered": null,
+          "all_required_groups_rank": null,
+          "critical_groups_rank": null,
+          "mean_group_reciprocal_rank": null,
+          "failure_codes": [
+            "MISSING_STAGE"
+          ],
+          "groups": [
+            {
+              "group_id": "g-main",
+              "critical": true,
+              "status": "UNKNOWN",
+              "observed_fully_covered": false,
+              "first_full_rank": null,
+              "alternatives": [
+                {
+                  "alternative_id": "canonical",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-a",
+                        "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 2,
+                        "end": 12
+                      },
+                      "required_chars": 10,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "alternative_id": "equivalent",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-equivalent",
+                        "version_id": "syn-v2",
+                        "block_id": "syn-alt",
+                        "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 3,
+                        "end": 13
+                      },
+                      "required_chars": 10,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "group_id": "g-boundary",
+              "critical": true,
+              "status": "UNKNOWN",
+              "observed_fully_covered": false,
+              "first_full_rank": null,
+              "alternatives": [
+                {
+                  "alternative_id": "joint-spans",
+                  "fully_covered": false,
+                  "first_full_rank": null,
+                  "spans": [
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-b",
+                        "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 0,
+                        "end": 8
+                      },
+                      "required_chars": 8,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    },
+                    {
+                      "source": {
+                        "resource_id": "syn-resource",
+                        "version_id": "syn-v1",
+                        "block_id": "syn-block-c",
+                        "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                        "valid_from": "2026-01-01",
+                        "valid_to": "2027-01-01"
+                      },
+                      "required_span": {
+                        "start": 10,
+                        "end": 16
+                      },
+                      "required_chars": 6,
+                      "covered_chars": 0,
+                      "fully_covered": false,
+                      "first_full_rank": null,
+                      "mismatch_counts": {},
+                      "failure_codes": [
+                        "NO_MATCHING_SPAN"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "semantic": {
+        "status": "UNKNOWN",
+        "expected_claim_count": 0,
+        "human_reviewed_claim_count": 0,
+        "missing_claim_ids": [],
+        "human_label_counts": {
+          "supported": 0,
+          "partial": 0,
+          "contradicted": 0,
+          "insufficient": 0
+        },
+        "claim_outcomes": [],
+        "human_expert_reviewed": false,
+        "failure_codes": [
+          "ANSWER_INCOMPLETE",
+          "ZERO_ANSWER_CLAIMS",
+          "MISSING_HUMAN_JUDGMENT"
+        ]
+      },
+      "engineering_status": "UNKNOWN",
+      "professional_status": "UNKNOWN",
+      "professional_failure_codes": [
+        "SYNTHETIC_IS_NOT_PROFESSIONAL_EVIDENCE",
+        "CASE_NOT_EXPERT_CONFIRMED",
+        "ANSWER_NOT_EXPERT_REVIEWED"
+      ],
+      "latency": {
+        "complete_response_ms": null,
+        "cache_state": "unknown",
+        "query_state": "first",
+        "measurement_scope": "server_execution_to_completed_answer",
+        "status": "UNKNOWN",
+        "failure_codes": [
+          "COMPLETE_RESPONSE_TIMING_MISSING_OR_INCOMPLETE"
+        ]
+      },
+      "adapter_diagnostics": [
+        "ANSWER_NOT_CONFIRMED_COMPLETE",
+        "FINAL_STAGE_NOT_EXPORTED",
+        "READ_STAGE_NOT_EXPORTED",
+        "RUN_NOT_COMPLETED",
+        "TRACE_MISSING"
+      ],
+      "execution_observation": {
+        "execution_elapsed_ms": 10000,
+        "phases": {
+          "model_planning": {
+            "elapsed_ms": 10000,
+            "calls": 1
+          }
+        },
+        "durations_additive": false,
+        "first_visible_answer_ms": null,
+        "first_visible_answer_status": "NOT_MEASURED"
+      },
+      "run_state": "FAILED",
+      "adapter_provenance": {
+        "adapter_version": "candidate_lineage_v1_to_rag_eval_v1",
+        "source_manifest_id": null,
+        "source_export_id": null,
+        "source_bytes_rehashed": false
+      },
+      "retrieval_observation": null
+    }
+  ],
+  "privacy": {
+    "query_text_included": false,
+    "source_text_included": false,
+    "answer_text_included": false,
+    "reviewer_rationale_included": false
+  }
+}

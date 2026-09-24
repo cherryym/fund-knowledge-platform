@@ -45,6 +45,7 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
     fresh, unavailable, outlines = [], [], []
     for pid in wanted:
         page = pages[pid]
+        pending_incoming = {}
         rows = sorted(grouped.get(page["version_id"], []), key=lambda row: (row["ordinal"], row["block_id"]))
         if not rows or len(rows) != page["block_count"]:
             unavailable.append(pid)
@@ -73,7 +74,7 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
                     locators=(reference_locators or {}).get(pid, ()), structural_groups=not requested_ids)
                 chosen_sections = expansion["sections"]
                 page["reading_dependencies"] = expansion["references"]
-                page["incoming_context"] = {**page.get("incoming_context", {}), **expansion["incoming"]}
+                pending_incoming = expansion["incoming"]
                 additions = [*page.get("context_structural_additions", []), *expansion["structural_additions"]]
                 page["context_structural_additions"] = list({(x["from_section_id"], x["to_section_id"]): x for x in additions}.values())
             elif expand_dependencies or allow_parent:
@@ -126,6 +127,10 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
         previous = {section["section_id"]: section for section in page.get("read_sections", [])}
         previous.update({section["section_id"]: section for section in chosen_sections})
         page["read_sections"] = list(previous.values())
+        if pending_incoming:
+            from .evidence_context import bind_context_receipts
+            page["incoming_context"] = {**page.get("incoming_context", {}),
+                **bind_context_receipts(page, pending_incoming, page.get("source_outline", []), page["records"])}
     return fresh, unavailable, next_evidence, outlines
 
 

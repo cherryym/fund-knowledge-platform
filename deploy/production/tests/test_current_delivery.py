@@ -26,6 +26,8 @@ def test_current_untracked_runtime_is_packaged():
     assert {"backend/fund_kb/business_reading.py", "backend/fund_kb/evidence_context.py",
             "backend/fund_kb/source_associations.py", "backend/fund_kb/qwen_reranker.py",
             "backend/fund_kb/qwen_reranker_spec.py"} <= files
+    assert {"backend/fund_kb/rag_evaluation.py", "evals/rag/schema.json",
+            "scripts/evaluate-rag.py", "scripts/inspect-rag-fusion.py"} <= files
     assert not any(".venv" in f or "node_modules" in f or "__pycache__" in f for f in files)
 
 

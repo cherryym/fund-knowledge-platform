@@ -17,6 +17,7 @@ from . import models as m
 from . import services as svc
 from .ingestion import block_text, text_sha256
 from .retrieval import lexical_scores
+from .retrieval_observation import observe_candidates, rank_candidates, rerank_pool_size
 from .source_sections import build_document_sections
 from .vector_indexing import current_receipts
 from .wiki_catalog import build_catalog, catalog_signature
@@ -367,22 +368,20 @@ def _unit_results(db, user, space_id, query, context, scope, pages, vector, chan
                   catalog_versions, blocks, headings, checked_blocks, warnings, started, limit):
     by_version = {p["version_id"]: p for p in pages.values()}
     units, weights = _fused_unit_candidates(query, pages, channel_hits, catalog_versions, blocks, headings, warnings)
-    # Only the first compute batch is reranked. Remaining candidates are kept
-    # discoverable and can be processed by another SEARCH; no document cap.
-    count = getattr(vector.settings, "retrieval_unit_candidates", 80)
+    # Candidate policy is explicit and reported. complete_pool scores the whole
+    # admitted union using native memory-bounded batches. Keep ranked_prefix as
+    # the default until paired quality/latency evidence supports promotion.
+    count = rerank_pool_size(vector.settings, units)
     batch, remaining = units[:count], units[count:]
     rerank = {"mode": "disabled", "model": None, "input_units": len(batch), "elapsed_ms": 0.0,
-              "business_accuracy": "NOT_EVALUATED"}
+              "business_accuracy": "NOT_EVALUATED",
+              "candidate_policy": getattr(vector.settings, "retrieval_rerank_policy", "ranked_prefix")}
     before = time.monotonic()
     if batch and getattr(vector.settings, "reranker_mode", "disabled") == "local":
         try:
             scores = vector.rerank(query, [u["title"] + "\n" + " / ".join(u.get("section_path", []))
                                           + "\n" + u["text"] for u in batch])
-            if scores is None:
-                raise RuntimeError("RERANKER_UNAVAILABLE")
-            for unit, score in zip(batch, scores, strict=True):
-                unit["rerank_score"] = score
-            batch.sort(key=lambda u: (-u["rerank_score"], -u["score"], u["unit_id"]))
+            batch = rank_candidates(batch, scores)
             rerank.update(mode="local_cross_encoder", model=vector.settings.reranker_model,
                 revision=vector.settings.reranker_revision)
         except Exception:  # noqa: BLE001 - retain retrievable candidates with an explicit quality warning.
@@ -403,7 +402,7 @@ def _unit_results(db, user, space_id, query, context, scope, pages, vector, chan
 
 
 def _format_unit_results(query, scope, pages, ready, ordered, weights, rerank,
-                         checked_blocks, warnings, elapsed_ms, limit):
+                         checked_blocks, warnings, elapsed_ms, limit, *, phases_ms=None):
     """Identical result/ordering contract; caller has already checked live authority."""
     grouped = {}
     for rank, unit in enumerate(ordered, 1):
@@ -422,6 +421,7 @@ def _format_unit_results(query, scope, pages, ready, ordered, weights, rerank,
         "returned": len(hits), "warnings": list(dict.fromkeys(warnings)),
         "timing_ms": round(elapsed_ms, 3), "evidence_preview": False,
         "fusion_weights": weights, "reranking": rerank,
+        "retrieval_trace": observe_candidates(query, ordered, rerank, phases_ms=phases_ms),
         "candidate_preview_stats": {"verified_snippets": len(ordered), "source_blocks_checked": checked_blocks}}
 
 

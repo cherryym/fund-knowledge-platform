@@ -183,3 +183,48 @@ test('document divider clamps when the companion opens and restores preference w
   e.dispose();e.workspace.classList.remove('no-overview');await Promise.resolve();
   assert.equal(e.host.style.getPropertyValue('--document-category-width'),'');
 });
+
+test('consultation divider reserves answer space, with safe narrow-container bounds',()=>{
+  assert.deepEqual(previewResizeLimits('consultation-history',1100),{min:160,max:480,defaultWidth:200});
+  assert.deepEqual(previewResizeLimits('consultation-history',700),{min:160,max:340,defaultWidth:200});
+  assert.deepEqual(previewResizeLimits('consultation-history',500),{min:140,max:140,defaultWidth:200});
+  assert.equal(previewResizeLimits('consultation-history',300).max,0);
+});
+test('consultation drag grows to the right, shrinks left, and coalesces updates without touching another panel',()=>{
+  const e=setup('consultation-history');e.event('pointerdown');
+  for(let i=1;i<=100;i++)e.event('pointermove',{clientX:700+i});
+  assert.equal(frames.size,1);assert.equal(e.width(),200);
+  assert.equal(window.localStorage.getItem(e.key),null);
+  flush();assert.equal(e.width(),300);
+  observers[0].cb();assert.equal(e.captured.size,1,'history reflow cannot cancel the drag');
+  e.event('pointerup',{clientX:850});assert.equal(e.width(),350);
+  assert.equal(e.host.style.getPropertyValue('--consultation-history-width'),'350px');
+  assert.equal(e.host.style.getPropertyValue('--document-preview-width'),'');
+  assert.equal(window.localStorage.getItem(e.key),'350');
+  e.event('pointerdown');e.event('pointerup',{clientX:630});assert.equal(e.width(),280);
+});
+test('consultation divider clamps, supports accessible keys and resets on double click',()=>{
+  const e=setup('consultation-history');e.event('pointerdown');e.event('pointerup',{clientX:5000});
+  assert.equal(e.width(),480);
+  e.event('keydown',{key:'ArrowLeft'});assert.equal(e.width(),456);
+  e.event('keydown',{key:'Home'});assert.equal(e.width(),160);
+  e.event('keydown',{key:'ArrowRight',shiftKey:true});assert.equal(e.width(),240);
+  e.event('keydown',{key:'End'});assert.equal(e.width(),480);
+  e.event('dblclick');assert.equal(e.width(),200);
+  assert.equal(e.handle.getAttribute('aria-valuetext'),'200 像素');
+});
+test('consultation width persists across remount and narrow layouts do not erase the preference',()=>{
+  const e=setup('consultation-history','400');e.available(620);observers[0].cb();
+  assert.equal(e.width(),260);assert.equal(window.localStorage.getItem(e.key),'400');
+  e.available(390);observers[0].cb();assert.equal(e.width(),30);
+  e.available(1100);observers[0].cb();assert.equal(e.width(),400);
+  e.dispose();assert.equal(e.host.style.getPropertyValue('--consultation-history-width'),'');
+  assert.equal(setup('consultation-history').width(),400);
+});
+for(const signal of ['pointercancel','Escape'])test(`consultation ${signal} discards an unfinished drag`,()=>{
+  const e=setup('consultation-history','300');e.event('pointerdown');
+  e.event('pointermove',{clientX:820});flush();assert.equal(e.width(),420);
+  if(signal==='Escape')e.event('keydown',{key:'Escape'});else e.event(signal);
+  assert.equal(e.width(),300);assert.equal(window.localStorage.getItem(e.key),'300');
+  assert.equal(e.captured.size,0);assert.equal(e.host.dataset.previewResizing,undefined);
+});

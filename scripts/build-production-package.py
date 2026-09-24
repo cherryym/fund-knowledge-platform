@@ -18,12 +18,20 @@ VERSION = "0.1.0-production.20260923"
 NAME = f"fundkb-windows-x64-oracle-{VERSION}-online"
 FORBIDDEN = {"data", "runtime", "node_modules", ".venv", "__pycache__", ".git", "output", ".pytest_cache", ".ruff_cache"}
 PRIVATE_SUFFIXES = {".key", ".pem", ".sqlite", ".sqlite3", ".db", ".log", ".safetensors", ".onnx", ".gguf"}
-CURRENT_SOURCE_DIRS = ("backend/fund_kb", "backend/tests", "frontend/src", "contracts", "integrations")
+CURRENT_SOURCE_DIRS = ("backend/fund_kb", "backend/tests", "frontend/src", "contracts", "integrations", "evals/rag")
 CURRENT_SOURCE_FILES = (
     "scripts/configure-retrieval.py", "scripts/prepare-qwen-reranker.py", "scripts/probe-qwen-reranker.py",
     "scripts/probe-context-reranker.py", "scripts/private-transfer.py", "scripts/restore-private-transfer.py",
     "docs/business-reading-focus.md", "docs/context-completion-validation-20260923.md",
     "docs/qwen-reranker-validation-20260923.md",
+    "scripts/evaluate-rag.py", "scripts/inspect-rag-fusion.py", "scripts/probe-qwen-padding.py",
+    "docs/rag-evaluation.md", "docs/rag-structure-audit.md", "docs/qwen-rerank-padding.md",
+    "docs/rag-chain-optimization-20260924.md",
+    "docs/evidence-review-v1.md",
+    "docs/rag-repair-20260924.md", "docs/qwen-label-head-20260924.md",
+    "scripts/probe-qwen-label-head.py", "docs/qwen-label-head-smoke-20260924.json",
+    "docs/qwen-label-head-shared-20260924.json",
+    "docs/qwen-label-head-quiet-scale-20260924.json",
 )
 
 

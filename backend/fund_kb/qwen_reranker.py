@@ -12,6 +12,10 @@ from .local_encoders import LocalEncoderError, _positive_setting, _texts, _Token
 from .qwen_reranker_spec import DEFAULT_RERANK_INSTRUCTION, QWEN_RERANKER_SPEC
 
 ADAPTER = "qwen3-reranker-yes-no-v1"
+BATCHING_STRATEGY = "stable_token_length_ascending_v1"
+OUTPUT_PROJECTION = "yes_no_weight_rows_v1"
+FULL_OUTPUT_PROJECTION = "full_vocab_last_token_v1"
+LABEL_TOKEN_IDS = (9693, 2152)
 PREFIX = ('<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. '
           'Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n')
 SUFFIX = '<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n'
@@ -25,6 +29,10 @@ class QwenReranker(_TokenizationMemo):
     every source character remains covered. No auto-download, remote code,
     dtype/device fallback or change to the embedding/index fingerprint.
     """
+
+    batching_strategy = BATCHING_STRATEGY
+    output_projection = FULL_OUTPUT_PROJECTION
+    projected_output_columns = 0  # Filled from the actual output; empty work projects nothing.
 
     def __init__(self, settings):
         self.model_name = getattr(settings, "reranker_model", None)
@@ -49,6 +57,7 @@ class QwenReranker(_TokenizationMemo):
         self.instruction = instruction or DEFAULT_RERANK_INSTRUCTION
         self._lock = threading.RLock()
         self._tokenizer = self._model = self._torch = None
+        self._label_weight = None
         self.device = None
         self.verified_files = {}
         self.last_diagnostics = {}
@@ -178,6 +187,52 @@ class QwenReranker(_TokenizationMemo):
             raise LocalEncoderError("QWEN_MODEL_DEVICE_OR_DTYPE_MISMATCH")
         self._model = model
 
+    def _prepare_label_head(self):
+        # This pinned causal head is a bias-free linear map. Gather two original
+        # rows once, without replacing/mutating the (possibly tied) full weights.
+        # Never merge the rows: BF16 logits must round separately before their
+        # FP32 subtraction, exactly as in the full-vocabulary scoring contract.
+        torch = self._torch
+        from transformers.models.qwen3.modeling_qwen3 import Qwen3ForCausalLM, Qwen3Model
+        head = getattr(self._model, "lm_head", None)
+        if (type(self._model) is not Qwen3ForCausalLM or type(self._model.model) is not Qwen3Model
+                or type(head) is not torch.nn.Linear or head.bias is not None
+                or head.weight.ndim != 2 or head.weight.shape[0] <= max(LABEL_TOKEN_IDS)
+                or head.weight.device.type != self.device
+                or head.weight.dtype != getattr(torch, self.dtype)):
+            raise LocalEncoderError("QWEN_UNSUPPORTED_RERANK_HEAD")
+        with torch.inference_mode():
+            indices = torch.tensor(LABEL_TOKEN_IDS, dtype=torch.long, device=head.weight.device)
+            self._label_weight = head.weight.detach().index_select(0, indices).contiguous()
+
+    def _label_logits(self, inputs, masks):
+        # Production default intentionally retains the original full-vocabulary
+        # path. The two-row experiment was numerically equivalent on the tested
+        # native weights but did NOT demonstrate an end-to-end performance win.
+        output = self._model(input_ids=inputs, attention_mask=masks,
+            use_cache=False, return_dict=True, logits_to_keep=1, output_hidden_states=False)
+        logits = output.logits
+        if logits.ndim != 3 or tuple(logits.shape[:2]) != (len(inputs), 1) or logits.shape[2] <= 9693:
+            raise LocalEncoderError("QWEN_RERANK_INVALID_OUTPUT")
+        self.projected_output_columns = int(logits.shape[2])
+        return logits[:, -1, list(LABEL_TOKEN_IDS)]
+
+    def _experimental_label_logits(self, inputs, masks):
+        """Explicit probe-subclass entry only; no Settings/profile opt-in or default activation."""
+        if self._label_weight is None:
+            self._prepare_label_head()
+        # Same decoder, final norm, masks and positions as Qwen3ForCausalLM.
+        # Only the final linear output width changes; no intermediate states,
+        # sequence positions, document windows or attention work are skipped.
+        output = self._model.model(input_ids=inputs, attention_mask=masks,
+            use_cache=False, return_dict=True, output_hidden_states=False)
+        hidden = output.last_hidden_state
+        if (hidden.ndim != 3 or tuple(hidden.shape[:2]) != tuple(inputs.shape)
+                or hidden.shape[2] != self._label_weight.shape[1]):
+            raise LocalEncoderError("QWEN_RERANK_INVALID_OUTPUT")
+        self.projected_output_columns = 2
+        return self._torch.nn.functional.linear(hidden[:, -1:, :], self._label_weight)[:, 0, :]
+
     def _forward(self, rows):
         self._load_model()
         torch = self._torch
@@ -190,18 +245,23 @@ class QwenReranker(_TokenizationMemo):
             inputs[i, width - len(row):] = torch.tensor(row, dtype=torch.long)
             masks[i, width - len(row):] = 1
         with torch.inference_mode():
-            output = self._model(input_ids=inputs.to(self.device), attention_mask=masks.to(self.device),
-                use_cache=False, return_dict=True, logits_to_keep=1, output_hidden_states=False)
-            logits = output.logits
-            if logits.ndim != 3 or tuple(logits.shape[:2]) != (len(rows), 1) or logits.shape[2] <= 9693:
+            values = self._label_logits(inputs.to(self.device), masks.to(self.device))
+            if tuple(values.shape) != (len(rows), 2):
                 raise LocalEncoderError("QWEN_RERANK_INVALID_OUTPUT")
-            values = logits[:, -1, [9693, 2152]].float()
+            values = values.float()
             if not torch.isfinite(values).all():
                 raise LocalEncoderError("QWEN_RERANK_INVALID_OUTPUT")
             return (values[:, 0] - values[:, 1]).cpu().tolist()
 
     def score(self, query, texts):
         return self.score_many([(query, texts)])[0]
+
+    def _ordered_frame_keys(self, unique):
+        # Stable ties retain first occurrence in request/document/window order.
+        # Keys, not sorted positions, own the scatter mapping. Keep this small
+        # scheduling seam so the offline probe can compare insertion order with
+        # the same framing, deduplication, forward pass and max aggregation.
+        return sorted(unique, key=lambda key: len(key[1]))
 
     def score_many(self, requests):
         if not isinstance(requests, (list, tuple)):
@@ -222,21 +282,28 @@ class QwenReranker(_TokenizationMemo):
                     windows.append([dict(location, input_tokens=len(ids)) for ids, location in frames])
                     work.extend((request_index, document_index, ids) for ids, _ in frames)
                 details.append({"windows": windows, "window_count": sum(map(len, windows))})
-            # Identical instructed token frames have identical semantics. Score
-            # each once in THIS call; never share a cache across users/requests,
-            # change a window, omit a candidate, or merge distinct queries.
+            # Reuse exact token frames only for the exact same query in THIS
+            # call. Tokenizer normalization can give distinct queries identical
+            # IDs; keep their work separate even in that case. The instruction
+            # and full pair framing remain in the IDs. Never cache scores across
+            # calls, change a window or omit a candidate/window occurrence.
             unique = {}
             for i, j, ids in work:
-                unique.setdefault(tuple(ids), []).append((i, j))
-            frames = sorted(unique, key=len)
+                unique.setdefault((prepared[i][0], tuple(ids)), []).append((i, j))
+            frames = self._ordered_frame_keys(unique)
+            actual_batches = actual_useful = actual_padded = 0
             for offset in range(0, len(frames), self.batch_size):
-                batch = frames[offset:offset + self.batch_size]
+                keys = frames[offset:offset + self.batch_size]
+                batch = [key[1] for key in keys]
                 values = self._forward(batch)
                 if len(values) != len(batch) or any(isinstance(v, bool) or not isinstance(v, (float, int))
                                                   or not math.isfinite(v) for v in values):
                     raise LocalEncoderError("RERANK_ALIGNMENT_FAILED")
-                for ids, value in zip(batch, values, strict=True):
-                    for i, j in unique[ids]:
+                actual_batches += 1
+                actual_useful += sum(map(len, batch))
+                actual_padded += len(batch) * max(map(len, batch))
+                for key, value in zip(keys, values, strict=True):
+                    for i, j in unique[key]:
                         scores[i][j] = max(scores[i][j], float(value))
             if any(not all(math.isfinite(value) for value in row) for row in scores):
                 raise LocalEncoderError("RERANK_ALIGNMENT_FAILED")
@@ -246,12 +313,22 @@ class QwenReranker(_TokenizationMemo):
                 "request_count": len(prepared), "pair_count": sum(len(texts) for _, texts in prepared),
                 "window_count": len(work), "requests": details,
                 "computed_window_count": len(frames), "reused_window_count": len(work) - len(frames),
+                "batching_strategy": self.batching_strategy,
+                "deduplication_strategy": "exact_query_and_token_ids_call_scoped",
+                "actual_batch_count": actual_batches, "actual_useful_tokens": actual_useful,
+                "actual_padded_tokens": actual_padded,
+                "actual_padding_tokens": actual_padded - actual_useful,
+                "output_projection": self.output_projection,
+                "projected_output_columns": self.projected_output_columns,
+                "actual_projected_logits": len(frames) * self.projected_output_columns,
                 "elapsed_seconds": round(time.monotonic() - started, 6)}
             return scores
 
     def close(self):
         with self._lock:
             self._clear_token_memo()
+            self._label_weight = None
+            self.projected_output_columns = 0
             self._model = self._tokenizer = None
             if self._torch is not None and self.device == "mps":
                 self._torch.mps.empty_cache()

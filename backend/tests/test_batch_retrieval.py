@@ -79,6 +79,32 @@ def test_three_projection_checks_not_three_per_query(env):
     assert vector.calls["receipts"] == 3
 
 
+def test_followup_schedule_keeps_single_query_inference_but_shares_fresh_source_checks(env):
+    from fund_kb.batch_retrieval import search_catalog_batch
+    from fund_kb.universal_retrieval import _merge_results
+    _, _, vector, pages = setup(env)
+    queries = ["事项0", "事项1", "后续事项"]
+    with env.db() as db:
+        serial = search_many_catalog_serial(db, env.owner, env.space, queries,
+            pages=pages, vector=vector, session_factory=env.db)
+    vector.calls["receipts"] = 0
+    rows, receipt = search_catalog_batch(env.owner, env.space, queries, pages=pages,
+        vector=vector, session_factory=env.db, inference_schedule="serial_equivalent")
+    actual = _merge_results(queries, rows, pages, "reference", 0)
+    assert actual["units"] == serial["units"] and actual["hits"] == serial["hits"]
+    assert vector.calls["receipts"] == 3
+    assert vector.calls["dense_batches"] == vector.calls["rerank_batches"] == []
+    assert receipt["inference_schedule"] == "serial_equivalent"
+
+
+def test_unknown_inference_schedule_does_not_silently_change_computation(env):
+    from fund_kb.batch_retrieval import search_catalog_batch
+    _, _, vector, pages = setup(env)
+    with pytest.raises(ValueError, match="INVALID_INFERENCE_SCHEDULE"):
+        search_catalog_batch(env.owner, env.space, ["事项"], pages=pages, vector=vector,
+            session_factory=env.db, inference_schedule="unknown")
+
+
 def test_no_sql_session_held_during_vector_or_encoder_waits(env):
     _, _, vector, pages = setup(env)
     open_sessions = []

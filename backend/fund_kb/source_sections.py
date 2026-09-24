@@ -739,6 +739,10 @@ def _checked_blocks(tree: _Outline, blocks: list[dict]) -> dict[str, dict]:
 
 def _reference_targets(tree: _Outline, owner: int, numbers: list[int], unit: str | None,
                        scope: str | None) -> tuple[str, int | None, list[int]]:
+    # A natural paragraph (款) is not a numbered item (项). The outline has no
+    # verified natural-paragraph identities; never certify a guessed mapping.
+    if unit == "款" or scope == "本款":
+        return "unresolved", None, []
     family = {"章": 2, "节": 3, "条": 4}.get(unit)
     families = {family} if family else {5, 6, 7, 8}
     ancestors = list(tree.ancestors(owner))

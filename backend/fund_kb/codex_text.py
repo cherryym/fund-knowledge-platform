@@ -392,6 +392,10 @@ class CodexTextEngine:
             raise ProviderError("CODEX_REASONING_PROFILE_UNVERIFIED") from None
         return frozenset(matrix)
 
+    def supports_reasoning(self, model, effort):
+        """True only for an attested model/effort pair of a configurable profile."""
+        return (model, effort) in getattr(self, "_verified_reasoning", frozenset())
+
     def reasoning_configuration(self, snapshot, reasoning_effort=None):
         """Resolve a request override, provider default, or pinned model default.
 

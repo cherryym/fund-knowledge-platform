@@ -19,7 +19,8 @@ TOKEN = "fkb_agent_" + "0" * 32 + "." + "x" * 43
 OBJECT = "10000000-0000-4000-8000-000000000001"
 KEY = "20000000-0000-4000-8000-000000000001"
 TOOL_NAMES = {"list_capabilities", "get_capability", "start_workflow", "get_next_steps", "report_step",
-    "read_bound_sources", "get_workflow"}
+    "read_bound_sources", "get_workflow", "get_library_map", "search_knowledge", "read_version", "list_coverage_gaps",
+    "create_consultation", "ask_question", "get_answer"}
 
 
 @pytest.fixture
@@ -69,7 +70,7 @@ def child_env(base=None):
     return values
 
 
-def test_official_sdk_initialize_ping_list_and_all_seven_tools_over_stdio(fake_api):
+def test_official_sdk_initialize_ping_list_and_all_tools_over_stdio(fake_api):
     base, requests = fake_api
     async def run():
         parameters = StdioServerParameters(command=sys.executable, args=["-B", str(SCRIPT)], env=child_env(base))
@@ -96,6 +97,14 @@ def test_official_sdk_initialize_ping_list_and_all_seven_tools_over_stdio(fake_a
                         "outputs": {"evidence_summary": "合成离线回传"}, "note": "待人工确认", "request_id": KEY}),
                     ("read_bound_sources", {"run_id": OBJECT}),
                     ("get_workflow", {"run_id": OBJECT}),
+                    ("get_library_map", {"space_id": OBJECT}),
+                    ("search_knowledge", {"space_id": OBJECT, "query": "停牌股票估值"}),
+                    ("read_version", {"version_id": OBJECT}),
+                    ("list_coverage_gaps", {"space_id": OBJECT}),
+                    ("create_consultation", {"space_id": OBJECT, "title": "合成咨询", "request_id": KEY}),
+                    ("ask_question", {"thread_id": OBJECT, "question": "合成问题", "connection_id": OBJECT,
+                        "model_id": "synthetic-model", "request_id": KEY}),
+                    ("get_answer", {"run_id": OBJECT}),
                 ]
                 for name, arguments in calls:
                     result = await session.call_tool(name, arguments=arguments)
@@ -110,7 +119,10 @@ def test_official_sdk_initialize_ping_list_and_all_seven_tools_over_stdio(fake_a
                     assert denied.isError and TOKEN not in denied.content[0].text
                 assert len(requests) == count
     asyncio.run(run())
-    assert len(requests) == 7
+    assert len(requests) == 14
+    assert requests[8]["method"] == "POST" and requests[8]["key"] is None  # read-only search: no idempotency record
+    assert requests[12]["body"]["model_selection"] == {"connection_id": OBJECT, "model_id": "synthetic-model"}
+    assert requests[12]["body"]["answer_scope"] == "reference" and requests[12]["key"] == "fkb-mcp-" + KEY
     assert all(r["authorization"] == "Bearer " + TOKEN and r["cookie"] is None for r in requests)
     assert requests[2]["key"] == "fkb-mcp-" + KEY and requests[4]["etag"] == '"1"'
     assert requests[4]["path"] == f"/api/v1/capability-runs/{OBJECT}/steps/collect"

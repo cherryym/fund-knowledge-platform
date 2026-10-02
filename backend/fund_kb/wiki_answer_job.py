@@ -6,6 +6,7 @@ database command, and a READ can address only this request's registered pages.
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections import defaultdict
 from hashlib import sha256
@@ -40,6 +41,11 @@ from .wiki_reader import (
     NOTES_INSTRUCTION,
     PLANNING_INSTRUCTION,
     PROMPT_VERSION,
+    REASONING_PLANNING_INSTRUCTION,
+    REASONING_PROMPT_VERSION,
+    REASONING_SYNTHESIS_INSTRUCTION,
+    REASONING_SYSTEM,
+    REASONING_SYSTEM_SHA256,
     SELECTION_INSTRUCTION,
     SYNTHESIS_INSTRUCTION,
     SYSTEM,
@@ -49,17 +55,48 @@ from .wiki_reader import (
     UNIVERSAL_SYNTHESIS_INSTRUCTION,
     UNIVERSAL_SYSTEM,
     UNIVERSAL_SYSTEM_SHA256,
+    clean_search_queries,
     fallback_pages,
     full_read_requests,
+    gap_requests,
     index_lines,
+    move_gap_lines,
+    display_title,
+    name_page_ids,
     page_text,
+    planning_read_requests,
     planning_search_requests,
     read_requests,
     requests_catalog,
     search_requests,
     section_read_requests,
+    sort_gaps,
 )
 from .wiki_section_reader import outline_text, read_scoped_pages, source_anchors
+
+
+# Reasoning strategy: an explicit READ of a source this small is read whole; a
+# larger unlocated source contributes this many question-restricted units.
+FULL_READ_BLOCKS = 120
+# Whole-source reads are kept while the estimated reading still fits this share of one
+# synthesis request; the remainder is read located, avoiding extra note-taking calls.
+READ_BUDGET_SHARE = 0.75
+READ_ESTIMATE_BLOCK_BYTES = 48
+READ_ESTIMATE_SECTION_FACTOR = 3
+LOCATED_UNITS_PER_READ = 3
+# Question-restricted locating searches per run; later rounds keep outlines + READ_SECTION.
+LOCATED_SEARCH_ROUNDS = 2
+# A page too large for the synthesis request keeps only sections the reranker scores above this
+# (Qwen3-Reranker logit: above 0 = judged relevant to the question).
+SECTION_MIN_SCORE = 0.0
+# Only pages the model asked for or among this many top-ranked pages are reduced (bounds reranking time).
+REDUCE_TOP_RANKED = 6
+# Reasoning: a search for an explicitly cited document/clause reranks only this many fused candidates
+# (finding a named reference does not need the full discovery pool; every reference is still searched).
+DEPENDENCY_RERANK_UNITS = 16
+# Reasoning: unresolved explicit references listed in the synthesis prompt (the rest are counted). A tax law with
+# hundreds of cross-references otherwise fills most of a 64 KiB request with the list alone.
+CONTEXT_GAP_LINES = 20
 
 
 def run_wiki_answer(dispatcher, job_id, attempt):
@@ -84,14 +121,20 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
         previous = (run.policy_snapshot or {}).get("question_analysis")
         previous_calls = int((run.model_snapshot or {}).get("model_request_count", 0))
         settings, _ = dispatcher._answer_policy(db, run)
-        universal = settings.wiki_query_strategy == "universal"
+        # Reasoning core = universal reading/citation path + library map before
+        # planning, no question-type reading rules, explicit derivation and GAPs.
+        reasoning = settings.wiki_query_strategy == "reasoning"
+        universal = reasoning or settings.wiki_query_strategy == "universal"
         adaptive = universal or settings.wiki_query_strategy == "adaptive"
-        system = UNIVERSAL_SYSTEM if universal else ADAPTIVE_SYSTEM if adaptive else SYSTEM
-        prompt_version = UNIVERSAL_PROMPT_VERSION if universal else ADAPTIVE_PROMPT_VERSION if adaptive else PROMPT_VERSION
-        system_sha = UNIVERSAL_SYSTEM_SHA256 if universal else ADAPTIVE_SYSTEM_SHA256 if adaptive else SYSTEM_SHA256
+        system = (REASONING_SYSTEM if reasoning else UNIVERSAL_SYSTEM if universal
+                  else ADAPTIVE_SYSTEM if adaptive else SYSTEM)
+        prompt_version = (REASONING_PROMPT_VERSION if reasoning else UNIVERSAL_PROMPT_VERSION if universal
+                          else ADAPTIVE_PROMPT_VERSION if adaptive else PROMPT_VERSION)
+        system_sha = (REASONING_SYSTEM_SHA256 if reasoning else UNIVERSAL_SYSTEM_SHA256 if universal
+                      else ADAPTIVE_SYSTEM_SHA256 if adaptive else SYSTEM_SHA256)
         request, context, space_id = dict(run.request), dict(run.request.get("context", {})), thread.space_id
         from .business_reading import business_profile, profile_instructions
-        business = business_profile(db, space_id) if universal else None
+        business = business_profile(db, space_id) if universal and not reasoning else None
         business_stamp = policy_stamp(db, space_id) if business else None
         if business:
             system += profile_instructions(business)
@@ -196,6 +239,20 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
             except svc.APIError as exc:
                 raise JobError(exc.code) from exc
 
+    def phase_effort(connection, phase):
+        # Deeper synthesis only where the value is attested (Codex) or documented
+        # (OpenAI API); planning and other providers keep their existing default.
+        wanted = settings.wiki_synthesis_reasoning_effort
+        if not reasoning or wanted is None or phase != "synthesis" or not connection:
+            return None
+        if connection.get("protocol") == "codex_app_server":
+            engine = connection.get("_codex_engine")
+            supports = getattr(engine, "supports_reasoning", None)
+            return wanted if callable(supports) and supports(connection.get("model_id"), wanted) else None
+        if connection.get("provider_id") == "openai" and connection.get("protocol") in {"responses", "openai"}:
+            return wanted
+        return None
+
     def complete(body, phase, records=(), *, preview_source_bound=False):
         nonlocal query_path, model_elapsed_ms
         from .wiki_answer_content import _redact
@@ -248,10 +305,12 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 query_path = {**query_path, "selection_model_calls": query_path.get("selection_model_calls", 0) + 1,
                     "route": "expanded_discovery"}
                 current.model_snapshot = {**current.model_snapshot, "query_path": query_path}
+            effort = phase_effort(connection, phase)
             dispatcher._audit(db, job, "answer.model_invocation_started", {"phase": phase, "limits": limits,
                 "prompt_version": prompt_version, "system_prompt_sha256": system_sha,
                 "format": "markdown", "records_sent": len(records), "sensitive_input_redacted": redacted,
-                "local_sources_loaded": 0 if phase == "planning" else None})
+                "local_sources_loaded": 0 if phase == "planning" else None,
+                **({"reasoning_effort_requested": effort} if reasoning else {})})
             preview_binding = {"run_id": run_id, "job_id": job_id, "attempt": attempt,
                 "owner_id": user.id, "request_number": current.model_snapshot["model_request_count"],
                 "request_hash": svc.digest(current.request), "evidence_hash": svc.digest(current.evidence_snapshot),
@@ -269,7 +328,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                     # fresh authority/source fence before any staged text leaves.
                     connection["_on_public_text"] = lambda text: previews.update(entry, text)
                 raw = providers.complete(connection, messages, max_tokens=settings.wiki_answer_max_output_tokens,
-                    json_mode=False, output_schema=None, timeout=None)
+                    json_mode=False, output_schema=None, timeout=None,
+                    **({"reasoning_effort": effort} if effort else {}))
             else:
                 from .ai_transport import post_json
                 raw = post_json(settings.llm_base_url, "chat/completions", {"model": settings.llm_model,
@@ -320,6 +380,34 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
             current = db.get(m.ConsultationRun,run_id)
             current.model_snapshot = {**current.model_snapshot,"retrieval_runtime":manager.snapshot()}
 
+    library = None
+    if reasoning:
+        # The planner sees what exists (metadata only) before deciding what to
+        # read. Same authorized catalog, no bodies; no question-type reading rules.
+        dispatcher._checkpoint(job_id, attempt, "LOADING_WIKI_CATALOG", {})
+        with timings.measure("catalog_and_policy"), dispatcher.read_session_factory() as db:
+            job = db.get(m.Job, job_id)
+            actor, _, _ = dispatcher._run_context(db, job, read_only=True)
+            pages = build_catalog(db, actor, space_id, context, scope=scope)
+            connection = providers.resolve_connection(db, actor, space_id, choice["connection_id"], choice["model_id"],
+                settings, require_transfer=True, expected_revision=revision) if choice else {}
+            source_plan = {"policy_stamp": policy_stamp(db, space_id), "sources": [], "matched_rules": [], "warnings": []}
+            from .source_metadata import load as load_source_metadata
+            candidates = load_source_metadata(db, [p["version_id"] for p in pages.values() if p["kind"] == "document"])
+        catalog_stamp = catalog_signature(pages)
+        from .library_map import PLANNING_LEVELS, build_fitting
+        planning_tail = f"\n问题：{question}\n用户背景：{json.dumps(context, ensure_ascii=False)}"
+        # Source list with metadata first: planners select sources; knowledge pages
+        # stay reachable through SEARCH/CATALOG and the dependency closure.
+        library = build_fitting(pages, candidates, lambda text: fits_context(system,
+            REASONING_PLANNING_INSTRUCTION + "\n" + text + planning_tail, connection,
+            default_capacity=settings.provider_max_request_bytes), lambda text: text, levels=PLANNING_LEVELS)
+        with dispatcher.session_factory.begin() as db:
+            dispatcher._fence(db, job_id, attempt)
+            current = db.get(m.ConsultationRun, run_id)
+            current.model_snapshot = {**current.model_snapshot, "library_map": ({**library["stats"],
+                "sha256": library["sha256"]} if library else {"status": "NOT_FITTED", "body_blocks_loaded": 0})}
+
     # Exact, source-free plan reuse never reuses an answer or source admission.
     # A fresh connection and a current originating-run/source check precede any
     # use; the new retrieval/reading/synthesis chain below remains unchanged.
@@ -333,7 +421,9 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 "storage": str(settings.storage_dir.resolve()), "database": settings.database_url}),
                 owner_id=actor_id, space_id=space_id, request=request, connection=connection,
                 prompt_version=prompt_version, system_sha256=system_sha,
-                planning_instruction=UNIVERSAL_PLANNING_INSTRUCTION,
+                # A reasoning plan depends on the library map (W-ids, titles, metadata).
+                planning_instruction=(REASONING_PLANNING_INSTRUCTION + "\n" + (library or {}).get("sha256", "")
+                                      if reasoning else UNIVERSAL_PLANNING_INSTRUCTION),
                 max_output_tokens=settings.wiki_answer_max_output_tokens,
                 business_day=str(svc.effective_date(context)))
             cache_entry = planning_cache.get(public_plan_key)
@@ -368,33 +458,51 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
     elif reuse:
         plan = previous["plan"]
     else:
-        planning_instruction = UNIVERSAL_PLANNING_INSTRUCTION if universal else PLANNING_INSTRUCTION
-        preliminary, planning_finish = complete(planning_instruction +
+        planning_instruction = (REASONING_PLANNING_INSTRUCTION if reasoning else
+                                UNIVERSAL_PLANNING_INSTRUCTION if universal else PLANNING_INSTRUCTION)
+        map_text = "\n" + library["text"] if library else ""
+        preliminary, planning_finish = complete(planning_instruction + map_text +
             f"\n问题：{question}\n用户背景：{json.dumps(context, ensure_ascii=False)}", "planning")
         planning_complete = planning_finish == "stop"
         plan = {"interpretation": question, "initial_assessment": preliminary,
             "search_queries": list(dict.fromkeys([question, *planning_search_requests(preliminary)])),
             "focus_terms": [], "decision_points": [], "missing_facts": []}
+        if reasoning:
+            plan["search_queries"] = clean_search_queries(plan["search_queries"])
+            plan["gaps"] = gap_requests(preliminary)
+            plan["library_map_sha256"] = library["sha256"] if library else None
         with dispatcher.session_factory.begin() as db:
             job = dispatcher._fence(db, job_id, attempt)
             current = db.get(m.ConsultationRun, run_id)
             current.policy_snapshot = {**current.policy_snapshot, "question_analysis": {
-                "source": "model_prior_knowledge_unverified", "local_sources_loaded": 0, "plan": plan,
+                "source": "model_with_library_map_metadata" if library else "model_prior_knowledge_unverified",
+                "local_sources_loaded": 0, "plan": plan,
                 "prompt_version": prompt_version, "system_prompt_sha256": system_sha}}
             dispatcher._audit(db, job, "answer.planning_completed", {"plan_sha256": svc.digest(plan), "local_sources_loaded": 0,
-                "prompt_version": prompt_version, "system_prompt_sha256": system_sha})
+                "prompt_version": prompt_version, "system_prompt_sha256": system_sha,
+                **({"library_map_sha256": library["sha256"], "library_map_level": library["stats"]["level"]}
+                   if library else {})})
 
-    dispatcher._checkpoint(job_id, attempt, "LOADING_WIKI_CATALOG", {})
-    with timings.measure("catalog_and_policy"), dispatcher.read_session_factory() as db:
-        job = db.get(m.Job, job_id)
-        actor, _, _ = dispatcher._run_context(db, job, read_only=True)
-        pages = build_catalog(db, actor, space_id, context, scope=scope)
-        connection = providers.resolve_connection(db, actor, space_id, choice["connection_id"], choice["model_id"],
-            settings, require_transfer=True, expected_revision=revision) if choice else {}
-        source_plan = build_reading_plan(db, space_id, question, context, pages)
-        from .business_reading import add_foundations
-        add_foundations(db, business, pages, source_plan, context)
-    catalog_stamp = catalog_signature(pages)
+    if not reasoning:
+        dispatcher._checkpoint(job_id, attempt, "LOADING_WIKI_CATALOG", {})
+        with timings.measure("catalog_and_policy"), dispatcher.read_session_factory() as db:
+            job = db.get(m.Job, job_id)
+            actor, _, _ = dispatcher._run_context(db, job, read_only=True)
+            pages = build_catalog(db, actor, space_id, context, scope=scope)
+            connection = providers.resolve_connection(db, actor, space_id, choice["connection_id"], choice["model_id"],
+                settings, require_transfer=True, expected_revision=revision) if choice else {}
+            source_plan = build_reading_plan(db, space_id, question, context, pages)
+            from .business_reading import add_foundations
+            add_foundations(db, business, pages, source_plan, context)
+        catalog_stamp = catalog_signature(pages)
+    # Planned READ lines (reasoning map) are explicit model reads: same scoped
+    # reader, dependency closure and ACL/hash checks as any later READ.
+    plan_reads = []
+    if reasoning:
+        plan_text = plan.get("initial_assessment", "")
+        plan_reads = list(dict.fromkeys([*remember_commands(plan_text, pages),
+                                         *planning_read_requests(plan_text, pages)]))
+        manual_requested.update(plan_reads)
     next_evidence, unavailable_pages = 1, set()
     # Measure the actual adapter envelope; do not divide its capacity by three.
     def fits(body):
@@ -434,7 +542,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
             selected.extend(remember_commands(response, pages))
         return selected
 
-    def discover(queries):
+    def discover(queries, rerank_units=None):
         nonlocal graph_plan, query_path, navigation_links
         from .hybrid_retrieval import candidate_context, search_catalog
         selected, pending_queries = [], list(queries)
@@ -456,7 +564,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                     batch_results, batch_receipt = search_catalog_batch(authority(), space_id, current_queries,
                         pages=pages, scope=scope, context=context, vector=vector,
                         limit=settings.hybrid_candidate_limit, checkpoint=authority,
-                        session_factory=dispatcher.read_session_factory, inference_schedule="serial_equivalent")
+                        session_factory=dispatcher.read_session_factory, inference_schedule="serial_equivalent",
+                        rerank_units=rerank_units)
                 prefetched = {q: {**result, "batch_execution": batch_receipt}
                               for q, result in zip(current_queries, batch_results, strict=True)}
             merged, summaries = {}, []
@@ -631,8 +740,10 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 required_anchors[pid] = list(dict.fromkeys([*required_anchors.get(pid, []), *source["anchor_block_ids"]]))
             intro += plan_instructions(source_plan)
         wanted = [pid for pid in graph_plan["requested"] if pid in pages]
+        if reasoning:
+            wanted = list(dict.fromkeys([*[pid for pid in plan_reads if pid in pages], *wanted]))
         discovered_anchors = {pid: set(ids) for pid, ids in graph_plan["anchors"].items() if pid in pages}
-        query_path = {"strategy": "universal_wiki_rag" if universal else "adaptive_graph",
+        query_path = {"strategy": "reasoning_core" if reasoning else "universal_wiki_rag" if universal else "adaptive_graph",
             "route": "planned_grounded" if universal and wanted else "direct_grounded" if wanted else "clarification_or_evidence_gap",
             "cache_hit": cache_hit, "target_ms": settings.wiki_query_target_seconds * 1000,
             **({"batch_execution": result["batch_execution"]} if not cache_hit and result.get("batch_execution") is not None else {}),
@@ -646,7 +757,9 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
             **({"domain_retrieval": graph_plan.get("domain_retrieval")} if business else {}),
             **({"reranker_model": settings.reranker_model, "reranker_revision": settings.reranker_revision,
                 "candidate_policy": settings.retrieval_rerank_policy,
-                "reading_plan_source": "model_public_plan"} if universal else {})}
+                "reading_plan_source": "model_plan_with_library_map" if library else "model_public_plan"} if universal else {}),
+            **({"planned_reads": [pid for pid in plan_reads if pid in pages],
+                "library_map_level": (library or {}).get("stats", {}).get("level")} if reasoning else {})}
         with dispatcher.read_session_factory() as db:
             query_path["model_cost_hint"] = model_cost_hint(db, authority(), choice, query_path["target_ms"], connection)
         with dispatcher.session_factory.begin() as db:
@@ -677,6 +790,197 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
     final, finish = "", "unknown"
     reading_round = 0
     seen_reads = set()
+    located_attempted, prose_read_used, located_rounds = set(), False, 0
+    budget_located = []
+
+    def within_read_budget(candidates, expanded, anchors):
+        """Reasoning: whole-source candidates (smallest first) that, together with what is read
+        and this round's other reads (estimated from block sizes), fit READ_BUDGET_SHARE of one
+        synthesis request. Sizes are metadata only; no body is loaded here."""
+        if not candidates:
+            return []
+        from sqlalchemy import func
+        others = [pid for pid in expanded if pid not in read_pages and pid not in candidates]
+        versions = {pages[pid]["version_id"]: pid for pid in [*candidates, *others]}
+        with dispatcher.read_session_factory() as db:
+            stats = {versions[vid]: (count, chars or 0) for vid, count, chars in db.execute(
+                select(m.ContentBlock.version_id, func.count(), func.sum(func.length(m.ContentBlock.search_text)))
+                .where(m.ContentBlock.version_id.in_(list(versions))).group_by(m.ContentBlock.version_id))}
+
+        def estimate(pid, blocks=None):
+            count, chars = stats.get(pid, (0, 0))
+            if blocks is not None and count:
+                count, chars = min(count, blocks), min(chars, chars * blocks // count)
+            return count * READ_ESTIMATE_BLOCK_BYTES + 3 * chars
+
+        used = sum(len(row["text"].encode()) + READ_ESTIMATE_BLOCK_BYTES for row in read_records.values())
+        used += sum(estimate(pid) if pages[pid]["kind"] == "knowledge" or pid in full_requested
+                    else estimate(pid, len(anchors.get(pid, ())) * READ_ESTIMATE_SECTION_FACTOR) for pid in others)
+        chosen = []
+        for pid in sorted(candidates, key=estimate):
+            if not fits(intro + "x" * int((used + estimate(pid)) / READ_BUDGET_SHARE) + REASONING_SYNTHESIS_INSTRUCTION):
+                break
+            chosen.append(pid)
+            used += estimate(pid)
+        return chosen
+
+    wiki_located = set()
+
+    def wiki_citation_targets(expanded):
+        """Reasoning: sources reached only because a READ knowledge page cites them. They are read where they answer
+        this question (question-restricted located units, as for large sources), not at every block the page cites -
+        a concept page can cite thousands of blocks, and graph planning may already have anchored them all. The
+        knowledge page itself is still read whole. Each source is located once per run."""
+        knowledge = [pid for pid in expanded if pid in manual_requested and pages[pid]["kind"] == "knowledge"]
+        cited = source_anchors(pages, knowledge) if knowledge else {}
+        targets = {pid for pid in cited if pid in expanded and pages[pid]["kind"] == "document"
+                   and pid not in manual_requested and pid not in full_requested and not section_requested.get(pid)
+                   and pid not in wiki_located}
+        wiki_located.update(targets)
+        return targets
+
+    context_trimmed, context_partial = set(), set()
+
+    def reading_units(page):
+        """Complete units a reduced read keeps or leaves whole: a source's read sections (each with the parent
+        lead-in read before it), or a knowledge page's heading sections (text before its first heading leads)."""
+        units, keys = [], []
+        if page["kind"] == "knowledge":
+            for row in page.get("records", []):
+                if not units or row["text"].lstrip().startswith("#"):
+                    units.append([])
+                units[-1].append(row)
+            return units
+        # Read sections nest (a chapter includes its articles): units are the innermost ones, and a parent's own
+        # heading/lead-in rows belong to the unit that follows them.
+        sections = [section for section in page.get("read_sections") or [] if section.get("block_ids")]
+        spans = [set(section["block_ids"]) for section in sections]
+        member = {bid: section["section_id"] for section, span in zip(sections, spans)
+                  if not any(other < span for other in spans) for bid in span}
+        for row in page.get("records", []):
+            sid = member.get(row["block_id"])
+            if units and (keys[-1] == sid or keys[-1] is None and sid is not None or sid is None and keys[-1] is None):
+                keys[-1] = keys[-1] or sid  # a lead-in joins the section it introduces
+                units[-1].append(row)
+            else:
+                units.append([row])
+                keys.append(sid)
+        return units
+
+    def unit_scores(page, units):
+        """Reranker scores of each unit against the question (cached with the group scores), or None when the
+        reranker is not available or returns anything but one finite number per unit."""
+        vector = dispatcher.vector_index
+        if vector is None or not callable(getattr(vector, "rerank", None)):
+            return None
+        model = [getattr(getattr(vector, "settings", None), key, None) for key in (
+            "reranker_model", "reranker_revision", "reranker_dtype", "reranker_instruction", "reranker_max_tokens")]
+        texts = [page["title"] + "\n" + "\n".join(row["text"] for row in unit) for unit in units]
+        keys = ["section_score_v1:" + sha256(json.dumps({"query": question, "text": text, "model": model},
+                                                        ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+                for text in texts]
+        missing = list(dict.fromkeys(key for key in keys if key not in group_rank_cache))
+        text_by_key = dict(zip(keys, texts))
+        try:
+            with timings.measure("context_reranking"):
+                values = vector.rerank(question, [text_by_key[key] for key in missing]) if missing else []
+        except Exception:  # noqa: BLE001 - without scores the page is not reduced; authority is rechecked by the caller
+            return None
+        if values is None or len(values) != len(missing) or any(
+                isinstance(v, bool) or not isinstance(v, (int, float)) or v != v or v in (float("inf"), float("-inf"))
+                for v in values):
+            return None
+        group_rank_cache.update(zip(missing, values))
+        return [group_rank_cache[key] for key in keys]
+
+    def reduced_page(page, units, chosen):
+        rows = [row for index in sorted(chosen) for row in units[index]]
+        ids = {row["block_id"] for row in rows}
+        return {**page, "records": rows, "read_scope": "sections", "read_sections": [
+            section for section in page.get("read_sections", []) if section.get("block_ids") and section["block_ids"][0] in ids]}
+
+    def trim_to_one_request(prefix, instruction, extras, ordered, report):
+        """Reasoning: when the read material exceeds one synthesis request, fill it by priority instead of note-taking
+        passes. Conclusions rest on source text and knowledge pages are navigation, so sources come first - those the
+        model asked for or the reranker scores as relevant - then knowledge pages, then sources scored as unrelated;
+        within each tier pages the model asked for first, then reranker order, each root with its dependency bundle.
+        A bundle that does not fit is taken page by page, and a page too large on its own contributes its most relevant
+        complete sections (reranked against the question; sections scored as unrelated stay out), so a relevant large
+        source is reduced rather than lost to smaller pages. What is not sent is listed by title so the model can READ
+        it (a later round puts it first). Returns (body, dropped, partial) or (None, [], [])."""
+        rank = {pid: index for index, pid in enumerate(ordered)}
+        receipt = (report or {}).get("group_rerank") or {}
+        groups = [[pid for pid in group if pid in read_pages] for group in receipt.get("groups") or [[pid] for pid in ordered]]
+        scores = receipt.get("scores") or []
+        root_score = ({group[0]: score for group, score in zip(receipt["groups"], scores) if group}
+                      if receipt.get("groups") and len(scores) == len(receipt["groups"]) else {})
+
+        def tier(root):
+            if pages[root]["kind"] == "knowledge":
+                return 1
+            return 0 if root in manual_requested or root not in root_score or root_score[root] > 0 else 2
+
+        groups = sorted((group for group in groups if group), key=lambda group: (
+            tier(group[0]), not set(group) & manual_requested, rank.get(group[0], len(rank))))
+
+        def text(keep, part):
+            return "\n\n".join(page_text(part.get(pid) or pages[pid], related_pages=read_pages)
+                               for pid in pages if pid in keep or pid in part)
+
+        def listing(dropped, part):
+            notes = []
+            if part:
+                notes.append("以下资料只放入了与本题最相关的完整小节，其余小节在库内；答复确需时用 READ_SECTION 或 READ 加编号补读，"
+                             "不是资料缺口：" + "；".join(f"{pid}《{display_title(pages[pid]['title'])}》" for pid in part))
+            if dropped:
+                notes.append("以下资料在库内、与本题相关，但超出本次单次综合的容量未放入正文。答复确需其中内容时，"
+                             "用 READ 或 READ_SECTION 加编号补读；它们不是本库缺少的资料，不要列为GAP或资料缺口："
+                             + "；".join(f"{pid}《{display_title(pages[pid]['title'])}》" for pid in dropped))
+            return "".join("\n" + note for note in notes)
+
+        def fits_with(keep, part):
+            dropped = [pid for pid in ordered if pid in read_pages and pid not in keep and pid not in part]
+            return fits(prefix + text(keep, part) + extras + listing(dropped, part) + instruction)
+
+        def reduce(pid, keep, part):
+            if pid not in manual_requested and rank.get(pid, len(rank)) >= REDUCE_TOP_RANKED:
+                return None
+            page = pages[pid]
+            units = reading_units(page)
+            lead = [0] if page["kind"] == "knowledge" and units and not units[0][0]["text"].lstrip().startswith("#") else []
+            candidates = [index for index in range(len(units)) if index not in lead]
+            if len(candidates) < 2:
+                return None
+            scores = unit_scores(page, units)
+            if scores is None:
+                return None
+            chosen = list(lead)
+            for index in sorted(candidates, key=lambda i: (-scores[i], i)):
+                if scores[index] <= SECTION_MIN_SCORE:
+                    break
+                if fits_with(keep, {**part, pid: reduced_page(page, units, [*chosen, index])}):
+                    chosen.append(index)
+            return reduced_page(page, units, chosen) if len(chosen) > len(lead) else None
+
+        kept, partial = set(), {}
+        for group in groups:
+            members = [pid for pid in group if pid not in kept and pid not in partial]
+            if not members:
+                continue
+            if fits_with(kept | set(members), partial):
+                kept |= set(members)
+                continue
+            for pid in members:
+                if fits_with(kept | {pid}, partial):
+                    kept.add(pid)
+                    continue
+                reduced = reduce(pid, kept, partial)
+                if reduced is not None:
+                    partial[pid] = reduced
+        if not kept and not partial:
+            return None, [], []
+        dropped = [pid for pid in ordered if pid in read_pages and pid not in kept and pid not in partial]
+        return text(kept, partial) + extras + listing(dropped, partial), dropped, list(partial)
 
     def read_signature(pid, anchors):
         page = pages[pid]
@@ -714,6 +1018,43 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
         for pid, bids in required_anchors.items():
             if pid in expanded:
                 anchors[pid].update(bids)
+        if reasoning:
+            wiki_targets = wiki_citation_targets(expanded)
+            for pid in wiki_targets:  # replaced by this question's located units below
+                anchors[pid] = set()
+                discovered_anchors[pid] = set()
+            # An explicit READ of a source without a located clause would otherwise
+            # yield only an outline. Small sources are read whole; large ones get a
+            # retrieval restricted to that source for this question. Once per page.
+            unlocated = [pid for pid in expanded if pid in manual_requested and pages[pid]["kind"] == "document"
+                         and pid not in full_requested and not section_requested.get(pid) and not anchors.get(pid)
+                         and pid not in located_attempted]
+            located_attempted.update(unlocated)
+            small = [pid for pid in unlocated if (pages[pid].get("block_count") or 0) <= FULL_READ_BLOCKS]
+            whole = within_read_budget(small, expanded, anchors)
+            full_requested.update(whole)
+            budget_located.extend(pid for pid in small if pid not in whole)
+            large = {pid: pages[pid] for pid in unlocated if pid not in full_requested}
+            # One question-restricted search per round for every page that needs locating (sources cited by a READ
+            # concept page, and large explicit READs), instead of one search per kind.
+            search_pages = {pid: pages[pid] for pid in wiki_targets}
+            if large and located_rounds < LOCATED_SEARCH_ROUNDS:
+                located_rounds += 1
+                search_pages.update(large)
+            if search_pages:
+                from .universal_retrieval import search_many_catalog
+                with timings.measure("retrieval_and_navigation"), dispatcher.read_session_factory() as db:
+                    located = search_many_catalog(db, authority(), space_id, [question], pages=search_pages, scope=scope,
+                        context=context, vector=dispatcher.vector_index, limit=settings.hybrid_candidate_limit,
+                        checkpoint=authority, session_factory=dispatcher.read_session_factory)
+                taken = defaultdict(int)
+                for unit in located.get("units", []):
+                    pid = unit.get("page_id")
+                    if pid in search_pages and taken[pid] < LOCATED_UNITS_PER_READ:
+                        taken[pid] += 1
+                        anchors[pid].update(unit.get("block_ids", []))
+                        discovered_anchors.setdefault(pid, set()).update(unit.get("block_ids", []))
+            expanded = [pid for pid in expanded if pid not in wiki_located or anchors.get(pid)]
         fresh_ids = [pid for pid in expanded if pid not in unavailable_pages and read_signature(pid, anchors) not in seen_reads and (
             pid not in read_pages or pid in full_requested and not pages[pid].get("full_text_loaded")
             or set(section_requested.get(pid, ())) - {s["section_id"] for s in pages[pid].get("read_sections", [])}
@@ -799,7 +1140,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 reading_progress("completing_dependencies", round=reading_round)
                 # Same reference is searched once per run; unchanged absence is
                 # an explicit gap, not an unbounded paid retry loop.
-                followups.extend(discover(missing_queries))
+                followups.extend(discover(missing_queries, rerank_units=DEPENDENCY_RERANK_UNITS if reasoning else None))
             context_report["additional_searches"] = len(dependency_searches)
             with dispatcher.session_factory.begin() as db:
                 job = dispatcher._fence(db, job_id, attempt)
@@ -838,8 +1179,10 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
         # do not restart a whole-handbook reading pass after every follow-up READ.
         body = compact_evidence(pages, ordered_pages, used_edges=graph_plan.get("used_edges", [])) \
             if adaptive else "\n\n".join(page_text(pages[pid], related_pages=read_pages) for pid in pages if pid in read_pages)
+        page_body = body
         if context_report is not None:
-            body += context_instructions(context_report)
+            body += context_instructions(context_report, limit=CONTEXT_GAP_LINES if reasoning else None,
+                                         order=ordered_pages)
             body += coverage_instructions(context_report["reading_coverage"])
         body += review_context
         if outlines:
@@ -849,9 +1192,12 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
         if unavailable_pages:
             body += "\n下列页当前未通过完整正文/版本校验，未加载也不可作依据：" + " ".join(sorted(unavailable_pages))
         prefix = intro + "\n本次已核对的完整Wiki/原文小节：\n"
-        instruction = "\n" + (UNIVERSAL_SYNTHESIS_INSTRUCTION if universal else
-                              ADAPTIVE_SYNTHESIS_INSTRUCTION if adaptive else SYNTHESIS_INSTRUCTION)
-        if context_report and context_report["gap_count"]:
+        instruction = "\n" + (REASONING_SYNTHESIS_INSTRUCTION if reasoning else UNIVERSAL_SYNTHESIS_INSTRUCTION
+                              if universal else ADAPTIVE_SYNTHESIS_INSTRUCTION if adaptive else SYNTHESIS_INSTRUCTION)
+        if context_report and context_report["gap_count"] and reasoning:
+            instruction += ("\n原文中有部分显式交叉引用未能精确定位；结论依赖这些引用时，在该结论处用业务语言注明需核对，"
+                            "不报告数量，也不得宣称这些依赖已核验。")
+        elif context_report and context_report["gap_count"]:
             instruction += f"\n本轮原文显式依赖仍有{context_report['gap_count']}处未精确定位，请保留相应限制，不得宣称这些依赖已核验。"
         if adaptive and query_path is not None:
             query_path = {**query_path, "preparation_ms": round((time.monotonic() - path_started) * 1000, 3),
@@ -865,6 +1211,18 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 current = db.get(m.ConsultationRun, run_id)
                 current.model_snapshot = {**current.model_snapshot, "query_path": query_path}
                 dispatcher._audit(db, job, "answer.query_path_materialized", query_path)
+        context_trimmed.clear()  # describes the latest synthesis request only
+        context_partial.clear()
+        # Reasoning: a later round (after the model asked to READ more) is trimmed again from everything read, the new
+        # pages first. Its asking reply is only READ lines, so carrying it as notes would lose what the first round sent.
+        if reasoning and body.startswith(page_body) and not fits(prefix + body + instruction):
+            trimmed_body, dropped, partial = trim_to_one_request(prefix, instruction, body[len(page_body):], ordered_pages,
+                                                                 context_report)
+            authority()  # section scoring ran native inference outside any transaction
+            if trimmed_body is not None:
+                body = trimmed_body
+                context_trimmed.update(dropped)
+                context_partial.update(partial)
         total_chars = len(body)
         if fits(prefix + body + instruction):
             reading_progress("synthesis", round=reading_round, current_batch=1, total_batches=1,
@@ -891,7 +1249,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                     if (row["version_id"], row["block_id"]) in fresh_keys], "read_scope": "sections"}, related_pages=read_pages)
                     for pid in ordered_pages if any((r["version_id"], r["block_id"]) in fresh_keys for r in pages[pid]["records"]))
                 if context_report is not None:
-                    body += context_instructions(context_report)
+                    body += context_instructions(context_report, limit=CONTEXT_GAP_LINES if reasoning else None,
+                                                 order=ordered_pages)
                     body += coverage_instructions(context_report["reading_coverage"])
                 body += review_context
                 if outlines:
@@ -935,6 +1294,14 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 "blocks": len(read_records), "packets": len(packets), "complete_selected_units_sent": True})
         unsent_records.clear()
         requested = remember_commands(final, pages)
+        if reasoning and not requested and not prose_read_used and len(final) < 400 and "[E" not in final:
+            # Some models state a follow-up read in prose instead of a READ line.
+            # Only a short, uncited reply naming registered ids is treated so, once.
+            # CJK characters count as word characters, so no \b before "W" in "补读W7".
+            requested = [pid for pid in dict.fromkeys(w.upper() for w in re.findall(r"(?<![A-Za-z0-9])W\d+(?!\d)", final))
+                         if pid in pages]
+            prose_read_used = bool(requested)
+            manual_requested.update(requested)
         if fusion:
             requested.extend(discover(search_requests(final)))
             if requests_catalog(final) and not full_catalog_sent:
@@ -962,6 +1329,19 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
     with dispatcher.read_session_factory() as db:
         if policy_stamp(db, space_id) != source_plan["policy_stamp"]:
             raise JobError("SOURCE_READING_POLICY_CHANGED")
+    coverage_gaps = None
+    if reasoning:
+        # GAP lines are model-declared missing materials/facts: shown once as a
+        # readable section and kept on the run for library completion, never read as commands.
+        # Only materials the library lacks are gaps; case documents (contract, custody agreement...) are listed apart.
+        titles = [page["title"] for page in pages.values()]
+        final, answer_gaps, case_materials = move_gap_lines(final, titles)
+        # Presentation only: per-request W handles become titles; claims/E-citations untouched.
+        final, named_page_ids = name_page_ids(final, pages)
+        planning_gaps, planning_case = sort_gaps(plan.get("gaps", []), titles)
+        coverage_gaps = {"planning": planning_gaps, "answer": answer_gaps,
+                         "case_materials": list(dict.fromkeys([*planning_case, *case_materials])),
+                         "source": "model_declared_unverified"}
     answer = build_narrative_answer(question, "solution" if request.get("mode") == "solution" else "answer",
         context, list(read_records.values()), final, run_id)
     primary_coverage = check_primary_citations(source_plan, list(read_records.values()), answer)
@@ -1014,6 +1394,22 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
             "evidence_review": quality_review}
         if citation_trace is not None:
             current.model_snapshot["citation_integrity"] = citation_trace
+        if coverage_gaps is not None:
+            current.model_snapshot["coverage_gaps"] = coverage_gaps
+            current.model_snapshot["presentation_rewrites"] = {"page_ids_named": named_page_ids}
+            if context_trimmed or context_partial:
+                current.model_snapshot["wiki_reading"] = {**(current.model_snapshot.get("wiki_reading") or {}),
+                    "page_titles": [pages[pid]["title"] for pid in sorted(read_pages - context_trimmed)],
+                    "trimmed_page_titles": [pages[pid]["title"] for pid in sorted(context_trimmed)],
+                    "partial_page_titles": [pages[pid]["title"] for pid in sorted(context_partial)]}
+            current.model_snapshot["read_budget"] = {"share": READ_BUDGET_SHARE, "located_by_budget": len(budget_located),
+                                                     "wiki_citations_located": len(wiki_located),
+                                                     "context_trimmed_pages": len(context_trimmed),
+                                                     "context_partial_pages": len(context_partial)}
+            if coverage_gaps["planning"] or coverage_gaps["answer"]:
+                dispatcher._audit(db, job, "answer.coverage_gaps_recorded", {
+                    "planning": len(coverage_gaps["planning"]), "answer": len(coverage_gaps["answer"]),
+                    "gaps_sha256": svc.digest(coverage_gaps)})
         if adaptive:
             execution_ms = round((time.monotonic() - path_started) * 1000, 3)
             elapsed_ms = round((svc.now() - current.created_at).total_seconds() * 1000, 3)

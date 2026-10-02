@@ -7,6 +7,7 @@ import threading
 import time
 from pathlib import Path
 
+from .device_guard import gpu_section
 from .local_encoders import LocalEncoderError, _positive_setting, _texts, _TokenizationMemo, verify_model_file
 from .qwen_model_spec import QWEN4B_SPEC
 
@@ -170,7 +171,8 @@ class QwenEmbedding(_TokenizationMemo):
             if model.config.model_type != "qwen3" or model.config.hidden_size != DIMENSION:
                 raise LocalEncoderError("LOCAL_MODEL_OUTPUT_CONFIGURATION_MISMATCH")
             model.eval()
-            model.to(self.device)
+            with gpu_section(self.device):
+                model.to(self.device)
             if any(parameter.device.type != self.device or parameter.dtype != getattr(torch, self.dtype)
                    for parameter in model.parameters() if parameter.is_floating_point()):
                 raise LocalEncoderError("QWEN_MODEL_DEVICE_OR_DTYPE_MISMATCH")
@@ -194,7 +196,7 @@ class QwenEmbedding(_TokenizationMemo):
                 any(inputs[i][masks[i].bool()].tolist() != row for i, row in enumerate(rows))):
             raise LocalEncoderError("LOCAL_MODEL_PADDING_OR_LENGTH_MISMATCH")
         try:
-            with torch.inference_mode():
+            with gpu_section(self.device), torch.inference_mode():
                 masks = masks.to(self.device)
                 output = self._model(input_ids=inputs.to(self.device), attention_mask=masks,
                     return_dict=True, use_cache=False, output_hidden_states=False)
@@ -253,6 +255,7 @@ class QwenEmbedding(_TokenizationMemo):
             self._clear_token_memo()
             self._model = self._tokenizer = None
             if self._torch is not None and self.device == "mps":
-                self._torch.mps.empty_cache()
+                with gpu_section("mps"):
+                    self._torch.mps.empty_cache()
             self._torch = self.device = None
             self.verified_files = {}

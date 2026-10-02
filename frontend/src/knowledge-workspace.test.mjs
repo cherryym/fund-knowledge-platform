@@ -269,7 +269,7 @@ test("build request freezes explicit sources/model and enforces transfer consent
     model_selection: { connection_id: "connection", model_id: "model" }, max_pages: 4, consent: true });
   for (const value of [0, 13, 1.5, Number.NaN]) assert.throws(() => wiki.buildRequest("space", [SOURCE], model, value, true));
   assert.throws(() => wiki.buildRequest("space", [], model, 4, true));
-  assert.throws(() => wiki.buildRequest("space", Array.from({ length: 9 }, (_, i) => String(i)), model, 4, true));
+  assert.throws(() => wiki.buildRequest("space", Array.from({ length: wiki.WIKI_SOURCE_LIMIT + 1 }, (_, i) => String(i)), model, 4, true));
   assert.throws(() => wiki.buildRequest("space", [SOURCE], undefined, 4, true));
   assert.throws(() => wiki.buildRequest("space", [SOURCE], { ...model, configured: false }, 4, true));
   assert.throws(() => wiki.buildRequest("space", [SOURCE], { ...model, allow_document_transfer: false }, 4, true));

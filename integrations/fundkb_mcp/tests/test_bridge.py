@@ -33,6 +33,20 @@ KEY = "20000000-0000-4000-8000-000000000001"
         f"/capability-runs/{OBJECT}/steps/collect", {"status": "reported", "outputs": {"evidence": "合成引用"}, "note": "尚需人工"}),
     ("read_bound_sources", {"run_id": OBJECT}, "GET", f"/capability-runs/{OBJECT}/sources", None),
     ("get_workflow", {"run_id": OBJECT}, "GET", f"/capability-runs/{OBJECT}", None),
+    ("get_library_map", {"space_id": OBJECT}, "GET", "/library-map", None),
+    ("search_knowledge", {"space_id": OBJECT, "query": "估值", "limit": 5}, "POST", "/retrieval/search",
+        {"space_id": OBJECT, "query": "估值", "scope": "reference", "limit": 5}),
+    ("read_version", {"version_id": OBJECT}, "GET", "/versions/" + OBJECT, None),
+    ("list_coverage_gaps", {"space_id": OBJECT}, "GET", "/coverage-gaps", None),
+    ("create_consultation", {"space_id": OBJECT, "title": "合成", "request_id": KEY}, "POST", "/threads",
+        {"space_id": OBJECT, "title": "合成"}),
+    ("ask_question", {"thread_id": OBJECT, "question": "合成问题", "connection_id": OBJECT, "model_id": "m",
+        "retrieval_profile_id": "qwen3-4b-reasoning", "business_date": "2016-06-30", "request_id": KEY},
+        "POST", f"/threads/{OBJECT}/runs", {"question": "合成问题", "mode": "answer", "answer_scope": "reference",
+        "reasoning_strategy": "model_first", "require_model": True, "attachment_version_ids": [],
+        "context": {"business_date": "2016-06-30"}, "model_selection": {"connection_id": OBJECT, "model_id": "m"},
+        "retrieval_selection": {"profile_id": "qwen3-4b-reasoning"}}),
+    ("get_answer", {"run_id": OBJECT}, "GET", "/runs/" + OBJECT, None),
 ])
 def test_exact_tool_to_http_mapping(name, args, method, path, body):
     requests = []
@@ -48,9 +62,10 @@ def test_exact_tool_to_http_mapping(name, args, method, path, body):
     assert len(requests) == 1 and req.method == method and req.url.path == "/api/v1" + path
     assert req.headers["Authorization"] == "Bearer " + TOKEN and "cookie" not in req.headers
     assert TOKEN not in str(req.url)
-    assert dict(req.url.params) == ({"space_id": OBJECT} if name == "list_capabilities" else {})
+    assert dict(req.url.params) == ({"space_id": OBJECT} if name in {"list_capabilities", "get_library_map",
+        "list_coverage_gaps"} else {})
     assert (json.loads(req.content) if req.content else None) == body
-    if method == "POST": assert req.headers["Idempotency-Key"] == "fkb-mcp-" + KEY
+    if method == "POST" and "request_id" in args: assert req.headers["Idempotency-Key"] == "fkb-mcp-" + KEY
     else: assert "Idempotency-Key" not in req.headers
     if name == "report_step": assert req.headers["If-Match"] == '"3"'
     else: assert "If-Match" not in req.headers

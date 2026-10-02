@@ -202,3 +202,18 @@ def test_empty_authorized_pages_never_mean_search_everything(env):
     assert result["units"] == []
     assert vector.calls["dense_batches"] == []
     assert "VECTOR_INDEX_NOT_READY" in result["warnings"]
+
+
+def test_lookup_pool_caps_cross_encoder_pairs_per_query_only(env):
+    from fund_kb.batch_retrieval import search_catalog_batch
+    _, _, vector, pages = setup(env)
+    seen, score = [], vector.rerank
+    vector.rerank = lambda query, texts: seen.append(len(texts)) or score(query, texts)
+    rows, capped = search_catalog_batch(env.owner, env.space, ["事项0", "后续事项"], pages=pages, vector=vector,
+        session_factory=env.db, inference_schedule="serial_equivalent", rerank_units=2)
+    assert seen == [2, 2] and capped["query_document_pairs"] == 4
+    assert all(row["units"] for row in rows)  # the fused ranking still returns the remaining candidates
+    seen.clear()
+    _, full = search_catalog_batch(env.owner, env.space, ["事项0", "后续事项"], pages=pages, vector=vector,
+        session_factory=env.db, inference_schedule="serial_equivalent")
+    assert min(seen) > 2 and full["query_document_pairs"] == sum(seen)

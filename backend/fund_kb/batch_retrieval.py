@@ -33,8 +33,11 @@ def _read_state(db, user_id, space_id, pages, scope, context, vector):
 
 def search_catalog_batch(user, space_id, queries, *, pages, vector, scope="reference",
                          context=None, limit=24, checkpoint=None, session_factory,
-                         inference_schedule="shared"):
-    """Return one complete single-query result per query plus shared timing data."""
+                         inference_schedule="shared", rerank_units=None):
+    """Return one complete single-query result per query plus shared timing data.
+
+    `rerank_units` caps the cross-encoder pool per query (the fused ranking orders the rest), for lookups
+    that only need to find a named document or clause; None keeps the configured pool."""
     started = time.monotonic()
     if inference_schedule not in {"shared", "serial_equivalent"}:
         raise ValueError("INVALID_INFERENCE_SCHEDULE")
@@ -122,8 +125,9 @@ def search_catalog_batch(user, space_id, queries, *, pages, vector, scope="refer
             warnings = list(shared_warnings)
             units, weights = hybrid._fused_unit_candidates(query, current_pages, channels,
                 catalog_order, blocks, headings, warnings)
+            pool = rerank_pool_size(vector.settings, units)
             prepared.append({"query": query, "units": units, "weights": weights, "warnings": warnings,
-                             "rerank_count": rerank_pool_size(vector.settings, units)})
+                             "rerank_count": pool if rerank_units is None else min(pool, rerank_units)})
     phase["candidate_verification_and_fusion_ms"] = (time.monotonic() - phase_start) * 1000
     check()
 

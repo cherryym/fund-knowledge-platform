@@ -3,7 +3,8 @@ import { apiUrl, ApiError, get, query } from "./api";
 import { ErrorBox, Field, Loading, Notice, useApp, useLoad } from "./ui";
 import { isAccessError, pathId, revision, stringList, useCapabilitiesTask, validDate } from "./CapabilitiesShared";
 
-const scopes = { "capabilities:read": "读取能力定义", "runs:write": "领取运行并回传步骤", "sources:read": "读取任务绑定来源" };
+const scopes = { "capabilities:read": "读取能力定义", "runs:write": "领取运行并回传步骤", "sources:read": "读取任务绑定来源",
+  "knowledge:read": "查询知识库（库地图、检索、读取正文）", "consult:write": "发起咨询（使用本人模型连接，产生模型调用）" };
 type AccessScope = keyof typeof scopes;
 type AccessMetadata = { id: string; name: string; space_id: string; scopes: AccessScope[]; expires_at: string; revoked_at: string | null; created_at: string; revision: number };
 type AccessList = { items: AccessMetadata[]; can_create: boolean; base_url: string; notes: string[] };

@@ -19,6 +19,8 @@ type Proposal = { id: string; kind: Kind; status: "PROPOSED" | "ACCEPTED" | "REJ
   compiled_revision?: {candidate: {title: string; blocks: Block[]}} | null;
   review?: {comment: string}; resolution?: {comment: string};
   result?: {new_version_id?: string; requires_edit?: boolean; action?: string} };
+type CoverageGap = { gap: string; purposes: string[]; runs: number; first_seen: string; last_seen: string; own_run_ids: string[] };
+type CoverageGaps = { items: CoverageGap[]; scope: "space" | "own_runs"; runs_scanned: number; notes: string };
 const kindLabels = {REVISION: "修订", CONSOLIDATION: "导航归并", CONFLICT: "冲突"};
 const statusLabels = {PROPOSED: "待审阅", ACCEPTED: "已接受", REJECTED: "已拒绝"};
 const base = "/wiki/maintenance";
@@ -27,7 +29,7 @@ export function WikiMaintenanceDialog({close, pages, initialId}: {
   close: () => void; pages: EntryOption[]; initialId?: string;
 }) {
   const app = useApp();
-  const [tab, setTab] = useState<"entries" | "proposals">("entries");
+  const [tab, setTab] = useState<"entries" | "proposals" | "gaps">("entries");
   const [entryId, setEntryId] = useState(initialId || pages[0]?.id || "");
   const [entrySearch, setEntrySearch] = useState("");
   const [aliases, setAliases] = useState("");
@@ -47,6 +49,8 @@ export function WikiMaintenanceDialog({close, pages, initialId}: {
   const entry = useLoad(signal => entryId ? get<Entry>(entryPath, signal) : Promise.resolve(null), [entryId, epoch]);
   const proposals = useLoad(signal => get<{items: Proposal[]; total: number}>(`${base}/proposals?${query({
     space_id: app.space.id, status: filter})}`, signal), [app.space.id, filter, epoch]);
+  const gaps = useLoad(signal => tab === "gaps" ? get<CoverageGaps>(`/coverage-gaps?${query({space_id: app.space.id})}`, signal)
+    : Promise.resolve(null), [app.space.id, tab, epoch]);
   const detailPath = `${base}/proposals/${encodeURIComponent(proposalId)}`;
   const detailReadPath = `${detailPath}?include_candidate=true`;
   const detail = useLoad(signal => proposalId ? get<Proposal>(detailReadPath, signal) : Promise.resolve(null), [proposalId, epoch]);
@@ -72,9 +76,22 @@ export function WikiMaintenanceDialog({close, pages, initialId}: {
       <nav className="wiki-maint-tabs" aria-label="知识维护视图">
         <button type="button" aria-pressed={tab === "entries"} onClick={() => setTab("entries")}>主条目与别名</button>
         <button type="button" aria-pressed={tab === "proposals"} onClick={() => setTab("proposals")}>维护建议 {proposals.data?.total ?? ""}</button>
+        <button type="button" aria-pressed={tab === "gaps"} onClick={() => setTab("gaps")}>资料缺口</button>
       </nav>
       <Notice>归并只调整主条目导航，不删除正文。修订建立独立草稿；冲突需登记处理说明。所有原文、旧版本和审核状态均保留。</Notice>
-      {tab === "entries" ? <div className="wiki-maint-grid">
+      {tab === "gaps" ? <section className="wiki-maint-proposals" aria-label="资料缺口">
+        <div className="wiki-maint-toolbar">
+          <button type="button" onClick={() => setEpoch(value => value + 1)}><ArrowClockwise />刷新</button>
+        </div>
+        {gaps.loading && <Loading label="汇总资料缺口…" />}<ErrorBox error={gaps.error} retry={gaps.reload} />
+        {gaps.data && <p role="status">{gaps.data.scope === "space" ? "本知识库" : "本人"}最近 {gaps.data.runs_scanned} 次已完成咨询中，
+          模型声明的缺失资料。{gaps.data.notes}</p>}
+        {gaps.data?.items.length === 0 && <Empty title="暂无资料缺口" detail="使用“推理核心”检索方案答疑时，模型会记录推理需要但本库缺少的资料。" />}
+        <ul className="wiki-maint-list">{gaps.data?.items.map(item => <li key={item.gap}>
+          <div className="wiki-maint-gap"><span>{item.runs} 次咨询提到 · 最近 {item.last_seen.slice(0, 10)}</span><strong>{item.gap}</strong>
+            {item.purposes.map(purpose => <small key={purpose}>用途：{purpose}</small>)}</div>
+        </li>)}</ul>
+      </section> : tab === "entries" ? <div className="wiki-maint-grid">
         <section className="form-stack">
           <Field label="查找知识条目"><input value={entrySearch} placeholder="按标题查找" onChange={e => setEntrySearch(e.target.value)} /></Field>
           <Field label="当前知识条目"><select aria-label="当前知识条目" value={entryId} onChange={e => setEntryId(e.target.value)}>

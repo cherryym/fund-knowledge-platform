@@ -34,9 +34,11 @@ def search(ctx):
 
 
 def thread_access(ctx, thread_id=None):
+    from .agent_access import authorize_agent_space
     t = ctx.db.get(m.ConsultationThread, thread_id or ctx.id)
     if not t or t.owner_id != ctx.user.id or t.deleted_at:
         fail(404, "NOT_FOUND", "对象不存在或不可访问")
+    authorize_agent_space(getattr(ctx, "request", None), t.space_id)
     space_access(ctx.db, ctx.user, t.space_id)
     return t
 
@@ -232,6 +234,8 @@ def _run_projection(ctx, run):
 
 def threads(ctx):
     if ctx.operation == "createThread":
+        from .agent_access import authorize_agent_space
+        authorize_agent_space(getattr(ctx, "request", None), ctx.data["space_id"])
         space_access(ctx.db, ctx.user, ctx.data["space_id"])
         t = m.ConsultationThread(id=uid(), owner_id=ctx.user.id, **ctx.data)
         ctx.db.add(t)

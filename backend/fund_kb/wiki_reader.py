@@ -117,6 +117,47 @@ UNIVERSAL_SYNTHESIS_INSTRUCTION = """请综合本轮完整已读的Wiki与原文
 核对初始查证事项是否已解决；有新的相关条件或例外可以补读，已足够则直接形成完整答复。
 公开说明处理步骤、必要分支和推断依据，并将关键主张对应真实E来源。直接规定、综合推断和建议分开；不要因为某一局部缺证据而省掉其他有据可答的内容。"""
 
+# Reasoning core V1: the universal reading/citation contract plus a library map
+# before planning, dimension decomposition, precedence reasoning and explicit
+# principle-based derivation. Still no question/document allowlists.
+REASONING_PROMPT_VERSION = "wiki-rag-reasoning-core-v1.10-20261002"
+# Reasoning answers handle only the structural review items that bear on this answer, in
+# business terms, instead of enumerating every listed item.
+_REVIEW_DATA_RULE = "逐项处理数据列出的日期/模式、价格口径和分录疑点，说明已解决与未解决的范围；"
+REASONING_SYSTEM = UNIVERSAL_SYSTEM.replace(_REVIEW_DATA_RULE, (
+    "数据列出的日期/模式、价格口径和分录疑点，凡影响本题结论或你给出的分录与操作的，用业务语言说明需核对之处及影响范围；"
+    "与本题无关的不写。")).replace("\n\n边界\n", """
+
+推理方法
+按问题实际需要拆解维度：资产与工具、业务事件、时点与业务日期、分类与计量、价格来源与估值技术、会计核算、产品与适用主体、估值治理与披露。只展开相关维度；未提供的事实列为条件分支，不臆测。
+比较来源的层级、发布主体、施行/废止日期、版本和适用主体。同一事项有多份来源时，按上位规定优先、现行规定优先于已被废止或替代的规定、专门规定优先于一般规定、公募基金专门规定优先于其他主体标准来判断，并说明理由；业务日期早于新规施行时适用当时有效的规定。库地图中的“预抽”信息只是线索，据以判断效力前须读到对应原文（如施行或废止条款）；“已确认”来源治理事实可直接作为效力判断的前提。
+有专门规定时以其为直接依据。没有专门规定或规定未覆盖本题情形时，回到上位原则推导（如金融工具分类与计量、公允价值计量与层次、估值技术选择、估值一致性与谨慎性、会计确认与计量），写明“推导”及其前提和适用限制，并指出应由估值委员会、托管人或专业人员确认的事项。
+以估值技术确定公允价值时（缺乏活跃市场报价、没有第三方估值价格、自建模型或对报价作重大调整），说明公允价值层次：按对整体计量重要的最低层次输入值确定，使用重要的不可观察输入值的通常属于第三层次，并说明对复核与披露的影响。
+区分施行/生效日、过渡期或“至某日实施完毕”的实施期限、失效与废止：“自发布之日起至某日实施完毕”是完成实施的期限，届满后规定继续有效；判断失效或被替代须有明确的废止、失效或替代依据。
+效力字段为UNKNOWN只表示本库尚未登记核验结果，不等于失效或存疑；原文施行条款、发布公告或已确认的替代事实表明其为现行规定时，应据此作为现行依据，不要仅因UNKNOWN把现行规定列为缺口；只在用户需要判断效力或存在新旧冲突时简要说明本库效力字段尚未核验，不在每个答复中复述。
+估值服务机构（如中债、中证、上海清算所、外汇交易中心）的方法说明解释其价格如何编制，是价格来源的依据，不是对基金估值的规范性要求；以其他主体（如证券公司、私募）为对象的规定，对公募基金只能作参考并说明差异。
+逐项核对适用范围、除外情形、交易/行权状态、阈值和时点；条件不同导致结论不同时给出分支。
+推理需要但本库没有的规范性资料（如某份规定的正式全文或新版本、估值机构口径），用独立一行“GAP 缺少的资料｜用途”列出；库地图里已有的资料需要时用READ补读，不列为GAP。基金合同、托管协议、内部制度、交易确认等本基金或本笔业务的个案材料，以及用户未提供的业务事实，写成条件分支、追问或落地前需确认的事项，不写GAP。GAP不是阅读命令，不影响其他有据部分的作答。
+
+边界
+""")
+if REASONING_SYSTEM == UNIVERSAL_SYSTEM or _REVIEW_DATA_RULE not in UNIVERSAL_SYSTEM:
+    raise RuntimeError("REASONING_PROMPT_ANCHOR_MISSING")
+REASONING_SYSTEM_SHA256 = sha256(REASONING_SYSTEM.encode("utf-8")).hexdigest()
+REASONING_PLANNING_INSTRUCTION = """请先阅读下方库地图，再拆解问题，给出简洁的公开查证计划。只输出命令行，每行以一个命令词开头、后接真实内容；不写表格、长段分析或业务结论，不输出隐藏思维链，也不要照抄本说明里的字样。
+命令词 ISSUE 后写一个需要解决的具体事项及其关键分支；用户未提供但影响结论的事实，也作为 ISSUE 的分支列出。
+命令词 READ 后写库地图中一个最直接相关的来源或知识页的编号（即库地图每行开头的W加数字），每行一个；通常先读最直接的3至6个：与问题直接相关的专题页（跨来源整理，读取时连同它引用的原文小节一起提供）、直接适用的规定、上位原则、与效力判断相关的施行或废止文件。专题页不替代直接适用的规定：题目涉及的专门指引、交易规则、会计准则条款仍要READ。
+命令词 SEARCH 后写一条具体的检索语句，用于发现库地图里看不出、但需要核对的依据，每行一条。
+命令词 GAP 后写库地图中没有、本库可能缺少的一份规范性资料及其用途（用“｜”分隔），可选；合同、托管协议等个案材料不写GAP。
+目录只是元数据，不能据标题下结论；详细业务解释留到读过原文后的综合答复。"""
+REASONING_SYNTHESIS_INSTRUCTION = UNIVERSAL_SYNTHESIS_INSTRUCTION + """
+说明所采用依据的层级与效力判断；没有直接规定的部分写明是推导及其前提；本库仍缺的资料用 GAP 行列出，用户未提供的事实写成条件分支或追问。
+篇幅与问题复杂度相称：有直接规定的问题以结论、依据、适用条件和必要处理步骤为主，不铺陈与本题无关的科目表、背景或重复内容；多条规定综合或需要推导的问题再按维度展开。
+面向用户的正文用资料标题称呼来源，不写W编号（W编号只用于READ等阅读命令）；每个关键主张后仍须用[E编号]标注支持它的原文，E编号不可省略。专题页是整理后的导航，结论须引用它所指向的原文。效力与施行日期只在影响本题结论时简短说明，不要每题复述废止公告或施行日期等背景。
+正文只写业务内容，不复述阅读或程序核对过程（如本轮、新增材料、本次提供的正文、所提供条款、当前材料未提供、阅读提要、已读范围、依赖未定位、结构检查条数）；依据不足时直接写明哪项规定或事实尚需核对。
+会计分录：原则明确时先给出可执行的标准分录（科目、借贷方向、金额口径、时点），原文分录有疑点的另起一句说明，不要因疑点而不给分录。
+如确需补读，本次只输出若干行 READ、READ_SECTION 或 SEARCH 命令（命令词后接编号、章节号或检索语句），不写其他说明，程序读取后会请你继续作答；否则直接给出完整答复。"""
+
 
 def pages_from_records(records):
     grouped = defaultdict(list)
@@ -189,7 +230,7 @@ def split_text(text, max_bytes):
         yield "".join(current)
 
 
-_READ_COMMANDS = r"READ_SECTION|READ_FULL|SEARCH|CATALOG|READ|读取|阅读"
+_READ_COMMANDS = r"READ_SECTION|READ_FULL|SEARCH|CATALOG|GAP|READ|读取|阅读"
 
 
 def _command_prose(text):
@@ -220,15 +261,15 @@ def _command_prose(text):
             if not line.startswith(delimiter):
                 continue
             escaped = re.escape(delimiter)
-            head = re.match(rf"^{escaped}({_READ_COMMANDS})([:：]?){escaped}(?=$|[ \t:：])", line, re.IGNORECASE)
+            head = re.match(rf"^{escaped}({_READ_COMMANDS})([:：]?){escaped}(?=$|[ \t:：｜|])", line, re.IGNORECASE)
             if head:
                 line = head[1] + head[2] + line[head.end():]
             elif line.endswith(delimiter):
                 inner = line[len(delimiter):-len(delimiter)]
-                if re.match(rf"^(?:{_READ_COMMANDS})(?=$|[ \t:：])", inner, re.IGNORECASE):
+                if re.match(rf"^(?:{_READ_COMMANDS})(?=$|[ \t:：｜|])", inner, re.IGNORECASE):
                     line = inner
             break
-        if re.match(rf"^(?:{_READ_COMMANDS})(?=$|[ \t:：])", line, re.IGNORECASE):
+        if re.match(rf"^(?:{_READ_COMMANDS})(?=$|[ \t:：｜|])", line, re.IGNORECASE):
             lines.append(line)
     return "\n".join(lines)
 
@@ -321,6 +362,182 @@ def planning_search_requests(text):
             if value and not re.search(r"https?://|\[[^]]+\]\(|^(?:READ|SEARCH|CATALOG)\b", value, re.I):
                 result.append(value)
     return list(dict.fromkeys(result))
+
+
+_GAP_TEMPLATES = frozenset({"缺少的资料", "缺少的资料或事实", "缺失资料", "资料"})
+
+
+def clean_gap(text):
+    text = text.strip().strip('"“”')
+    # "GAP 1｜..." / "GAP ①：..." numbering is presentation, not the missing material.
+    text = re.sub(r"^(?:\d{1,2}|[①-⑳])\s*(?:[.)、:：]\s*|[｜|]\s*|\s+)", "", text).strip()
+    material = text.split("｜", 1)[0].split("|", 1)[0].strip()
+    return "" if not material or material in _GAP_TEMPLATES else text[:300]
+
+
+_QUERY_TEMPLATE = re.compile(r"^(?:检索(?:表达|语句|词)|同意图检索表达)(?:\s+|[:：]\s*|$)")
+
+
+def clean_search_queries(queries):
+    """Drop format words a model copied from the instruction ("检索表达 ..."); keep real queries."""
+    cleaned = []
+    for query in queries:
+        value = _QUERY_TEMPLATE.sub("", query.strip()).strip() if isinstance(query, str) else ""
+        if value and value not in cleaned:
+            cleaned.append(value)
+    return cleaned
+
+
+def gap_requests(text):
+    """Model-declared evidence gaps (GAP 缺少的资料｜用途): records, never commands."""
+    if not isinstance(text, str):
+        return []
+    prose = _command_prose(text)
+    gaps = [clean_gap(g) for g in re.findall(r"(?im)^\s*GAP\s*[:：｜| ]\s*([^\n]+)$", prose)]
+    return list(dict.fromkeys(g for g in gaps if g))[:30]
+
+
+# GAP lines feed library completion. A GAP naming a document the library already holds is not missing (the answer can
+# READ it); a document only this fund or deal has (contract, custody agreement, internal procedure, trade confirmation)
+# is a case material for the user to check, not a library gap.
+_GAP_TITLE = re.compile(r"《([^》]{4,80})》")
+_GAP_VERSION_HINT = re.compile(r"\d{4}年|版|修订|征求意见|最新|更新|全文")
+_CASE_MATERIAL = re.compile(r"基金合同|产品合同|资产管理合同|托管合同|托管协议|合同约定|合同条款|招募说明书|本基金|本产品|该基金|该产品"
+                            r"|内部制度|内部估值制度|交易确认|成交确认|确认书|交割单|持仓明细|估值表")
+
+
+def _title_key(text):
+    return re.sub(r"[\s《》〈〉“”\"'（）()【】\[\]、，,。.:：；;—\-－·]", "", text).casefold()
+
+
+def sort_gaps(gaps, library_titles):
+    """(library gaps, case materials) from model GAPs; GAPs naming a document the library holds are left out."""
+    titles = [_title_key(title) for title in library_titles]
+
+    def held(name):
+        key = _title_key(name)
+        return len(key) >= 6 and any(key in title for title in titles)
+
+    missing, case = [], []
+    for gap in gaps:
+        material = gap.split("｜", 1)[0].split("|", 1)[0]
+        names = _GAP_TITLE.findall(material)
+        if names and not _GAP_VERSION_HINT.search(_GAP_TITLE.sub("", material)) and any(held(n) for n in names):
+            continue
+        if not names and held(material):
+            continue
+        (case if _CASE_MATERIAL.search(material) else missing).append(gap)
+    return missing, case
+
+
+def move_gap_lines(markdown, library_titles=()):
+    """Replace raw GAP command lines by readable sections; other text unchanged. Returns (markdown, library gaps, case
+    materials); GAPs naming a document the library holds are dropped."""
+    gaps = gap_requests(markdown)
+    if not gaps:
+        return markdown, [], []
+    kept, fence = [], None
+    for raw in markdown.splitlines():
+        line = raw.strip()
+        marker = re.match(r"^(`{3,}|~{3,})", line)
+        if marker:
+            fence = None if fence == marker[1][0] else (fence or marker[1][0])
+        if not fence and not line.startswith(">") and _command_prose(raw).startswith("GAP"):
+            continue
+        kept.append(raw)
+    missing, case = sort_gaps(gaps, library_titles)
+    text = "\n".join(kept).rstrip()
+    if missing:
+        text += ("\n\n### 还需补充的资料\n本库暂缺以下资料，补充后可进一步完善本答复：\n"
+                 + "\n".join("- " + gap.replace("|", "｜") for gap in missing))
+    if case:
+        text += ("\n\n### 落地前需核对的个案材料\n以下材料属于本基金或本笔业务，需结合实际文本核对：\n"
+                 + "\n".join("- " + gap.replace("|", "｜") for gap in case))
+    return text, missing, case
+
+
+def planning_read_requests(text, pages):
+    """Planner reads: explicit READ lines, plus W-ids listed inside a READ section/table.
+
+    Only the reasoning planner uses the section form (models often tabulate a
+    reading list). Ids must be registered in this request's catalog; fenced or
+    quoted text stays inert. This never reads prose outside a READ section.
+    """
+    ids = read_requests(text, pages)
+    if not isinstance(text, str):
+        return ids
+    active, level, fence = False, 0, None
+    for raw in text.splitlines():
+        line = raw.strip()
+        marker = re.match(r"^(`{3,}|~{3,})", line)
+        if marker:
+            fence = None if fence == marker[1][0] else (fence or marker[1][0])
+            continue
+        if fence or line.startswith(">"):
+            continue
+        heading = re.match(r"^(#{1,6})\s+(.+)$", line)
+        if heading:
+            title = heading[2].strip("*_ ")
+            if (re.search(r"\bREAD\b|读取|阅读", title, re.IGNORECASE)
+                    and not re.search(r"\bSEARCH\b|检索", title, re.IGNORECASE)):
+                active, level = True, len(heading[1])
+            elif len(heading[1]) <= level:
+                active = False
+            continue
+        if active and (line.startswith("|") or re.match(r"^(?:\d+[.)、]|[-*+])\s+", line)):
+            ids.extend(word.upper() for word in re.findall(r"(?<![A-Za-z0-9])W\d+(?!\d)", line, re.IGNORECASE)
+                       if word.upper() in pages)
+    return list(dict.fromkeys(ids))
+
+
+def display_title(title):
+    """Readable source title: attachment path prefixes and file extensions removed."""
+    value = re.split(r"[—–-]附件[:：]", title or "")[-1]
+    value = re.sub(r"^(?:附件\d*[:：])+", "", value).strip()
+    value = re.sub(r"\.(?:pdf|docx?|xlsx?|html?)$", "", value, flags=re.IGNORECASE)
+    return value.strip("《》 ") or (title or "").strip("《》 ")
+
+
+def name_page_ids(markdown, pages):
+    """Replace this run's registered W-ids in public prose by the page title.
+
+    W-ids are per-request reading handles; users need titles. Literal command
+    lines inside fences and unregistered tokens stay unchanged. Returns (text, replacements).
+    """
+    if not isinstance(markdown, str):
+        return markdown, 0
+    count, out, fence = 0, [], None
+    def rewrite(line):
+        nonlocal count
+        def parenthetical(match):
+            # "《标题》（W12）" / "某指引(W12)": drop the handle when the title is already written just before.
+            nonlocal count
+            page = pages.get(match.group(2).upper())
+            if not page:
+                return match.group(0)
+            before = line[max(0, match.start() - 80):match.start()]
+            count += 1
+            name = display_title(page["title"])
+            return "" if name in before else "（《" + name + "》）"
+        line = re.sub(r"([（(])\s*(W\d+)\s*([）)])", parenthetical, line)
+        def title(match):
+            nonlocal count
+            page = pages.get(match.group(0).upper())
+            if not page:
+                return match.group(0)
+            count += 1
+            return "《" + display_title(page["title"]) + "》"
+        return re.sub(r"(?<![A-Za-z0-9])W\d+(?![A-Za-z0-9])", title, line)
+    for raw in markdown.splitlines():
+        marker = re.match(r"^\s*(`{3,}|~{3,})", raw)
+        if marker:
+            fence = None if fence == marker[1][0] else (fence or marker[1][0])
+            out.append(raw)
+            continue
+        # Fenced journal entries are prose for readers too; only literal command lines stay as written.
+        command = fence and re.match(rf"^\s*(?:{_READ_COMMANDS})(?=$|[ \t:：｜|])", raw, re.IGNORECASE)
+        out.append(raw if command else rewrite(raw))
+    return "\n".join(out), count
 
 
 def requests_catalog(text):

@@ -10,7 +10,7 @@ import copy
 import json
 import re
 
-SPEC_VERSION = "wiki-compilation/1.0"
+SPEC_VERSION = "wiki-compilation/1.1"
 TYPES = ("topic", "atomic_rule", "scenario", "sop")
 
 # Length is an output budget, NOT a prose-length requirement. A small complete
@@ -124,7 +124,10 @@ def instruction(config):
     if config["compilation_contract"] == "typed":
         content += ("每个block用section标注所属结构，support_status为SUPPORTED/GAP/NOT_APPLICABLE；所有必需结构都要有正文。"
             "每段保留本批evidence_ids，正文使用可读Markdown标题；缺口段也只关联其所核对的来源，不把该关联当作实质支撑。"
-            "GAP应同时写入gaps。每个输入S编号必须有且只有一个source_dispositions，EXTRACTED必须有页面或关系引用。")
+            "GAP应同时写入gaps。每个输入S编号必须有且只有一个source_dispositions，EXTRACTED必须有页面或关系引用。"
+            "页面标题写主题本身（资产、业务场景或规则名称），不加“待核验”“待核事项”“缺口”等状态说明；generation_brief"
+            "指定了页面标题时照用。SUPPORTED段只写来源支持的内容，不夹带“材料未提供/未给出/未载明”之类的说法；确有缺口时"
+            "写成独立的GAP段并写入gaps，具体写明缺少哪份原文或哪项规定。")
         if kind == "sop":
             content += ("steps的每个block还需step对象：step_id、owner_role、inputs、action、outputs、checks、exceptions、depends_on。"
                 "这些字段须在该block的Markdown中完整呈现；责任未规定写待确认，依赖只用本页更早的step_id。")
@@ -229,26 +232,74 @@ def semantic_passages(sources):
     return groups
 
 
-def whole_batch(sources, processed, key, *, max_bytes, max_units=32, strict_scope=False):
+def join_members(members):
+    """One passage record from consecutive source blocks of one version (a single block stays itself)."""
+    if len(members) == 1:
+        return {**members[0], "char_start": 0, "char_end": len(members[0]["text"])}
+    return {**members[0], "text": "\n".join(member["text"] for member in members), "source_members": list(members)}
+
+
+def section_passages(records, wanted=None):
+    """Multi-batch builds: one passage per minimal complete source section (chapter, section, article or
+    paragraph group, as recognized by source_sections v3 - the same complete sections the answer reader
+    uses) that contains a wanted block. The whole section is taken; passages follow document structure,
+    never a character-count window. records: every text block of the build's source versions, in source
+    order; wanted: requested block ids (None = every block)."""
+    from .source_sections import build_document_sections, select_sections_from_outline
+    by_version = {}
+    for record in records:
+        by_version.setdefault(record["version_id"], []).append(record)
+    passages = []
+    for rows in by_version.values():
+        rows = sorted(rows, key=lambda record: (record["ordinal"], record["block_id"]))
+        index = {record["block_id"]: record for record in rows}
+        anchors = set(index) if wanted is None else set(index) & set(wanted)
+        if not anchors:
+            continue
+        outline = build_document_sections(rows, structure_version="v3")
+        for section in select_sections_from_outline(outline, anchors):
+            members = [index[block_id] for block_id in section["block_ids"] if block_id in index]
+            if members:
+                passages.append({**join_members(members), "section_title": section["title"]})
+    return passages
+
+
+def _item(record, number):
+    item = {"id": f"S{number}", "title": record["title"], "version_id": record["version_id"],
+            "block_id": record["block_id"], "content_sha256": record["content_sha256"], "excerpt": record["text"],
+            "char_start": record.get("char_start", 0), "char_end": record.get("char_end", len(record["text"]))}
+    if record.get("review_notice"):
+        item["review_notice"] = record["review_notice"]
+    if record.get("source_members"):
+        item["source_block_count"] = len(record["source_members"])
+        item["source_blocks"] = [anchor(member) for member in record["source_members"]]
+        # The excerpt spans multiple originals; the first block offsets
+        # alone must never be presented as its whole source locator.
+        item["locator_kind"] = "contiguous_source_blocks"
+    return item
+
+
+def _pending(sources, processed, key, strict_scope):
     pending = [record for record in sources if key(record) not in processed]
     already = len(sources) - len(pending)
     if strict_scope and pending:
         # An explicitly selected window must include its prior processed middle
         # paragraphs as context, even when only the tail is new.
         pending, already = list(sources), 0
+    return pending, already
+
+
+def all_passages(sources, processed, key, *, strict_scope=False):
+    """Every pending passage, in source order, with a build-unique S id (multi-batch builds split later)."""
+    pending, already = _pending(sources, processed, key, strict_scope)
+    return [(_item(record, number), record) for number, record in enumerate(pending, 1)], already
+
+
+def whole_batch(sources, processed, key, *, max_bytes, max_units=32, strict_scope=False):
+    pending, already = _pending(sources, processed, key, strict_scope)
     chosen, used = [], 0
     for record in pending:
-        item = {"id": f"S{len(chosen) + 1}", "title": record["title"], "version_id": record["version_id"],
-                "block_id": record["block_id"], "content_sha256": record["content_sha256"], "excerpt": record["text"],
-                "char_start": record.get("char_start", 0), "char_end": record.get("char_end", len(record["text"]))}
-        if record.get("review_notice"):
-            item["review_notice"] = record["review_notice"]
-        if record.get("source_members"):
-            item["source_block_count"] = len(record["source_members"])
-            item["source_blocks"] = [anchor(member) for member in record["source_members"]]
-            # The excerpt spans multiple originals; the first block offsets
-            # alone must never be presented as its whole source locator.
-            item["locator_kind"] = "contiguous_source_blocks"
+        item = _item(record, len(chosen) + 1)
         size = len(json.dumps(item, ensure_ascii=False).encode("utf-8"))
         if used + size > max_bytes or len(chosen) >= max_units:
             if strict_scope:
@@ -259,6 +310,199 @@ def whole_batch(sources, processed, key, *, max_bytes, max_units=32, strict_scop
         chosen.append((item, record))
         used += size
     return chosen, already
+
+
+def batch_outline(parts, limit):
+    """What earlier batches already wrote (section + opening of each supported block), at most `limit` chars."""
+    lines = []
+    for part in parts:
+        for page in part["pages"]:
+            for block in page["blocks"]:
+                if block["support_status"] == "SUPPORTED":
+                    lines.append(f"[{block['section']}] {block['markdown'].strip().splitlines()[0][:80]}")
+    text = "\n".join(lines)
+    return text if len(text) <= limit else text[:limit]
+
+
+def merge_batches(parts, config):
+    """One typed page from per-batch outputs of the same page.
+
+    Sections keep the spec order. Within a section every batch's SUPPORTED blocks are kept in batch
+    order (exact duplicates dropped); a section without supported text keeps its first NOT_APPLICABLE,
+    else GAP, block. Gaps, dispositions and relations are unions; relation endpoints naming any batch's
+    page title are renamed to the merged (first) title. Evidence ids are build-unique, so bindings hold.
+    """
+    pages = [page for part in parts for page in part["pages"]]
+    gaps = list(dict.fromkeys(gap for part in parts for gap in part["gaps"]))
+    merged = {"pages": [], "gaps": gaps}
+    if any("source_dispositions" in part for part in parts):
+        merged["source_dispositions"] = [item for part in parts for item in part.get("source_dispositions", [])]
+    if pages:
+        first = pages[0]
+        blocks = []
+        for key, _, _ in _SPECS[config["compilation_type"]]["sections"]:
+            candidates = [block for page in pages for block in page["blocks"] if block["section"] == key]
+            seen, kept = {}, []
+            for block in candidates:
+                text = block["markdown"].strip()
+                if block["support_status"] != "SUPPORTED":
+                    continue
+                if text in seen:  # same paragraph from another batch: keep its citations too
+                    seen[text]["evidence_ids"] = list(dict.fromkeys([*seen[text]["evidence_ids"], *block["evidence_ids"]]))
+                    continue
+                seen[text] = {**block, "evidence_ids": list(block["evidence_ids"])}
+                kept.append(seen[text])
+            if not kept:
+                fallback = ([b for b in candidates if b["support_status"] == "NOT_APPLICABLE"]
+                            or [b for b in candidates if b["support_status"] == "GAP"])
+                kept = fallback[:1]
+            # One section heading per section: later batches' repeated leading headings are dropped.
+            for later in kept[1:]:
+                lines = later["markdown"].lstrip().split("\n", 1)
+                if lines[0].startswith("#") and len(lines) == 2 and lines[1].strip():
+                    later["markdown"] = lines[1].lstrip("\n")
+            blocks.extend(kept)
+        page = {**first, "blocks": blocks,
+                "aliases": list(dict.fromkeys(a for p in pages for a in p.get("aliases", [])))[:8],
+                "links": list(dict.fromkeys(link for p in pages for link in p.get("links", [])))[:12]}
+        merged["pages"] = [page]
+    if any("relations" in part for part in parts):
+        titles = {page["title"] for page in pages}
+        target = pages[0]["title"] if pages else None
+        relations, seen = [], {}
+        for part in parts:
+            for edge in part.get("relations", []):
+                edge = {**edge, "evidence_ids": list(edge["evidence_ids"]),
+                        "source_title": target if edge["source_title"] in titles else edge["source_title"],
+                        "target_title": target if edge["target_title"] in titles else edge["target_title"]}
+                identity = (edge["source_title"], edge["target_title"], edge["relation_type"])
+                if edge["source_title"] == edge["target_title"]:
+                    continue
+                if identity in seen:  # same relation from another batch: keep its citations too
+                    seen[identity]["evidence_ids"] = list(dict.fromkeys([*seen[identity]["evidence_ids"], *edge["evidence_ids"]]))
+                    continue
+                seen[identity] = edge
+                relations.append(edge)
+        merged["relations"] = relations
+    # A passage whose only citing text did not survive the merge (e.g. a batch's GAP note for a section another
+    # batch covered) is not claimed as extracted: it is marked for review instead of being re-attached elsewhere.
+    mark_uncited(merged, "（分批合并后正文未保留引用此段的内容）")
+    return merged
+
+
+def mark_uncited(merged, note):
+    """EXTRACTED passages no longer cited by any kept text or relation become NEEDS_REVIEW with `note`."""
+    if "source_dispositions" not in merged:
+        return
+    cited = {eid for page in merged["pages"] for block in page["blocks"] for eid in block["evidence_ids"]}
+    cited.update(eid for edge in merged.get("relations", []) for eid in edge["evidence_ids"])
+    merged["source_dispositions"] = [
+        {**item, "disposition": "NEEDS_REVIEW", "reason": item["reason"] + note}
+        if item["disposition"] == "EXTRACTED" and item["evidence_id"] not in cited else item
+        for item in merged["source_dispositions"]]
+
+
+# How a batch tends to say "what this batch adds"; on the merged page that is simply the page.
+BATCH_PHRASES = (("本页新增内容", "本页内容"), ("本页新增", "本页"), ("新增材料", "本页材料"), ("本批次", "本页"),
+                 ("本批", "本页"))
+# Sentences stating that the materials lack or only cover something: the ones a page-level review must see in full.
+COVERAGE_CLAIM = re.compile(r"未提供|未给出|未载明|未涉及|未覆盖|未列明|没有给出|没有提供|没有载明|只覆盖|仅覆盖|只涉及|仅涉及"
+                            r"|只提供|仅提供|只支持|仅支持|不能据此|缺少|尚无|待补充")
+_EMPTY_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)、]|（\d+）)\s*$")
+
+
+def clean_batch_phrases(merged):
+    for page in merged["pages"]:
+        for block in page["blocks"]:
+            for old, new in BATCH_PHRASES:
+                block["markdown"] = block["markdown"].replace(old, new)
+
+
+def review_paragraphs(merged, shorten=None):
+    """Numbered paragraphs of a merged page for the page-level review (text only; citations stay server-side).
+    With `shorten`, paragraphs without a coverage claim are cut to that many characters to fit the channel;
+    paragraphs that make a claim always stay whole."""
+    rows = []
+    for n, block in enumerate(merged["pages"][0]["blocks"], 1):
+        text = block["markdown"]
+        if shorten and not COVERAGE_CLAIM.search(text) and len(text) > shorten:
+            text = text[:shorten] + "…"
+        rows.append({"n": n, "section": block["section"], "markdown": text})
+    return rows
+
+
+def _body(markdown):
+    return "\n".join(line for line in markdown.splitlines() if not line.lstrip().startswith("#")).strip()
+
+
+def _paragraph_number(value, count, exclude=None):
+    """A valid 1-based paragraph number from an int, a digit string or (covered_in) a list of them."""
+    values = value if isinstance(value, list) else [value]
+    for item in values:
+        if isinstance(item, str) and item.strip().isdigit():
+            item = int(item.strip())
+        if type(item) is int and 1 <= item <= count and item != exclude:
+            return item
+    return None
+
+
+def _deletions_only(sentence, narrowed):
+    """True when `narrowed` is `sentence` with characters deleted (an ordered subsequence): nothing new is added."""
+    remaining = iter(sentence)
+    return all(char in remaining for char in narrowed)
+
+
+def apply_review(merged, removals):
+    """Delete verbatim sentences that the page-level review found contradicted by the page's own paragraphs.
+
+    Each removal must name another paragraph of the page that covers the content (covered_in), else it is ignored.
+    A claim only partly covered may instead be narrowed: `narrowed_to` must be the sentence with characters deleted
+    (an ordered subsequence, at least 6 characters), otherwise it is ignored. Nothing is rewritten or added.
+    Headings stay; a sentence that is not found exactly is ignored. A paragraph
+    left without text is dropped and its heading moves to the next paragraph of the same section, but the last
+    text of a section is never removed, so the structure stays complete. Returns the removed sentences."""
+    blocks = merged["pages"][0]["blocks"]
+    dropped, removed = set(), []
+    for item in removals:
+        if not isinstance(item, dict) or isinstance(item.get("n"), list):
+            continue
+        n = _paragraph_number(item.get("n"), len(blocks))
+        sentence = item.get("sentence").strip() if isinstance(item.get("sentence"), str) else ""
+        if n is None or len(sentence) < 6 or "\n#" in "\n" + sentence:
+            continue
+        if _paragraph_number(item.get("covered_in"), len(blocks), exclude=n) is None:
+            continue
+        block = blocks[n - 1]
+        if n in dropped or sentence not in block["markdown"]:
+            continue
+        narrowed = item.get("narrowed_to").strip() if isinstance(item.get("narrowed_to"), str) else ""
+        if narrowed:
+            if len(narrowed) < 6 or narrowed == sentence or not _deletions_only(sentence, narrowed):
+                continue
+            block["markdown"] = block["markdown"].replace(sentence, narrowed, 1)
+            removed.append({"n": n, "section": block["section"], "sentence": sentence, "narrowed_to": narrowed})
+            continue
+        text = block["markdown"].replace(sentence, "", 1)
+        text = "\n".join(line for line in text.splitlines() if not _EMPTY_ITEM.match(line))
+        text = re.sub(r"\n{3,}", "\n\n", text).strip()
+        if not _body(text):
+            if not any(other is not block and other["section"] == block["section"] and i + 1 not in dropped
+                       and _body(other["markdown"]) for i, other in enumerate(blocks)):
+                continue
+            dropped.add(n)
+        block["markdown"] = text
+        removed.append({"n": n, "section": block["section"], "sentence": sentence})
+    kept, carry = [], {}
+    for n, block in enumerate(blocks, 1):
+        if n in dropped:
+            carry.setdefault(block["section"], []).extend(
+                line for line in block["markdown"].splitlines() if line.lstrip().startswith("#"))
+            continue
+        if carry.get(block["section"]):
+            block["markdown"] = "\n".join(carry.pop(block["section"])) + "\n\n" + block["markdown"]
+        kept.append(block)
+    merged["pages"][0]["blocks"] = kept
+    return removed
 
 
 def anchor(record):

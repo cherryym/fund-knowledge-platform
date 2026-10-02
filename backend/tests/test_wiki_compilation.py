@@ -59,10 +59,16 @@ class CompilationProvider(FakeProvider):
         super().__init__(env)
         self.options, self.instructions = [], []
         self.finish_reason = "stop"
+        self.reviews, self.review_output = [], lambda data: {"remove": []}
 
     def complete(self, snapshot, messages, max_tokens=4096, json_mode=True, timeout=60):
         self.calls += 1
         data = json.loads(messages[1]["content"])
+        if "paragraphs" in data:  # page-level review after a multi-batch merge
+            self.reviews.append(data)
+            output = self.review_output(data)
+            return {"choices": [{"finish_reason": "stop", "message": {"content": output if isinstance(output, str)
+                                 else json.dumps(output, ensure_ascii=False)}}], "usage": {"prompt_tokens": 50}}
         self.requests.append(data)
         self.options.append({"max_tokens": max_tokens, "json_mode": json_mode, "timeout": timeout})
         self.instructions.append(messages[0]["content"])
@@ -445,3 +451,282 @@ def test_typed_compilation_rechecks_source_before_any_draft_commit(env, provider
     with env.db() as db:
         assert list(db.scalars(select(m.ResourceVersion).where(m.ResourceVersion.origin == "AI_DRAFT"))) == []
         assert list(db.scalars(select(m.RuntimePolicy).where(m.RuntimePolicy.name.like("wiki-compilation:%")))) == []
+
+
+def test_multi_batch_compiles_whole_scope_in_channel_batches_into_one_page(env, provider):
+    source = draft_source(env)
+    for ordinal in range(1, 40):  # one article per block: 40 complete sections, more than one batch (32 units) carries
+        append_block(env, source, f"第{ordinal}条 估值时核对价格来源、计量日期与输入参数之{ordinal}。", ordinal=ordinal)
+    jid = queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True))
+    result = finish(env, jid)
+    assert provider.calls == 3 and result["coverage"]["model_batches"] == 2  # two batches and one page review
+    assert len(provider.reviews) == 1 and result["coverage"]["page_review"]["status"] == "APPLIED"
+    first, second = provider.requests
+    assert [s["batch_index"] for s in (first["source_scope"], second["source_scope"])] == [1, 2]
+    assert first["prior_batches_outline"] == "" and "[scope]" in second["prior_batches_outline"]
+    ids = [item["id"] for item in first["sources"]] + [item["id"] for item in second["sources"]]
+    assert len(ids) == len(set(ids)) == 40  # build-unique evidence ids across batches
+    assert len(result["created_version_ids"]) == 1 and result["coverage"]["uncited_selected_blocks"] == 0
+    with env.db() as db:
+        vid = result["created_version_ids"][0]
+        version = db.get(m.ResourceVersion, vid)
+        cited = {link.to_block_id for link in db.scalars(select(m.EvidenceLink).where(m.EvidenceLink.from_version_id == vid))}
+        source_blocks = set(db.scalars(select(m.ContentBlock.block_id).where(m.ContentBlock.version_id == source[1])))
+    assert version.title == "合成topic知识1" and cited == source_blocks
+
+
+def test_multi_batch_requires_one_typed_page(env, provider):
+    source = draft_source(env)
+    for data in (request(env, [source], "topic", max_pages=2, multi_batch=True),
+                 build_input(env, [source], mode="topic", max_pages=1, multi_batch=True)):
+        response = env.call("POST", "/wiki/builds", data)
+        assert response.status_code == 422 and response.json()["code"] == "WIKI_MULTI_BATCH_REQUIRES_ONE_TYPED_PAGE"
+    assert provider.calls == 0
+
+
+def test_merge_batches_orders_sections_keeps_citations_and_renames_relations():
+    config = compilation.resolve("topic", "knowledge_points")
+    def part(title, texts, status="SUPPORTED", relations=()):
+        blocks = [{"section": key, "markdown": texts.get(key, f"{key}待补"), "evidence_ids": [f"{title}-{key}"],
+                   "support_status": status if key in texts else "GAP"} for key in ("sources_and_gaps", "scope", "overview",
+                                                                                     "rule_map", "exceptions")]
+        return {"pages": [{"title": title, "category": "c", "knowledge_type": "rule", "aliases": [title], "links": [],
+                           "blocks": blocks}], "gaps": [f"{title}缺口"], "relations": list(relations),
+                "source_dispositions": [{"evidence_id": f"{title}-x", "disposition": "SUPPORTING", "reason": "r"}]}
+    one = part("页", {"scope": "范围甲", "rule_map": "同一规则"},
+               relations=[{"source_title": "页", "target_title": "参考", "relation_type": "APPLIES_TO",
+                           "evidence_ids": ["e"], "explanation": "说明"}])
+    two = part("页（续）", {"scope": "范围乙", "rule_map": "同一规则", "exceptions": "例外乙"},
+               relations=[{"source_title": "页（续）", "target_title": "参考", "relation_type": "APPLIES_TO",
+                           "evidence_ids": ["f"], "explanation": "说明"}])
+    merged = compilation.merge_batches([one, two], config)
+    page = merged["pages"][0]
+    assert [b["section"] for b in page["blocks"]] == ["scope", "scope", "overview", "rule_map", "exceptions", "sources_and_gaps"]
+    assert [b["markdown"] for b in page["blocks"] if b["section"] == "scope"] == ["范围甲", "范围乙"]
+    rule = next(b for b in page["blocks"] if b["section"] == "rule_map")
+    assert rule["evidence_ids"] == ["页-rule_map", "页（续）-rule_map"]  # duplicate paragraph keeps both citations
+    assert next(b for b in page["blocks"] if b["section"] == "overview")["support_status"] == "GAP"
+    assert page["title"] == "页" and page["aliases"] == ["页", "页（续）"]
+    assert merged["gaps"] == ["页缺口", "页（续）缺口"] and len(merged["source_dispositions"]) == 2
+    assert merged["relations"] == [{**one["relations"][0], "evidence_ids": ["e", "f"]}]  # renamed; duplicate's citations kept
+
+
+def test_merge_marks_extractions_whose_citing_text_was_dropped_for_review():
+    config = compilation.resolve("topic", "knowledge_points")
+    def part(title, overview_status, disposition):
+        blocks = [{"section": key, "markdown": f"{title}{key}", "evidence_ids": [f"{title}-{key}"],
+                   "support_status": overview_status if key == "overview" else "SUPPORTED"}
+                  for key in ("scope", "overview", "rule_map", "exceptions", "sources_and_gaps")]
+        return {"pages": [{"title": title, "category": "c", "knowledge_type": "rule", "aliases": [], "links": [], "blocks": blocks}],
+                "gaps": ["缺口"], "source_dispositions": [{"evidence_id": f"{title}-overview", "disposition": disposition, "reason": "r"}]}
+    merged = compilation.merge_batches([part("甲", "SUPPORTED", "EXTRACTED"), part("乙", "GAP", "EXTRACTED")], config)
+    dispositions = {item["evidence_id"]: item["disposition"] for item in merged["source_dispositions"]}
+    assert dispositions == {"甲-overview": "EXTRACTED", "乙-overview": "NEEDS_REVIEW"}
+    compilation.validate_structure(merged, config, {"甲-overview", "乙-overview"})
+
+
+def test_multi_batch_retries_only_the_failed_batch(env, provider):
+    from fund_kb.providers import ProviderError
+    source = draft_source(env)
+    for ordinal in range(1, 40):
+        append_block(env, source, f"第{ordinal}条 估值时核对价格来源与计量日期之{ordinal}。", ordinal=ordinal)
+    def flaky(output, data):
+        if provider.calls == 2:  # first attempt of batch 2 times out
+            raise ProviderError("PROVIDER_TIMEOUT")
+        return output
+    provider.output_transform = flaky
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
+    assert provider.calls == 4 and result["coverage"]["model_batches"] == 2 and len(result["created_version_ids"]) == 1
+    assert [r["source_scope"]["batch_index"] for r in provider.requests] == [1, 2, 2]
+
+
+def test_multi_batch_takes_the_complete_section_around_a_requested_block(env, provider):
+    source = draft_source(env)
+    heading = append_block(env, source, "第一条 债券估值", ordinal=1)
+    lines = [append_block(env, source, f"债券估值核对要点之{n}。", ordinal=1 + n) for n in range(1, 4)]
+    append_block(env, source, "第二条 股票估值", ordinal=5)
+    append_block(env, source, "股票估值核对要点。", ordinal=6)
+    data = request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True, source_block_ids=[lines[1]])
+    result = finish(env, queue(env, data))
+    sources = provider.requests[0]["sources"]
+    assert len(sources) == 1 and sources[0]["source_block_count"] == 4 and "股票" not in sources[0]["excerpt"]
+    with env.db() as db:
+        vid = result["created_version_ids"][0]
+        cited = {link.to_block_id for link in db.scalars(select(m.EvidenceLink).where(m.EvidenceLink.from_version_id == vid))}
+    assert cited == {heading, *lines}  # the whole article, nothing from the next one
+
+
+def test_multi_batch_splits_an_oversized_section_only_at_paragraph_boundaries(env, provider, monkeypatch):
+    source = draft_source(env)
+    texts = [f"段落{n}：" + "核对价格来源、计量日期与输入参数。" * 90 for n in range(1, 31)]
+    for n, text in enumerate(texts, 1):  # no headings, no pages: one complete section larger than a request
+        append_block(env, source, text, ordinal=n)
+    resolve = provider.resolve_connection
+    monkeypatch.setattr(provider, "resolve_connection", lambda *a, **k: {**resolve(*a, **k), "max_request_bytes": 60000})
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
+    excerpts = [item["excerpt"] for data in provider.requests for item in data["sources"]]
+    assert len(excerpts) > 1 and result["coverage"]["model_batches"] == len(provider.requests)
+    for text in texts:  # every paragraph whole, in exactly one passage
+        assert sum(excerpt.split("\n").count(text) for excerpt in excerpts) == 1
+
+
+def test_merge_keeps_one_heading_per_section():
+    config = compilation.resolve("topic", "knowledge_points")
+    def part(title, scope_text):
+        blocks = [{"section": key, "markdown": scope_text if key == "scope" else f"{title}{key}", "evidence_ids": [f"{title}-{key}"],
+                   "support_status": "SUPPORTED"} for key in ("scope", "overview", "rule_map", "exceptions", "sources_and_gaps")]
+        return {"pages": [{"title": title, "category": "c", "knowledge_type": "rule", "aliases": [], "links": [], "blocks": blocks}],
+                "gaps": []}
+    merged = compilation.merge_batches([part("甲", "## 适用范围\n\n第一部分"), part("乙", "## 适用范围\n\n第二部分")], config)
+    scope = [b["markdown"] for b in merged["pages"][0]["blocks"] if b["section"] == "scope"]
+    assert scope == ["## 适用范围\n\n第一部分", "第二部分"]
+
+
+def test_multi_batch_drops_relations_that_cannot_exist_instead_of_failing(env, provider):
+    source = draft_source(env)
+    for ordinal in range(1, 5):
+        append_block(env, source, f"第{ordinal}条 估值时核对价格来源之{ordinal}。", ordinal=ordinal)
+    def with_bad_relation(output, data):
+        ids = [item["id"] for item in data["sources"]]
+        output["relations"] = [{"source_title": output["pages"][0]["title"], "target_title": "并不存在的页面",
+                                "relation_type": "APPLIES_TO", "evidence_ids": ids[:1],
+                                "explanation": "合成说明：关系仅为待核验提案。"}]
+        return output
+    provider.output_transform = with_bad_relation
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
+    assert provider.calls == 1 and len(result["created_version_ids"]) == 1 and result["semantic_relations_created"] == 0
+
+
+def _review_page(*blocks):
+    rows = [{"section": section, "markdown": text, "evidence_ids": [f"e{n}"], "support_status": "SUPPORTED"}
+            for n, (section, text) in enumerate(blocks, 1)]
+    return {"pages": [{"title": "债券", "category": "c", "knowledge_type": "rule", "aliases": [], "links": [], "blocks": rows}],
+            "gaps": [], "source_dispositions": [{"evidence_id": f"e{n}", "disposition": "EXTRACTED", "reason": "合成。"}
+                                                for n in range(1, len(rows) + 1)]}
+
+
+def test_page_review_removes_only_verbatim_contradicted_sentences_and_keeps_structure():
+    config = compilation.resolve("topic", "knowledge_points")
+    merged = _review_page(
+        ("scope", "## 适用范围\n\n本页新增内容适用于基金持有的债券。材料未给出债券买卖的会计分录。"),
+        ("scope", "- 材料仅覆盖交易所市场。"),
+        ("overview", "## 核心概念\n\n买入债券时借记债券投资—成本，银行间与交易所市场均适用。"),
+        ("rule_map", "## 规则\n\n原文未给出重大差异的数值阈值。"),
+        ("exceptions", "## 例外\n\n材料未提供违约债券的处理。"),
+        ("exceptions", "违约债券停止计提利息。"),
+        ("sources_and_gaps", "## 来源与缺口\n\n待补充原件核验。"))
+    compilation.clean_batch_phrases(merged)
+    removed = compilation.apply_review(merged, [
+        {"n": 1, "sentence": "材料未给出债券买卖的会计分录。", "covered_in": 3},
+        {"n": 2, "sentence": "材料仅覆盖交易所市场。", "covered_in": 3},  # whole paragraph: dropped, scope keeps paragraph 1
+        {"n": 4, "sentence": "原文未给出重大差异的数值阈值。", "covered_in": 3},  # last text of its section: kept
+        {"n": 5, "sentence": "材料未提供违约债券的处理。", "covered_in": 6},  # dropped; its heading moves to paragraph 6
+        {"n": 7, "sentence": "待补充原件核验。"},  # no covering paragraph named: kept
+        {"n": 7, "sentence": "待补充原件核验。", "covered_in": 7},  # a paragraph cannot cover itself: kept
+        {"n": 3, "sentence": "并不存在于该段的句子。", "covered_in": 1}, {"n": 3, "sentence": "## 核心概念", "covered_in": 1},
+        {"n": 99, "sentence": "越界的段落编号。", "covered_in": 1}])
+    compilation.mark_uncited(merged, "（整页统稿删除了引用此段的句子）")
+    texts = [block["markdown"] for block in merged["pages"][0]["blocks"]]
+    assert [(item["n"], item["section"]) for item in removed] == [(1, "scope"), (2, "scope"), (5, "exceptions")]
+    assert texts == ["## 适用范围\n\n本页内容适用于基金持有的债券。",
+                     "## 核心概念\n\n买入债券时借记债券投资—成本，银行间与交易所市场均适用。",
+                     "## 规则\n\n原文未给出重大差异的数值阈值。", "## 例外\n\n违约债券停止计提利息。",
+                     "## 来源与缺口\n\n待补充原件核验。"]
+    status = {item["evidence_id"]: item["disposition"] for item in merged["source_dispositions"]}
+    assert status == {"e1": "EXTRACTED", "e2": "NEEDS_REVIEW", "e3": "EXTRACTED", "e4": "EXTRACTED",
+                      "e5": "NEEDS_REVIEW", "e6": "EXTRACTED", "e7": "EXTRACTED"}
+    compilation.validate_structure(merged, config, {f"e{n}" for n in range(1, 8)})
+
+
+def test_page_review_shows_claim_paragraphs_whole_when_others_are_shortened():
+    merged = _review_page(("scope", "概述" * 400), ("overview", "材料未提供估值价格的取得方式。" + "补充" * 400))
+    shown = compilation.review_paragraphs(merged, 100)
+    assert len(shown[0]["markdown"]) == 101 and shown[1]["markdown"] == merged["pages"][0]["blocks"][1]["markdown"]
+
+
+def _forty_articles(env):
+    source = draft_source(env)
+    for ordinal in range(1, 40):
+        append_block(env, source, f"第{ordinal}条 估值时核对价格来源与计量日期之{ordinal}。", ordinal=ordinal)
+    return source
+
+
+def test_multi_batch_page_review_removes_a_claim_the_page_itself_answers(env, provider):
+    source = _forty_articles(env)
+    claim = "材料未给出估值价格的取得方式。"
+    def with_claim(output, data):
+        if data["source_scope"]["batch_index"] == 1:
+            output["pages"][0]["blocks"][0]["markdown"] += "\n\n本页新增内容覆盖价格来源。" + claim
+        return output
+    provider.output_transform = with_claim
+    provider.review_output = lambda data: {"remove": [{"n": "x"}, {"n": next(p["n"] for p in data["paragraphs"]
+                                                                          if claim in p["markdown"]),
+                                                       "sentence": claim, "covered_in": 2}]}  # one malformed item
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
+    assert provider.calls == 3 and result["coverage"]["page_review"]["status"] == "APPLIED"
+    assert result["coverage"]["page_review"]["removed_sentences"] == 1
+    assert result["coverage"]["page_review"]["removed"][0]["sentence"] == claim
+    assert all("本页新增" not in p["markdown"] for p in provider.reviews[0]["paragraphs"])  # cleaned before the review
+    with env.db() as db:
+        text = "".join(block.data["text"] for block in db.scalars(select(m.ContentBlock).where(
+            m.ContentBlock.version_id == result["created_version_ids"][0])))
+    assert claim not in text and "本页内容覆盖价格来源。" in text and "本页新增" not in text
+
+
+def test_page_review_that_keeps_failing_leaves_the_merged_page(env, provider):
+    source = _forty_articles(env)
+    provider.review_output = lambda data: "不是JSON"
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
+    assert provider.calls == 2 + wiki.BATCH_ATTEMPTS and len(result["created_version_ids"]) == 1
+    assert result["coverage"]["page_review"] == {"status": "SKIPPED_REVIEW_FAILED",
+                                                 "error_code": "WIKI_MODEL_RESPONSE_INVALID", "removed_sentences": 0}
+
+
+def test_page_review_reads_numbers_given_as_text_or_lists_and_skips_malformed_items():
+    merged = _review_page(("scope", "## 适用范围\n\n材料未给出债券买卖的会计分录。本页适用于债券。"),
+                          ("overview", "## 核心概念\n\n买入债券时借记债券投资—成本。"), ("rule_map", "## 规则\n\n规则正文。"),
+                          ("exceptions", "## 例外\n\n例外正文。"), ("sources_and_gaps", "## 来源与缺口\n\n来源正文。"))
+    removed = compilation.apply_review(merged, [
+        "不是对象", {"n": [1], "sentence": "材料未给出债券买卖的会计分录。", "covered_in": 2},
+        {"n": "1", "sentence": "材料未给出债券买卖的会计分录。", "covered_in": [1, "2"]}])
+    assert [item["n"] for item in removed] == [1]
+    assert merged["pages"][0]["blocks"][0]["markdown"] == "## 适用范围\n\n本页适用于债券。"
+
+
+def test_page_review_narrows_a_partly_answered_claim_by_deleting_words_only():
+    claim = "所读正文没有给出正常交易、停牌或退市整理期的估值方法。"
+    merged = _review_page(("scope", "## 适用范围\n\n新增材料覆盖两类对象。" + claim),
+                          ("overview", "## 核心概念\n\n正常交易按收盘价估值，停牌期间按指数收益法估值。"),
+                          ("rule_map", "## 规则\n\n规则正文。"), ("exceptions", "## 例外\n\n例外正文。"),
+                          ("sources_and_gaps", "## 来源与缺口\n\n来源正文。"))
+    compilation.clean_batch_phrases(merged)
+    narrowed = "所读正文没有给出退市整理期的估值方法。"
+    removed = compilation.apply_review(merged, [
+        {"n": 1, "sentence": claim, "covered_in": 2, "narrowed_to": "所读正文没有给出新增的退市整理期估值方法。"},  # adds words
+        {"n": 1, "sentence": claim, "covered_in": 2, "narrowed_to": "退市整理期"},  # too short
+        {"n": 1, "sentence": claim, "covered_in": 2, "narrowed_to": claim},  # not narrower
+        {"n": 1, "sentence": claim, "covered_in": 2, "narrowed_to": narrowed}])
+    assert removed == [{"n": 1, "section": "scope", "sentence": claim, "narrowed_to": narrowed}]
+    assert merged["pages"][0]["blocks"][0]["markdown"] == "## 适用范围\n\n本页材料覆盖两类对象。" + narrowed
+
+
+def test_single_typed_build_writes_batch_phrases_as_this_page(env, provider):
+    def transform(output, data):
+        output["pages"][0]["blocks"][0]["markdown"] += "\n\n### 本批材料列示的条件\n\n新增材料覆盖价格来源。"
+        return output
+    provider.output_transform = transform
+    result = finish(env, queue(env, request(env, [draft_source(env)], "topic")))
+    with env.db() as db:
+        text = "".join(block.data["text"] for block in db.scalars(select(m.ContentBlock).where(
+            m.ContentBlock.version_id == result["created_version_ids"][0])))
+    assert "### 本页材料列示的条件" in text and "本页材料覆盖价格来源。" in text and "本批" not in text and "新增材料" not in text
+
+
+def test_multi_batch_rebuild_of_the_same_topic_recompiles_its_whole_scope(env, provider):
+    source = _forty_articles(env)
+    data = request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)
+    first = finish(env, queue(env, data))
+    second = finish(env, queue(env, copy.deepcopy(data)))
+    assert first["created_version_ids"] and second["created_version_ids"]
+    assert second["created_version_ids"] != first["created_version_ids"]
+    assert second["coverage"]["already_processed_fragments"] == 0 and second["coverage"]["model_batches"] == 2

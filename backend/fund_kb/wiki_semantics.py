@@ -102,11 +102,23 @@ def check_source_snapshots(db, user, snapshots):
             raise wiki.WikiBuildError("WIKI_SOURCE_CHANGED")
 
 
-def validate_output(parsed, selected, reference_titles):
+def validate_output(parsed, selected, reference_titles, *, drop_unusable_relations=False):
+    """drop_unusable_relations (multi-batch builds): relations whose endpoints cannot exist in this build are
+    removed instead of failing the batch - persist() would skip them anyway; a passage cited only by such a
+    relation is then marked for review rather than claimed as extracted."""
     from . import wiki
 
     available = {wiki._norm(t) for t in reference_titles} | {wiki._norm(p["title"]) for p in parsed["pages"]}
     cited = {eid for page in parsed["pages"] for b in page["blocks"] for eid in b["evidence_ids"]}
+    if drop_unusable_relations:
+        parsed["relations"] = [r for r in parsed["relations"]
+            if wiki._norm(r["source_title"]) in available and wiki._norm(r["target_title"]) in available
+            and wiki._norm(r["source_title"]) != wiki._norm(r["target_title"]) and set(r["evidence_ids"]).issubset(selected)]
+        kept = cited | {eid for r in parsed["relations"] for eid in r["evidence_ids"]}
+        parsed["source_dispositions"] = [
+            {**d, "disposition": "NEEDS_REVIEW", "reason": d["reason"] + "（引用它的关系提案端点无效，已移除）"}
+            if d["disposition"] == "EXTRACTED" and d["evidence_id"] not in kept else d
+            for d in parsed["source_dispositions"]]
     for relation in parsed["relations"]:
         for key in ("source_title", "target_title", "explanation"):
             wiki._safe_text(relation[key])

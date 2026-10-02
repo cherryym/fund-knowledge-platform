@@ -2,17 +2,26 @@
 
 目标是把已经沉淀的知识变成外部Agent可读取的工作指导，而不是开放无限工具执行。能力定义保存在平台，访问通过本人、单知识库、有限scope、可到期/可撤销的凭据。
 
-## 七个MCP工具
+## 十四个MCP工具
 
-| 工具 | 用途 |
-|---|---|
-| `list_capabilities` | 发现授权库内可见的能力 |
-| `get_capability` | 读取能力、输入、步骤与绑定来源 |
-| `start_workflow` | 用输入和明确模式启动trial/guided运行 |
-| `get_next_steps` | 取得满足依赖的下一步指导 |
-| `read_bound_sources` | 读取该运行实际绑定、当前仍可访问的来源 |
-| `report_step` | 提交步骤产物、阻塞或失败，使用幂等键/版本 |
-| `get_workflow` | 查询运行状态、交付物及待人工检查事项 |
+| 工具 | 用途 | scope |
+|---|---|---|
+| `list_capabilities` | 发现授权库内可见的能力 | `capabilities:read` |
+| `get_capability` | 读取能力、输入、步骤与绑定来源 | `capabilities:read` |
+| `start_workflow` | 用输入和明确模式启动trial/guided运行 | `runs:write` |
+| `get_next_steps` | 取得满足依赖的下一步指导 | `capabilities:read` |
+| `read_bound_sources` | 读取该运行实际绑定、当前仍可访问的来源 | `sources:read` |
+| `report_step` | 提交步骤产物、阻塞或失败，使用幂等键/版本 | `runs:write` |
+| `get_workflow` | 查询运行状态、交付物及待人工检查事项 | `capabilities:read` |
+| `get_library_map` | 读取本库库地图（概念维度、来源层级与施行/废止线索、知识页目录；只含元数据） | `knowledge:read` |
+| `search_knowledge` | 在本库检索知识页与来源小节，返回候选与已核对片段（不是正式证据） | `knowledge:read` |
+| `read_version` | 按version_id读取知识页或来源版本的完整正文块、定位与内容Hash | `knowledge:read` |
+| `list_coverage_gaps` | 读取答疑中模型声明的资料缺口汇总（未经核实） | `knowledge:read` |
+| `create_consultation` | 在本库创建本人咨询会话 | `consult:write` |
+| `ask_question` | 在本人会话中用本人模型连接提问（产生模型调用，答复需专业复核） | `consult:write` |
+| `get_answer` | 读取本人咨询运行的状态、答复、引用与执行诊断 | `consult:write` |
+
+scope与operation一一列在后端`AGENT_OPERATIONS`白名单中，OpenAPI只为这些operation标注Bearer；不按GET、路径前缀或用户角色推导授权。知识类工具只读凭据所属用户当前有权访问、且在凭据所属知识库内的内容；咨询类工具只操作本人会话。
 
 没有任意shell、任意HTTP代理、文件系统或财务系统执行工具。来源文本中的指令不能改变权限，Agent也不能用本凭据替代人类进行审核。
 

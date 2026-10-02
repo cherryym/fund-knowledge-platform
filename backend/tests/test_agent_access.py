@@ -77,7 +77,7 @@ def issue(env, *, space="personal", scopes=None, who="owner"):
 
 def authenticate(env, token, operation="getCapability", *, db=None, method=None):
     req = request(authorization="Bearer " + token, method=method or (
-        "POST" if operation in access.WRITE_OPERATIONS else "GET"))
+        "POST" if operation in access.WRITE_OPERATIONS | access.READ_POST_OPERATIONS else "GET"))
     if db is not None:
         return access.authenticate_agent(req, db, operation), req
     with env.db() as session:

@@ -221,6 +221,8 @@ def create_index(ctx):
 
 
 def search(ctx):
+    from .agent_access import authorize_agent_space
+    authorize_agent_space(getattr(ctx, "request", None), ctx.data["space_id"])
     svc.space_access(ctx.db,ctx.user,ctx.data["space_id"])
     runtime = selected_runtime(ctx, ctx.data.get("retrieval_selection"))
     settings = runtime.settings if runtime else ctx.settings

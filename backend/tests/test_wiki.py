@@ -193,7 +193,7 @@ def test_contract_registered_and_no_vector_or_model_required(env):
     assert "getWikiCompilationSpecs" in HANDLERS
     spec = env.app.openapi()
     assert all("/api/v1" + p in spec["paths"] or p in spec["paths"] for p in PATHS)
-    assert SCHEMAS["WikiBuildInput"]["properties"]["source_resource_ids"]["maxItems"] == 8
+    assert SCHEMAS["WikiBuildInput"]["properties"]["source_resource_ids"]["maxItems"] == wiki.MAX_SOURCES
     assert env.app.state.vector_index is None
     response = env.call("GET", f"/wiki/workspace?space_id={env.space}")
     assert response.status_code == 200 and response.json()["mode"] == "wiki"
@@ -413,7 +413,7 @@ def test_no_model_no_fake_llm_success_and_unpublished_source_is_rejected(env, pr
 
 def test_source_limit_consent_and_coverage_budget_are_explicit(env, provider):
     source = page(env, kind="document", text="合成费用来源需要核对。" * 1000)
-    body = {"space_id": env.space, "source_resource_ids": [uid() for _ in range(9)], "model_selection": {"connection_id": env.connection, "model_id": "test"}, "consent": True}
+    body = {"space_id": env.space, "source_resource_ids": [uid() for _ in range(wiki.MAX_SOURCES + 1)], "model_selection": {"connection_id": env.connection, "model_id": "test"}, "consent": True}
     assert env.call("POST", "/wiki/builds", body).status_code == 422
     body.update(source_resource_ids=[source[0]], consent=False)
     assert env.call("POST", "/wiki/builds", body).status_code == 422

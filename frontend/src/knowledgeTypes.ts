@@ -112,7 +112,7 @@ export function wikiLaunch(hash: string): WikiLaunch {
 }
 export type CategoryBranch = { path: string; name: string; count: number | null; children: CategoryBranch[] };
 
-export const WIKI_SOURCE_LIMIT = 8;
+export const WIKI_SOURCE_LIMIT = 64;
 export const WIKI_LOCATOR_LIMIT = 20;
 export const WIKI_QUERY_LIMIT = 300;
 export const wikiNodeRoleLabels = {

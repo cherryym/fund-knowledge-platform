@@ -6,19 +6,19 @@ projection of current source blocks; no original text/hash or review state chang
 import re
 from collections import defaultdict
 
+from .ontology import legacy_router
+
 ROUTING_VERSION = "fund-source-routing-v3"
 _HAN = "一二三四五六七八九十百〇零两"
 _TOC = re.compile(r"\.{3,}|…{2,}|·{4,}")
 # Retrieval vocabulary describes questions and evidence, never a business answer,
-# a preferred resource UUID, or a numerical valuation rule.
-_EVENTS = {
-    "trading_suspension": ("停牌", "暂停交易"),
-    "bond_put": ("回售",),
-    "restricted_stock": ("流通受限", "限售", "流动性折扣", "AAP"),
-    "delisting": ("退市",),
-    "quote_disruption": ("无报价", "没有报价", "非活跃市场", "无活跃市场"),
-}
-_SPECIAL_SCOPES = ("可转债", "可交换债", "流通受限", "港股通", "期权", "期货", "货币市场基金", "证券公司", "私募")
+# a preferred resource UUID, or a numerical valuation rule. It is data in
+# domain/valuation_accounting.json (legacy_router), unchanged in behaviour.
+_ROUTER = legacy_router()
+_ASSETS = {name: tuple(tokens) for name, tokens in _ROUTER["assets"].items()}
+_EVENTS = {name: tuple(tokens) for name, tokens in _ROUTER["events"].items()}
+_SPECIAL_TERMS = tuple(_ROUTER["special_terms"])
+_SPECIAL_SCOPES = tuple(_ROUTER["special_scopes"])
 _FACETS = {
     "scope": r"适用|所称|是指|包括|不含|含投资人|含投资者|本文以|执行估值核算",
     "exclusion": r"不包括|不适用|不包含|不属于|除外",
@@ -48,12 +48,7 @@ def _body(record):
 def question_plan(question, context=None):
     context = context or {}
     text = question + " " + " ".join(str(v) for v in context.values())
-    assets = [name for name, tokens in {
-        "股票": ("股票", "股权", "A股", "港股", "限售股"),
-        "债券": ("债券", "可转债", "同业存单", "固收"),
-        "基金": ("FOF", "基金份额", "ETF", "基金分红"),
-        "衍生品": ("期权", "期货", "衍生品", "互换"),
-    }.items() if any(token.lower() in text.lower() for token in tokens)]
+    assets = [name for name, tokens in _ASSETS.items() if any(token.lower() in text.lower() for token in tokens)]
     purchase = bool(re.search(r"买入|购买|买进|购入|买股票|买债券|购置|取得|申购", text))
     posting = bool(re.search(r"入账|记账|账务|会计|分录|核算|计量|交易费用|手续费", text))
     valuation = bool(re.search(r"估值|公允价值|取价|市值|估值日", text))
@@ -65,8 +60,7 @@ def question_plan(question, context=None):
     assumed_valuation = bool(events) and not (valuation or posting or exchange or validity)
     if assumed_valuation:
         valuation = True
-    special = [token for token in ("流通受限", "限售", "停牌", "退市", "AAP", "港股通", "流动性折扣", "SPPI")
-               if token.lower() in text.lower()]
+    special = [token for token in _SPECIAL_TERMS if token.lower() in text.lower()]
     special += [term for name in events for term in _EVENTS[name] if term in text and term not in special]
     if exchange:
         intent, roles = "exchange_rules", ["exchange_rules", "source_document", "regulation"]

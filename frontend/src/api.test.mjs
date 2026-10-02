@@ -29,10 +29,28 @@ test("latest draft or review status cannot inherit an older version's published 
 });
 const originalFetch = globalThis.fetch;
 const originalWindow = globalThis.window;
+const originalCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
 afterEach(() => {
   globalThis.fetch = originalFetch;
   globalThis.window = originalWindow;
+  Object.defineProperty(globalThis, "crypto", originalCrypto);
   client.clearSession();
+});
+test("HTTP deployment without randomUUID still sends local login with cryptographic UUID keys", async () => {
+  const random = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+  Object.defineProperty(globalThis, "crypto", { configurable: true, value: { getRandomValues: random } });
+  const keys = [];
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/v1/auth/demo");
+    assert.equal(options.credentials, "include");
+    const key = options.headers.get("Idempotency-Key");
+    assert.match(key, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    keys.push(key);
+    return json({ id: "synthetic-user" });
+  };
+  await client.post("/auth/demo", { user_id: "synthetic-user" });
+  await client.post("/auth/demo", { user_id: "synthetic-user" });
+  assert.notEqual(keys[0], keys[1]);
 });
 const json = (value, status = 200, headers = {}) =>
   new Response(JSON.stringify(value), {

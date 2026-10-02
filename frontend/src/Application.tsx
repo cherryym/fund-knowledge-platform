@@ -89,7 +89,7 @@ function Brand() {
     </div>
   );
 }
-function Login({
+export function Login({
   ready,
   error,
   reload,
@@ -98,13 +98,10 @@ function Login({
   error?: Error;
   reload: () => void;
 }) {
-  const demos = useLoad(
-    (signal) =>
-      import.meta.env.DEV
-        ? get<DemoUser[]>("/auth/demo", signal)
-        : Promise.resolve(null),
-    [],
-  );
+  // Authentication mode is a server decision, independent of Vite's build mode.
+  // The existing endpoint returns 404 unless development + demo is enabled.
+  const demos = useLoad((signal) => get<DemoUser[]>("/auth/demo", signal), []);
+  const institutionalLogin = demos.error instanceof ApiError && demos.error.status === 404;
   const task = useTask();
   return (
     <div className="login-screen">
@@ -112,7 +109,7 @@ function Login({
         <Brand />
         <h1>让知识成为业务的依据</h1>
         <p>登录工作空间，管理资料、复核知识并追溯每个答案。</p>
-        {import.meta.env.DEV && demos.data ? (
+        {demos.data ? (
           <>
             <div className="login-demo-label">本地开发空间 · 演示身份</div>
             <div className="demo-users">
@@ -151,15 +148,18 @@ function Login({
                 </button>
               ))}
             </div>
+            {demos.data.length === 0 && (
+              <p role="status">本地登录已启用，但暂无可用身份，请检查预设账户是否有效。</p>
+            )}
             <small className="muted">
               演示登录仅在开发模式可用，不用于生产身份验证。
             </small>
           </>
-        ) : (
+        ) : institutionalLogin ? (
           <a className="button primary" href="/api/v1/auth/login">
             通过机构账号登录
           </a>
-        )}
+        ) : null}
         <ErrorBox
           error={
             task.error ??
@@ -170,7 +170,11 @@ function Login({
               ? undefined
               : demos.error)
           }
-          retry={reload}
+          retry={() => {
+            task.clearError();
+            demos.reload();
+            reload();
+          }}
         />
         {demos.loading && <Loading label="正在读取登录方式…" />}
       </Motion>

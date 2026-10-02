@@ -380,6 +380,19 @@ def test_relation_only_preserves_existing_content_and_replay_is_idempotent(env, 
     assert content_snapshot(env) == before
 
 
+def test_relation_rerun_against_changed_reference_nodes_is_new_work(env, provider):
+    source, refs, _, _ = relation_build(env, provider)
+    unchanged = finish(env, queue(env, build_input(env, [source], mode="relations", references=refs)))
+    assert provider.calls == 1 and unchanged["model"]["called"] is False
+    assert unchanged["coverage"]["status"] == "NO_NEW_CONTENT"
+    change_record(env, refs[1], "epoch")
+    assert semantic_edges(env) == []
+    rerun = finish(env, queue(env, build_input(env, [source], mode="relations", references=refs)))
+    assert provider.calls == 2 and rerun["semantic_relations_created"] == 1
+    edge, = semantic_edges(env)
+    assert (edge["source"], edge["target"]) == (refs[0][0], refs[1][0])
+
+
 def test_relation_only_rejects_model_attempt_to_create_pages(env, provider):
     source = draft_source(env)
     refs = [page(env, "参考甲"), page(env, "参考乙")]

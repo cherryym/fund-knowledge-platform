@@ -45,7 +45,16 @@ PINNED_EXECUTABLE_SHA256 = "a29d9e86eef88cbbd69f97ce8c590b1d0a287c8f77424f5eef22
 PINNED_V2_HELPER_SHA256 = "922509f26719e1154f783ef1c5ab018a00f739c81a45fa1f775713afeeda1877"
 ATTACKS = (None, "apply_patch", "view_image", "exec_command")
 PROBE_SUITE_VERSION = "reasoning-v3-loopback-matrix-1"
-INITIALIZE = {"id": 1, "method": "initialize", "params": {
+# The contract under test. probe-codex-large-context-v4.py rebinds these for v4;
+# v3 runs keep exactly the original values and checks.
+PROFILE_UNDER_TEST = CONFIGURABLE_PROFILE_VERSION
+CONTRACT_UNDER_TEST = CONFIGURABLE_INSTRUCTION_CONTRACT
+CONTRACT_SHA256_UNDER_TEST = CONFIGURABLE_INSTRUCTION_CONTRACT_SHA256
+BUDGET_CAPS = (65536, 262144)
+MIN_SEMANTIC_BYTES = 0
+CANDIDATE_PREFIX = "codex-text-v3-candidate-"
+EXTRA_SOURCES = ()
+INITIALIZE ={"id": 1, "method": "initialize", "params": {
     "clientInfo": {"name": "fund_kb_reasoning_v3_probe", "version": "3.0"},
     "capabilities": {"experimentalApi": False, "optOutNotificationMethods": ["item/agentMessage/delta"]}}}
 
@@ -337,7 +346,7 @@ def run_probe(executable, catalog_bytes, model, effort, attack, runtime, helpers
                         send({"id": 3, "method": "thread/start", "params": thread})
                     elif event.get("id") == 3:
                         turn["threadId"] = event["result"]["thread"]["id"]
-                        check_text_request_budget(thread, turn)
+                        check_text_request_budget(thread, turn, *BUDGET_CAPS, caps=BUDGET_CAPS)
                         send({"id": 4, "method": "turn/start", "params": turn})
                     params = event.get("params", {})
                     if event.get("method") in {"item/started", "item/completed"}:
@@ -380,15 +389,15 @@ def run_probe(executable, catalog_bytes, model, effort, attack, runtime, helpers
         "zero_tools": bool(captures) and all(not row["tools"] for row in captures),
         "attack_rejected": attack is None or unsupported,
         "capture_count": len(captures) == (1 if attack is None else 2),
-        "layered_budget": sizes["semantic_utf8_bytes"] <= 65536 < sizes["rpc_total_bytes"]
-                          and max(sizes["thread_rpc_bytes"], sizes["turn_rpc_bytes"]) <= 262144,
+        "layered_budget": MIN_SEMANTIC_BYTES < sizes["semantic_utf8_bytes"] <= BUDGET_CAPS[0] < sizes["rpc_total_bytes"]
+                          and max(sizes["thread_rpc_bytes"], sizes["turn_rpc_bytes"]) <= BUDGET_CAPS[1],
         "no_account_rpc": [row["method"] for row in rpc_writes] == ["initialize", "initialized", "thread/start", "turn/start"],
         "boundary": boundary is not None and boundary["passed"] and blocked.accepted_connections == 0,
         "no_auth_file": not (runtime / "auth.json").exists(),
     }
     row = {"model": model, "reasoning_effort": effort, "attack": attack, "passed": all(checks.values()),
-           "profile_version": CONFIGURABLE_PROFILE_VERSION,
-           "instruction_contract_sha256": CONFIGURABLE_INSTRUCTION_CONTRACT_SHA256,
+           "profile_version": PROFILE_UNDER_TEST,
+           "instruction_contract_sha256": CONTRACT_SHA256_UNDER_TEST,
            "policy_sha256": POLICY_SHA256, "catalog_sha256": digest(catalog_bytes),
            "executable_sha256": PINNED_EXECUTABLE_SHA256, "executable_version": VERIFIED_VERSION,
            "probe_suite_version": PROBE_SUITE_VERSION, "probe_fixture_sha256": helpers.PROBE_FIXTURE_SHA256,
@@ -477,9 +486,9 @@ def main(argv=None):
         print(json.dumps(verify_bundle(args.root), ensure_ascii=False))
         return 0
     root = checked_path(args.root)
-    if root.parent != PROJECT_ROOT / "data" or not root.name.startswith("codex-text-v3-candidate-") \
+    if root.parent != PROJECT_ROOT / "data" or not root.name.startswith(CANDIDATE_PREFIX) \
             or root.exists() or not args.executable or not args.catalog:
-        parser.error("Use a NEW project data/codex-text-v3-candidate-* directory and explicit public executable/catalog.")
+        parser.error(f"Use a NEW project data/{CANDIDATE_PREFIX}* directory and explicit public executable/catalog.")
     executable, catalog_path = checked_path(args.executable), checked_path(args.catalog)
     if not executable.is_file() or digest(executable.read_bytes()) != PINNED_EXECUTABLE_SHA256:
         raise ProviderError("CODEX_VERSION_UNSUPPORTED")
@@ -509,9 +518,9 @@ def main(argv=None):
                 raise ProviderError("V3_OFFLINE_PROBE_FAILED")
         if digest(executable.read_bytes()) != PINNED_EXECUTABLE_SHA256 or catalog_path.read_bytes() != catalog_bytes:
             raise ProviderError("PUBLIC_INPUT_CHANGED")
-        profile = {"profile_version": CONFIGURABLE_PROFILE_VERSION,
-            "instruction_contract": CONFIGURABLE_INSTRUCTION_CONTRACT,
-            "instruction_contract_sha256": CONFIGURABLE_INSTRUCTION_CONTRACT_SHA256, "policy_sha256": POLICY_SHA256,
+        profile = {"profile_version": PROFILE_UNDER_TEST,
+            "instruction_contract": CONTRACT_UNDER_TEST,
+            "instruction_contract_sha256": CONTRACT_SHA256_UNDER_TEST, "policy_sha256": POLICY_SHA256,
             "executable_sha256": PINNED_EXECUTABLE_SHA256, "catalog_sha256": digest(catalog_bytes), "probes": rows}
         report = {**profile, "status": "PASS", "created_at": datetime.now(UTC).isoformat(),
             "probe_suite_version": PROBE_SUITE_VERSION, "probe_fixture_sha256": helpers.PROBE_FIXTURE_SHA256,
@@ -532,7 +541,7 @@ def main(argv=None):
                     "sources": {str(path.relative_to(PROJECT_ROOT)): digest(path.read_bytes()) for path in (
                         Path(__file__), Path(__file__).with_name("configure-codex-text-v3.py"),
                         Path(__file__).with_name("probe-codex-instruction-channels.py"),
-                        PROJECT_ROOT / "backend/fund_kb/codex_text.py")}}
+                        PROJECT_ROOT / "backend/fund_kb/codex_text.py", *EXTRA_SOURCES)}}
         _write_private(root / "artifact-manifest.json", json_bytes(manifest))
         verified = verify_bundle(root)
         _write_private(root / "independent-verification.json", json_bytes(verified))

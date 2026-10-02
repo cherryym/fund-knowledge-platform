@@ -226,6 +226,17 @@ def test_gaps_naming_a_held_document_are_dropped_and_case_materials_set_apart():
     assert move_gap_lines("GAP " + gaps[0], titles) == ("", [], [])
 
 
+def test_gaps_describing_a_held_standard_by_topic_are_dropped():
+    from fund_kb.wiki_reader import sort_gaps
+    titles = ["企业会计准则第39号——公允价值计量", "关于证券投资基金估值业务的指导意见"]
+    gaps = ["公允价值计量准则中层次划分及相关披露条款｜核验层次判断",  # the held CAS 39, described by topic
+            "公允价值计量及层次披露的相关准则全文（仅涉及模型估值时）｜核实输入值层次",
+            "公允价值计量准则2025年修订征求意见稿｜对照拟修订内容",  # another edition than the one held
+            "公允价值计量的行业估值指引｜确定行业做法",  # a different document kind than the held standard
+            "中国结算可转债转股登记结算规定｜确定日期衔接"]
+    assert sort_gaps(gaps, titles) == (gaps[2:], [])
+
+
 def test_planning_reads_accept_tabulated_read_section_only():
     from fund_kb.wiki_reader import planning_read_requests
     pages = {pid: {} for pid in ("W941", "W991", "W999", "W910", "W5")}

@@ -402,6 +402,10 @@ def gap_requests(text):
 # is a case material for the user to check, not a library gap.
 _GAP_TITLE = re.compile(r"《([^》]{4,80})》")
 _GAP_VERSION_HINT = re.compile(r"\d{4}年|版|修订|征求意见|最新|更新|全文")
+# A topic description names a held document only without an edition qualifier; "全文" alone does not ask for another
+# edition of a "series——topic" document.
+_GAP_EDITION_HINT = re.compile(r"\d{4}年|版|修订|征求意见|最新|更新")
+_GAP_DOC_KINDS = ("准则", "指引", "办法", "规定", "标准", "细则")
 _CASE_MATERIAL = re.compile(r"基金合同|产品合同|资产管理合同|托管合同|托管协议|合同约定|合同条款|招募说明书|本基金|本产品|该基金|该产品"
                             r"|内部制度|内部估值制度|交易确认|成交确认|确认书|交割单|持仓明细|估值表")
 
@@ -411,12 +415,20 @@ def _title_key(text):
 
 
 def sort_gaps(gaps, library_titles):
-    """(library gaps, case materials) from model GAPs; GAPs naming a document the library holds are left out."""
+    """(library gaps, case materials) from model GAPs; GAPs naming a document the library holds are left out, also
+    when described by topic rather than title ("公允价值计量准则…" for a held "企业会计准则第39号——公允价值计量")."""
     titles = [_title_key(title) for title in library_titles]
+    topics = [(kind, _title_key(topic)) for series, _, topic in (t.rpartition("——") for t in library_titles if "——" in t)
+              for kind in [next((k for k in _GAP_DOC_KINDS if k in series), None)]
+              if kind and len(_title_key(topic)) >= 4]
 
     def held(name):
         key = _title_key(name)
         return len(key) >= 6 and any(key in title for title in titles)
+
+    def described(material):
+        key = _title_key(material)
+        return not _GAP_EDITION_HINT.search(material) and any(kind in material and topic in key for kind, topic in topics)
 
     missing, case = [], []
     for gap in gaps:
@@ -424,7 +436,7 @@ def sort_gaps(gaps, library_titles):
         names = _GAP_TITLE.findall(material)
         if names and not _GAP_VERSION_HINT.search(_GAP_TITLE.sub("", material)) and any(held(n) for n in names):
             continue
-        if not names and held(material):
+        if not names and (held(material) or described(material)):
             continue
         (case if _CASE_MATERIAL.search(material) else missing).append(gap)
     return missing, case

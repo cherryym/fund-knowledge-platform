@@ -107,14 +107,18 @@ def validate_output(parsed, selected, reference_titles, *, drop_unusable_relatio
     removed instead of failing the batch - persist() would skip them anyway; a passage cited only by such a
     relation is then marked for review rather than claimed as extracted."""
     from . import wiki
+    from . import wiki_compilation as compilation
+
+    def known(eids):
+        return all(compilation.known_evidence(selected, eid) for eid in eids)
 
     available = {wiki._norm(t) for t in reference_titles} | {wiki._norm(p["title"]) for p in parsed["pages"]}
-    cited = {eid for page in parsed["pages"] for b in page["blocks"] for eid in b["evidence_ids"]}
+    cited = {compilation.evidence_section(eid) for page in parsed["pages"] for b in page["blocks"] for eid in b["evidence_ids"]}
     if drop_unusable_relations:
         parsed["relations"] = [r for r in parsed["relations"]
             if wiki._norm(r["source_title"]) in available and wiki._norm(r["target_title"]) in available
-            and wiki._norm(r["source_title"]) != wiki._norm(r["target_title"]) and set(r["evidence_ids"]).issubset(selected)]
-        kept = cited | {eid for r in parsed["relations"] for eid in r["evidence_ids"]}
+            and wiki._norm(r["source_title"]) != wiki._norm(r["target_title"]) and known(r["evidence_ids"])]
+        kept = cited | {compilation.evidence_section(eid) for r in parsed["relations"] for eid in r["evidence_ids"]}
         parsed["source_dispositions"] = [
             {**d, "disposition": "NEEDS_REVIEW", "reason": d["reason"] + "（引用它的关系提案端点无效，已移除）"}
             if d["disposition"] == "EXTRACTED" and d["evidence_id"] not in kept else d
@@ -125,9 +129,9 @@ def validate_output(parsed, selected, reference_titles, *, drop_unusable_relatio
         if (wiki._norm(relation["source_title"]) not in available
                 or wiki._norm(relation["target_title"]) not in available
                 or wiki._norm(relation["source_title"]) == wiki._norm(relation["target_title"])
-                or not set(relation["evidence_ids"]).issubset(selected)):
+                or not known(relation["evidence_ids"])):
             raise wiki.WikiBuildError("WIKI_SEMANTIC_ENDPOINT_OR_EVIDENCE_INVALID")
-        cited.update(relation["evidence_ids"])
+        cited.update(compilation.evidence_section(eid) for eid in relation["evidence_ids"])
     dispositions = parsed["source_dispositions"]
     ids = [d["evidence_id"] for d in dispositions]
     if len(ids) != len(set(ids)) or set(ids) != set(selected):
@@ -140,6 +144,7 @@ def validate_output(parsed, selected, reference_titles, *, drop_unusable_relatio
 
 def persist(db, user, payload, job_id, parsed, selected, created_ids):
     from . import wiki
+    from . import wiki_compilation as compilation
 
     allowed_ids = set(created_ids) | set(payload.get("reference_resource_ids", []))
     by_title = {}
@@ -161,12 +166,12 @@ def persist(db, user, payload, job_id, parsed, selected, created_ids):
                 "content_sha256": wiki._checked_hash(db, v), "access_epoch": r.access_epoch})
         anchors = []
         for eid in edge["evidence_ids"]:
-            for record in wiki._members(selected[eid]):
+            for record in compilation.evidence_records(selected, eid):
                 anchors.append({"resource_id": record["resource_id"], "version_id": record["version_id"],
                     "block_id": record["block_id"], "char_start": record.get("char_start", 0),
                     "char_end": record.get("char_end", len(record["text"])),
                     "excerpt_sha256": text_sha256(record["text"])})
-            used.add(eid)
+            used.add(compilation.evidence_section(eid))
         proposals.append({"endpoints": endpoints, "relation_type": edge["relation_type"], "anchors": anchors,
                           "explanation": edge["explanation"], "verification_status": "PROPOSED"})
     if proposals:

@@ -9,6 +9,7 @@ import dataclasses
 import hashlib
 import json
 import queue
+import re
 import threading
 import time
 from pathlib import Path
@@ -228,6 +229,23 @@ def text_snapshot(db, user, policy, model_id, settings, space_id=None):
             authorize_model_snapshot(fresh, principal, public, settings)
     snapshot["_authority_check"], snapshot["_codex_engine"] = guard, engine
     return snapshot
+
+
+_ERROR_CATEGORY = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,63}")
+
+
+def _error_category(value):
+    """The service's category for a reported error, for the inference trace: an enum name and an HTTP status at
+    most, never the message text."""
+    error = value.get("error") if isinstance(value.get("error"), dict) else {}
+    info = error.get("codexErrorInfo", error.get("codex_error_info"))
+    name, status = info, None
+    if isinstance(info, dict) and len(info) == 1:
+        (name, detail), = info.items()
+        status = detail.get("httpStatusCode", detail.get("http_status_code")) if isinstance(detail, dict) else None
+    category = (name if isinstance(name, str) and _ERROR_CATEGORY.fullmatch(name)
+                else "unspecified" if info is None else "other")
+    return {"category": category, **({"http_status": status} if type(status) is int and 100 <= status <= 599 else {})}
 
 
 class TextStdioTransport(AuthStdioTransport):
@@ -692,6 +710,7 @@ class CodexTextEngine:
                 elif method == "error":
                     if preview:
                         preview.revoke()
+                    trace.upstream_error = _error_category(value)
                     if not value.get("willRetry", False):
                         raise ProviderError("CODEX_MODEL_REQUEST_FAILED")
                 elif method in {"model/safetyBuffering/updated", "model/verification", "model/rerouted"}:

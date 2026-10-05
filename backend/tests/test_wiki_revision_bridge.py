@@ -47,3 +47,23 @@ def test_same_title_compiler_proposes_complete_revision_not_silent_skip_or_overw
         metadata = db.scalar(select(m.RuntimePolicy).where(m.RuntimePolicy.name == f"wiki-compilation:{new_id}"))
         assert metadata.config["compiled_content_sha256"] == new.content_sha256
     assert provider.calls == 1
+
+
+def test_an_accepted_revision_keeps_the_page_title_as_written(env, provider):
+    source = page(env, "已发布合成来源", kind="document")
+    original = page(env, "股票（上市流通股票）的估值：核算", text="原规则完整正文。", cites=[source])
+    def same_entry(output, data):
+        output["pages"][0]["title"] = "股票(上市流通股票)的估值:核算"  # the same name after NFKC
+        return output
+    provider.output_transform = same_entry
+    result = finish(env, queue(env, request(env, [source], "atomic_rule", source_mode="published")))
+    pid, = result["revision_proposal_ids"]
+    path = f"/wiki/maintenance/proposals/{pid}"
+    proposal = env.call("GET", path + "?include_candidate=true")
+    assert proposal.json()["compiled_revision"]["candidate"]["title"] == "股票（上市流通股票）的估值：核算"
+    accepted = env.call("POST", path + "/review", {"decision": "ACCEPT", "comment": "合成验收：标题沿用原写法"},
+                        etag=proposal.headers["etag"])
+    assert accepted.status_code == 200, accepted.text
+    with env.db() as db:
+        new = db.get(m.ResourceVersion, accepted.json()["result"]["new_version_id"])
+        assert new.title == "股票（上市流通股票）的估值：核算"

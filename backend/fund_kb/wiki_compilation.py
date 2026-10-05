@@ -10,7 +10,7 @@ import copy
 import json
 import re
 
-SPEC_VERSION = "wiki-compilation/1.1"
+SPEC_VERSION = "wiki-compilation/1.2"
 TYPES = ("topic", "atomic_rule", "scenario", "sop")
 
 # Length is an output budget, NOT a prose-length requirement. A small complete
@@ -125,6 +125,8 @@ def instruction(config):
         content += ("每个block用section标注所属结构，support_status为SUPPORTED/GAP/NOT_APPLICABLE；所有必需结构都要有正文。"
             "每段保留本批evidence_ids，正文使用可读Markdown标题；缺口段也只关联其所核对的来源，不把该关联当作实质支撑。"
             "GAP应同时写入gaps。每个输入S编号必须有且只有一个source_dispositions，EXTRACTED必须有页面或关系引用。"
+            "含多个段落的来源，每段前标有段落编号（如【S12.3】）：evidence_ids写直接支持本段内容的具体段落编号"
+            "（如S12.3），不要用整节编号S12代替；只有本段确实概括了整节时才引用整节编号。"
             "页面标题写主题本身（资产、业务场景或规则名称），不加“待核验”“待核事项”“缺口”等状态说明；generation_brief"
             "指定了页面标题时照用。SUPPORTED段只写来源支持的内容，不夹带“材料未提供/未给出/未载明”之类的说法；确有缺口时"
             "写成独立的GAP段并写入gaps，具体写明缺少哪份原文或哪项规定。")
@@ -185,8 +187,8 @@ def validate_structure(parsed, config, selected):
     if config["compilation_contract"] != "typed":
         return
     sections = {key for key, _, _ in _SPECS[config["compilation_type"]]["sections"]}
-    cited = {eid for page in parsed["pages"] for block in page["blocks"] for eid in block["evidence_ids"]}
-    cited.update(eid for edge in parsed.get("relations", []) for eid in edge["evidence_ids"])
+    cited = {evidence_section(eid) for page in parsed["pages"] for block in page["blocks"] for eid in block["evidence_ids"]}
+    cited.update(evidence_section(eid) for edge in parsed.get("relations", []) for eid in edge["evidence_ids"])
     for page in parsed["pages"]:
         if {block["section"] for block in page["blocks"]} != sections:
             raise ValueError("WIKI_COMPILATION_STRUCTURE_INCOMPLETE")
@@ -262,6 +264,47 @@ def section_passages(records, wanted=None):
             if members:
                 passages.append({**join_members(members), "section_title": section["title"]})
     return passages
+
+
+PARAGRAPH_ID = re.compile(r"^(S\d+)\.(\d+)$")
+
+
+def marked_item(record, number):
+    """The model-facing item. A passage of several source blocks lists each block under its own paragraph id
+    (【S12.3】), so a statement cites the paragraphs that support it rather than the whole section."""
+    item = _item(record, number)
+    members = record.get("source_members") or []
+    if len(members) > 1:
+        item["excerpt"] = "\n".join(f"【S{number}.{index}】{member['text']}" for index, member in enumerate(members, 1))
+    return item
+
+
+def evidence_section(eid):
+    """The passage (input S id) an evidence id belongs to: S12.3 -> S12; a passage id is itself."""
+    match = PARAGRAPH_ID.match(eid)
+    return match[1] if match else eid
+
+
+def evidence_records(selected, eid):
+    """Source block records an evidence id stands for: the one block of a paragraph id (S12.3), or every block
+    of a passage id (S12). KeyError for an id the build did not send."""
+    record = selected[evidence_section(eid)]
+    members = record.get("source_members") or [record]
+    match = PARAGRAPH_ID.match(eid)
+    if not match:
+        return list(members)
+    index = int(match[2]) - 1
+    if not 0 <= index < len(members):
+        raise KeyError(eid)
+    return [join_members([members[index]])]
+
+
+def known_evidence(selected, eid):
+    try:
+        evidence_records(selected, eid)
+    except KeyError:
+        return False
+    return True
 
 
 def _item(record, number):
@@ -394,8 +437,8 @@ def mark_uncited(merged, note):
     """EXTRACTED passages no longer cited by any kept text or relation become NEEDS_REVIEW with `note`."""
     if "source_dispositions" not in merged:
         return
-    cited = {eid for page in merged["pages"] for block in page["blocks"] for eid in block["evidence_ids"]}
-    cited.update(eid for edge in merged.get("relations", []) for eid in edge["evidence_ids"])
+    cited = {evidence_section(eid) for page in merged["pages"] for block in page["blocks"] for eid in block["evidence_ids"]}
+    cited.update(evidence_section(eid) for edge in merged.get("relations", []) for eid in edge["evidence_ids"])
     merged["source_dispositions"] = [
         {**item, "disposition": "NEEDS_REVIEW", "reason": item["reason"] + note}
         if item["disposition"] == "EXTRACTED" and item["evidence_id"] not in cited else item

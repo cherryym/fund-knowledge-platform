@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -525,19 +526,23 @@ def test_merge_marks_extractions_whose_citing_text_was_dropped_for_review():
     compilation.validate_structure(merged, config, {"甲-overview", "乙-overview"})
 
 
-def test_multi_batch_retries_only_the_failed_batch(env, provider):
+@pytest.mark.parametrize("code", ["PROVIDER_TIMEOUT", "CODEX_MODEL_REQUEST_FAILED"])
+def test_multi_batch_retries_only_the_failed_batch(env, provider, code, monkeypatch):
     from fund_kb.providers import ProviderError
+    pauses = []
+    monkeypatch.setattr(wiki, "_sleep", pauses.append)
     source = draft_source(env)
     for ordinal in range(1, 40):
         append_block(env, source, f"第{ordinal}条 估值时核对价格来源与计量日期之{ordinal}。", ordinal=ordinal)
     def flaky(output, data):
-        if provider.calls == 2:  # first attempt of batch 2 times out
-            raise ProviderError("PROVIDER_TIMEOUT")
+        if provider.calls == 2:  # the first attempt of batch 2 fails transiently
+            raise ProviderError(code)
         return output
     provider.output_transform = flaky
     result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
     assert provider.calls == 4 and result["coverage"]["model_batches"] == 2 and len(result["created_version_ids"]) == 1
     assert [r["source_scope"]["batch_index"] for r in provider.requests] == [1, 2, 2]
+    assert pauses == [wiki.BATCH_RETRY_DELAY_SECONDS]  # a provider failure waits before the batch is re-sent
 
 
 def test_multi_batch_takes_the_complete_section_around_a_requested_block(env, provider):
@@ -566,8 +571,9 @@ def test_multi_batch_splits_an_oversized_section_only_at_paragraph_boundaries(en
     result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
     excerpts = [item["excerpt"] for data in provider.requests for item in data["sources"]]
     assert len(excerpts) > 1 and result["coverage"]["model_batches"] == len(provider.requests)
-    for text in texts:  # every paragraph whole, in exactly one passage
-        assert sum(excerpt.split("\n").count(text) for excerpt in excerpts) == 1
+    for text in texts:  # every paragraph whole, in exactly one passage (each line carries its paragraph id)
+        assert sum([re.sub(r"^【S\d+\.\d+】", "", line) for line in excerpt.split("\n")].count(text)
+                   for excerpt in excerpts) == 1
 
 
 def test_merge_keeps_one_heading_per_section():
@@ -730,3 +736,87 @@ def test_multi_batch_rebuild_of_the_same_topic_recompiles_its_whole_scope(env, p
     assert first["created_version_ids"] and second["created_version_ids"]
     assert second["created_version_ids"] != first["created_version_ids"]
     assert second["coverage"]["already_processed_fragments"] == 0 and second["coverage"]["model_batches"] == 2
+
+
+def _article_with_points(env):
+    source = draft_source(env)
+    heading = append_block(env, source, "第一条 债券估值", ordinal=1)
+    lines = [append_block(env, source, f"债券估值核对要点之{n}。", ordinal=1 + n) for n in range(1, 4)]
+    return source, heading, lines
+
+
+def test_multi_batch_paragraph_ids_link_only_the_cited_paragraph(env, provider):
+    source, heading, lines = _article_with_points(env)
+
+    def cite_one_paragraph(output, data):
+        for block in output["pages"][0]["blocks"]:
+            block["evidence_ids"] = ["S1.3"]
+        return output
+    provider.output_transform = cite_one_paragraph
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True, source_block_ids=[lines[0]])))
+    excerpt = provider.requests[0]["sources"][0]["excerpt"]
+    assert excerpt.split("\n")[0] == "【S1.1】第一条 债券估值" and "【S1.4】债券估值核对要点之3。" in excerpt
+    assert "S12.3" in provider.instructions[0] or "【S12.3】" in provider.instructions[0]
+    with env.db() as db:
+        vid = result["created_version_ids"][0]
+        cited = {link.to_block_id for link in db.scalars(select(m.EvidenceLink).where(m.EvidenceLink.from_version_id == vid))}
+    assert cited == {lines[1]}  # S1.3: the third block of the article (heading, point 1, point 2)
+    assert result["coverage"]["cited_blocks"] == 1
+    # Dispositions stay per passage; citing one of its paragraphs counts as extracting it.
+    assert [(d["evidence_id"], d["disposition"]) for d in result["coverage"]["source_dispositions"]] == [("S1", "EXTRACTED")]
+
+
+def test_a_passage_id_still_links_its_whole_passage(env, provider):
+    source, heading, lines = _article_with_points(env)
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True, source_block_ids=[lines[0]])))
+    with env.db() as db:
+        vid = result["created_version_ids"][0]
+        cited = {link.to_block_id for link in db.scalars(select(m.EvidenceLink).where(m.EvidenceLink.from_version_id == vid))}
+    assert cited == {heading, *lines}
+
+
+def test_a_paragraph_id_outside_its_passage_is_an_invalid_citation(env, provider):
+    source, _, lines = _article_with_points(env)
+
+    def cite_missing_paragraph(output, data):
+        output["pages"][0]["blocks"][0]["evidence_ids"] = ["S1.9"]
+        return output
+    provider.output_transform = cite_missing_paragraph
+    before = content_snapshot(env)
+    with pytest.raises(wiki.WikiBuildError) as caught:
+        execute(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True, source_block_ids=[lines[0]])))
+    assert caught.value.code == "WIKI_CITATION_INVALID"
+    assert content_snapshot(env) == before
+
+
+def test_related_pages_line_carries_no_evidence(env, provider):
+    source, _, lines = _article_with_points(env)
+    other = page(env, "股票估值核对")
+
+    def link_related(output, data):
+        output["pages"][0]["links"] = ["股票估值核对"]
+        return output
+    provider.output_transform = link_related
+    result = finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True, source_block_ids=[lines[0]])))
+    with env.db() as db:
+        vid = result["created_version_ids"][0]
+        related = db.scalar(select(m.ContentBlock).where(m.ContentBlock.version_id == vid,
+                                                         m.ContentBlock.search_text.like("相关知识%")))
+        links = list(db.scalars(select(m.EvidenceLink).where(m.EvidenceLink.from_version_id == vid,
+                                                             m.EvidenceLink.from_block_id == related.block_id)))
+    assert other and related is not None and links == []
+
+
+def test_a_larger_model_channel_does_not_enlarge_compile_batches(env, provider, monkeypatch):
+    source = draft_source(env)
+    for n in range(1, 31):
+        append_block(env, source, f"段落{n}：" + "核对价格来源、计量日期与输入参数。" * 90, ordinal=n)
+    resolve = provider.resolve_connection
+    counts = []
+    for capacity in (65536, 196608):
+        monkeypatch.setattr(provider, "resolve_connection",
+                            lambda *a, capacity=capacity, **k: {**resolve(*a, **k), "max_request_bytes": capacity})
+        before = len(provider.requests)
+        finish(env, queue(env, request(env, [source], "topic", "knowledge_points", max_pages=1, multi_batch=True)))
+        counts.append(len(provider.requests) - before)
+    assert counts[0] > 1 and counts[0] == counts[1]

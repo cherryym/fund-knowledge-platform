@@ -9,6 +9,7 @@ import copy
 import html
 import json
 import re
+import time
 import unicodedata
 from collections import Counter
 from contextvars import ContextVar
@@ -31,33 +32,49 @@ MAX_SOURCES = 64
 MAX_PAGES = 12
 # Earlier batches' written points shown to later batches of one multi-batch page.
 MULTI_BATCH_OUTLINE_CHARS = 1500
+# One multi-batch compile request. Batches keep this size when the model channel is larger: a batch carries the
+# same output budget whatever its input, so larger batches would thin out the page.
+MULTI_BATCH_REQUEST_BYTES = 65536
 # Model-facing passage fields in multi-batch builds. Member block anchors, hashes and offsets stay server-side
 # (evidence ids bind to the records), so a passage joined from many line blocks costs only its text.
 MULTI_BATCH_ITEM_FIELDS = ("id", "title", "excerpt", "review_notice", "locator_kind", "source_block_count")
-# Transient transport/timeout failures, and model output that fails validation (format, citations, links,
-# structure, dispositions) - both vary from call to call - are retried within a multi-batch build, for that
-# batch only. Source/permission/scope changes are never retried.
+# Transient transport/timeout failures (including a model request the Codex service reported failed after its
+# own retries), and model output that fails validation (format, citations, links, structure, dispositions) - both
+# vary from call to call - are retried within a multi-batch build, for that batch only. Source/permission/scope
+# changes are never retried.
 BATCH_RETRY_CODES = frozenset({
     "PROVIDER_TIMEOUT", "PROVIDER_CONNECTION_INTERRUPTED", "PROVIDER_CONNECTION_FAILED", "PROVIDER_DNS_FAILED",
     "PROVIDER_RESPONSE_INCOMPLETE", "PROVIDER_EMPTY_OUTPUT", "PROVIDER_INVALID_RESPONSE", "CODEX_RPC_TIMEOUT",
-    "CODEX_INFERENCE_TIMEOUT", "CODEX_INFERENCE_BUSY", "CODEX_INFERENCE_QUEUE_TIMEOUT",
+    "CODEX_INFERENCE_TIMEOUT", "CODEX_INFERENCE_BUSY", "CODEX_INFERENCE_QUEUE_TIMEOUT", "CODEX_MODEL_REQUEST_FAILED",
     "WIKI_MODEL_OUTPUT_INCOMPLETE", "WIKI_MODEL_NOT_FINAL_TEXT", "WIKI_MODEL_RESPONSE_INVALID",
     "WIKI_OUTPUT_SCHEMA_INVALID", "WIKI_OUTPUT_PAGE_LIMIT", "WIKI_CITATION_INVALID", "WIKI_LINK_TITLE_INVALID",
     "WIKI_DUPLICATE_OR_INVALID_TITLE", "WIKI_UNSAFE_MODEL_OUTPUT", "WIKI_COMPILATION_STRUCTURE_INCOMPLETE",
     "WIKI_COMPILATION_GAP_UNDECLARED", "WIKI_SOURCE_DISPOSITION_INCOMPLETE", "WIKI_EXTRACTED_WITHOUT_EVIDENCE",
     "WIKI_SEMANTIC_ENDPOINT_OR_EVIDENCE_INVALID", "WIKI_SOP_STEP_INCOMPLETE", "WIKI_SOP_DEPENDENCY_INVALID"})
 BATCH_ATTEMPTS = 3
+BATCH_RETRY_DELAY_SECONDS = 30  # before re-sending after a provider failure; grows with each retry
 MAX_INPUT_BYTES = 16000
 MAX_SOURCE_BYTES = 8500
 MAX_SOURCE_BLOCKS = 32
 MAX_BLOCK_EXCERPT = 1200
 MAX_VOCAB = 80
+MENTION_MIN_CHARS = 2       # shortest page name (title or alias) matched as an unlinked mention
+MENTION_TITLE_CHARS = 8     # names at least this long count as a mention once; shorter ones must recur
+_QUOTED_TITLE = re.compile(r"《([^《》\n]{2,200})》")  # a document title quoted in a source document
 _MARKDOWN = MarkdownIt("commonmark", {"html": False})
 _WIKILINK = re.compile(r"(?<![!\\])\[\[([^\[\]\n]{1,300})\]\]")
 _UNSAFE = re.compile(r"<\s*/?\s*[a-z][a-z0-9]*\b|!\[|(?:javascript|vbscript)\s*:|"
                      r"data\s*:\s*text/html|-----BEGIN [A-Z ]*PRIVATE KEY-----", re.IGNORECASE)
 _PROVENANCE_PATH = ContextVar("wiki_provenance_path", default=())
 DRAFT_SOURCE_MODE = "unverified_draft"
+_sleep = time.sleep
+
+
+def _retry_pause(code, attempt_no):
+    """A provider or transport failure (load or rate limits upstream) gets time before the batch is re-sent; output
+    that failed validation is re-sent at once."""
+    if str(code).startswith(("PROVIDER_", "CODEX_")):
+        _sleep(BATCH_RETRY_DELAY_SECONDS * attempt_no)
 
 
 class WikiBuildError(RuntimeError):
@@ -582,6 +599,47 @@ def _edges(db, pages, context=None, user=None):
     return sorted(edges.values(), key=lambda edge: edge["id"]), unresolved
 
 
+def _mention_edges(db, user, pages, edges):
+    """Unlinked mentions for the graph: a knowledge page whose text names another visible page (title or registered
+    alias), or a source document whose title or text quotes another visible page's full title or alias in 《》, with
+    no other edge between the two. A text match for navigation, not a verified business relation. In a knowledge page
+    a short name must recur and a full title counts once; a document counts only exactly quoted names."""
+    metadata = _navigation_metadata(db, user, pages)
+    names_by_space = {sid: _name_index({rid: p for rid, p in pages.items() if p["resource"].space_id == sid}, metadata)
+                      for sid in {p["resource"].space_id for p in pages.values()}}
+    connected = {frozenset((edge["source"], edge["target"])) for edge in edges}
+    result = []
+    for rid, page in pages.items():
+        kind, names = page["resource"].kind, names_by_space[page["resource"].space_id]
+        if kind not in {"knowledge", "document"}:
+            continue
+        found = {}
+        if kind == "document":
+            quoted = Counter(_norm(name) for name in _QUOTED_TITLE.findall(
+                "\n".join([page["version"].title, *(block.search_text or "" for block in page["blocks"])])))
+            for name, count in quoted.items():
+                targets = names.get(name, set())
+                target = next(iter(targets)) if len(targets) == 1 else None
+                if target is not None and target != rid and frozenset((rid, target)) not in connected:
+                    found[target] = found.get(target, 0) + count
+        else:
+            text = _norm("\n".join(block.search_text or "" for block in page["blocks"]))
+            for name, targets in names.items():
+                target = next(iter(targets)) if len(targets) == 1 else None
+                if target is None or target == rid or frozenset((rid, target)) in connected \
+                        or len(name) < MENTION_MIN_CHARS or name.isascii() and len(name) < 4:
+                    continue
+                count = text.count(name)
+                if count >= (1 if len(name) >= MENTION_TITLE_CHARS else 2):
+                    found[target] = found.get(target, 0) + count
+        for target, count in sorted(found.items()):
+            key = (rid, page["version"].id, target, pages[target]["version"].id, "MENTIONS", "mention")
+            result.append({"id": str(uuid5(NAMESPACE_URL, json.dumps(key))), "source": rid, "target": target,
+                           "type": "MENTIONS", "origin": "mention", "state": page["version"].state,
+                           "mention_count": count})
+    return result
+
+
 def page_links(db, user, resource_id, *, context=None, _pages=None):
     resource = svc.resource_access(db, user, resource_id)
     pages = _pages if _pages is not None else visible_pages(db, user, resource.space_id, context=context)
@@ -694,6 +752,7 @@ def graph(db, user, space_id, *, focus_id=None, depth=1, category="", q="", limi
     pages = _pages if _pages is not None else visible_pages(db, user, space_id, context=context)
     pages = _linked_pages(db, user, pages, context, incoming_target=focus_id)
     edges, _ = _edges(db, pages, context, user)
+    edges = [*edges, *_mention_edges(db, user, pages, edges)]
     allowed = {rid for rid, page in pages.items() if _matches(page, q=q, category=category)
                and (not node_role or semantic.node_role(page["resource"]) == node_role)}
     if focus_id:
@@ -809,7 +868,7 @@ def choose_wiki_evidence(db, user, space_id, question, context=None, limit=12):
 
 _GENERATED_BLOCK = {"type": "object", "additionalProperties": False, "required": ["markdown", "evidence_ids"],
     "properties": {"markdown": {"type": "string", "minLength": 1},
-                   "evidence_ids": {"type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": True,
+                   "evidence_ids": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": True,
                                     "items": {"type": "string"}}}}
 _GENERATED_PAGE = {"type": "object", "additionalProperties": False,
     "required": ["title", "category", "knowledge_type", "aliases", "blocks", "links"],
@@ -1328,7 +1387,8 @@ def _validate_generated(response, selected, max_pages, *, granularity="topic", r
                     raise WikiBuildError("WIKI_LINK_TITLE_INVALID")
             for block in page["blocks"]:
                 _safe_text(block["markdown"])
-                if not block["markdown"].strip() or not set(block["evidence_ids"]).issubset(selected):
+                if not block["markdown"].strip() or not all(compilation.known_evidence(selected, eid)
+                                                            for eid in block["evidence_ids"]):
                     raise WikiBuildError("WIKI_CITATION_INVALID")
                 if block.get("step"):
                     _safe_text(json.dumps(block["step"], ensure_ascii=False))
@@ -1356,7 +1416,7 @@ def _write_page(db, user, space_id, page, sources, job_id, *, source_mode="publi
         page = copy.deepcopy(page)
         if not (page["category"] == "估值与核算" or page["category"].startswith("估值与核算/")):
             page["category"] = category_path("估值与核算/" + page["category"])
-    used = {eid for block in page["blocks"] for eid in block["evidence_ids"]}
+    used = {compilation.evidence_section(eid) for block in page["blocks"] for eid in block["evidence_ids"]}
     source_records = [sources[eid] for eid in used]
     # The model saw all selected input fragments, not only the citations it
     # chose to emit. Preserve that security boundary independently of editable text.
@@ -1404,8 +1464,9 @@ def _write_page(db, user, space_id, page, sources, job_id, *, source_mode="publi
     if source_mode == DRAFT_SOURCE_MODE:
         generated[0]["markdown"] = "待核验 Wiki：来源尚未完成正式复核，本文仅供浏览、整理和编辑，不是现行规则或正式答疑依据；禁止直接发布。历史与征求意见材料须按原适用范围理解。"
     if page["links"]:
+        # Navigation to related pages; it states nothing a source must support.
         generated.append({"markdown": "相关知识：" + "、".join(f"[[{title}]]" for title in page["links"]),
-                          "evidence_ids": sorted(used)})
+                          "evidence_ids": []})
     for index, block in enumerate(generated):
         block_id = svc.uid()
         markdown = block["markdown"]
@@ -1416,7 +1477,7 @@ def _write_page(db, user, space_id, page, sources, job_id, *, source_mode="publi
         data = {"text": markdown, "text_format": "markdown"}
         typ = "warning" if index == 0 else "paragraph"
         text = block_text({"block_type": typ, "data": data})
-        cited_records = [record for eid in block["evidence_ids"] for record in _members(sources[eid])]
+        cited_records = [record for eid in block["evidence_ids"] for record in compilation.evidence_records(sources, eid)]
         spans = [{"version_id": record["version_id"], "block_id": record["block_id"],
                   "char_start": record.get("char_start", 0), "char_end": record.get("char_end", len(record["text"])),
                   "excerpt_sha256": text_sha256(record["text"])} for record in cited_records]
@@ -1466,14 +1527,14 @@ def _compile_in_batches(provider, recheck_before_send, settings, instruction, mo
 
     def fits(messages):
         size = len(json.dumps(messages, ensure_ascii=False).encode("utf-8"))
-        return size <= limits["max_input_utf8_bytes"] and fits_context(
+        return size <= min(limits["max_input_utf8_bytes"], MULTI_BATCH_REQUEST_BYTES) and fits_context(
             messages[0]["content"], messages[1]["content"], connection, default_capacity=settings.provider_max_request_bytes)
 
     # Plan with the largest outline a later batch can carry, so every planned batch still fits when sent.
     reserve = "汇" * MULTI_BATCH_OUTLINE_CHARS
 
     def fits_alone(record):
-        return fits(messages_for([(compilation._item(record, 0), record)], reserve, 999, 999))
+        return fits(messages_for([(compilation.marked_item(record, 0), record)], reserve, 999, 999))
 
     # Passages are complete source sections; one larger than a whole request is split only at paragraph
     # (source block) boundaries into consecutive runs. Ids are then numbered build-uniquely.
@@ -1491,7 +1552,7 @@ def _compile_in_batches(provider, recheck_before_send, settings, instruction, mo
             if not fits_alone(compilation.join_members(run)):
                 raise WikiBuildError("WIKI_PASSAGE_EXCEEDS_BATCH_BUDGET")
         records.append({**compilation.join_members(run), "section_title": record.get("section_title")})
-    chosen = [(compilation._item(record, number), record) for number, record in enumerate(records, 1)]
+    chosen = [(compilation.marked_item(record, number), record) for number, record in enumerate(records, 1)]
     batches, current = [], []
     for entry in chosen:
         if current and (len(current) >= MAX_SOURCE_BLOCKS or not fits(messages_for([*current, entry], reserve, 999, 999))):
@@ -1522,6 +1583,7 @@ def _compile_in_batches(provider, recheck_before_send, settings, instruction, mo
                     raise
                 checkpoint("WIKI_GENERATING", {"batch": index, "batches": len(batches), "retry": attempt_no,
                                                "retry_reason": getattr(exc, "code", None)})
+                _retry_pause(getattr(exc, "code", None), attempt_no)
         for key, value in response.get("usage", {}).items():
             if key in {"prompt_tokens", "completion_tokens", "total_tokens"} and type(value) is int and value >= 0:
                 usage[key] = usage.get(key, 0) + value
@@ -1599,6 +1661,7 @@ def _review_merged_page(provider, recheck_before_send, settings, merged, limits,
                 return {"status": "SKIPPED_REVIEW_FAILED", "error_code": code, "removed_sentences": 0}
             checkpoint("WIKI_GENERATING", {"batch": batch_count, "batches": batch_count, "page_review": True,
                                            "retry": attempt_no, "retry_reason": code})
+            _retry_pause(code, attempt_no)
     for key, value in response.get("usage", {}).items():
         if key in {"prompt_tokens", "completion_tokens", "total_tokens"} and type(value) is int and value >= 0:
             usage[key] = usage.get(key, 0) + value
@@ -1802,6 +1865,9 @@ def execute_build(settings, session_factory, job_id, attempt, checkpoint):
         existing_pages = visible_pages(db, user, payload["space_id"])
         names = _name_index(existing_pages, _navigation_metadata(db, user, existing_pages))
         created_resources, created_versions, skipped, used_ids = [], [], [], set()
+        # Paragraph-level ids as cited (passage ids in used_ids are what the ledger and coverage units track).
+        cited_evidence = {eid for page in parsed["pages"] for block in page["blocks"] for eid in block["evidence_ids"]}
+        cited_evidence.update(eid for edge in parsed.get("relations", []) for eid in edge["evidence_ids"])
         revision_proposals = []
         proposed_source_ids = set()
         # Initial page metadata is conservative until all accepted page/edge
@@ -1810,7 +1876,7 @@ def execute_build(settings, session_factory, job_id, attempt, checkpoint):
             config=compilation_config, corpus_blocks=corpus_source_blocks, scoped_blocks=len(sources),
             unresolved=unresolved_units, explicit_scope=bool(payload.get("source_block_ids")))
         for page in parsed["pages"]:
-            cited = {eid for block in page["blocks"] for eid in block["evidence_ids"]}
+            cited = {compilation.evidence_section(eid) for block in page["blocks"] for eid in block["evidence_ids"]}
             if not multi_batch and all(_source_key(selected[eid]) in latest_processed for eid in cited):
                 skipped.append({"title": page["title"], "reason": "ALREADY_PROCESSED"})
                 continue
@@ -1899,7 +1965,9 @@ def execute_build(settings, session_factory, job_id, attempt, checkpoint):
                     "total_source_fragments": len(fragments), "coverage_unit": "source_fragments",
                     "selected_blocks": len({(r["version_id"], r["block_id"]) for _, p in chosen for r in _members(p)}),
                     "selected_fragments": len(chosen), "already_processed_fragments": already,
-                    "cited_blocks": len({(r["version_id"], r["block_id"]) for eid in used_ids for r in _members(selected[eid])}),
+                    "cited_blocks": len({(r["version_id"], r["block_id"]) for eid in cited_evidence
+                                         if compilation.evidence_section(eid) in used_ids
+                                         for r in compilation.evidence_records(selected, eid)}),
                     "cited_fragments": len(used_ids),
                     "omitted_blocks": omitted, "uncited_selected_blocks": len(uncited),
                     "input_utf8_bytes": input_bytes, "max_input_utf8_bytes": limits["max_input_utf8_bytes"],

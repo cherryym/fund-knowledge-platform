@@ -283,3 +283,43 @@ def test_empty_graph_without_limit_is_complete(env):
         assert result["nodes"] == result["edges"] == [] and result["truncated"] is False
         assert_counts(result, total_nodes=0, total_edges=0, matched_nodes=0, matched_edges=0)
         assert result["semantic_relation_count"] == 0 and result["node_role_counts"] == {}
+
+
+def test_graph_shows_unlinked_mentions_of_titles_and_aliases_only_where_no_other_edge(env):
+    ncd, _, _ = page(env, "公募基金同业存单的估值与会计核算", tags=["alias:同业存单"])
+    futures, _, _ = page(env, "期货的估值与核算（股指、国债、商品期货）", tags=["alias:期货"])
+    gold, _, _ = page(env, "黄金及贵金属基金的估值与核算")
+    linked, _, _ = page(env, "货币市场基金：摊余成本法与影子定价", tags=["alias:货币市场基金"])
+    reader, _, _ = page(env, "利率债与信用债的估值", text="同业存单按估值全价估值；同业存单的应计利息另行核算。"
+                        "期货只出现一次。另见[[货币市场基金]]，货币市场基金适用摊余成本法。"
+                        "参照黄金及贵金属基金的估值与核算。")
+    result = graph(env)
+    mentions = {(e["source"], e["target"]): e for e in result["edges"] if e["type"] == "MENTIONS"}
+    # A short alias must recur; a full title (8+ characters) counts once; a pair already linked gets no mention.
+    assert set(mentions) == {(reader, ncd), (reader, gold)}
+    assert (mentions[(reader, ncd)]["mention_count"], mentions[(reader, gold)]["mention_count"]) == (2, 1)
+    assert {e["origin"] for e in mentions.values()} == {"mention"}
+    assert (reader, futures) not in mentions
+    assert {(e["source"], e["target"]) for e in result["edges"] if e["type"] == "WIKI_LINK"} == {(reader, linked)}
+    local = graph(env, focus_id=ncd, depth=1)
+    assert {node["id"] for node in local["nodes"]} == {ncd, reader}
+
+
+def test_a_source_document_mentions_only_the_names_it_quotes(env):
+    rule, _, _ = page(env, "上海证券交易所债券交易规则", "第一条 为规范债券交易。", kind="document")
+    law_page, _, _ = page(env, "公募基金法律框架中的估值义务", tags=["alias:证券投资基金法"])
+    guideline, _, _ = page(env, "基金中基金估值业务指引", "根据《证券投资基金法》制定本指引。", kind="document")
+    hedging, _, _ = page(env, "企业会计准则第24号——套期会计", "套期会计的确认和计量。", kind="document")
+    twins = [page(env, "非上市公司股权估值指引", "估值方法。", kind="document")[0] for _ in range(2)]
+    deferral, _, _ = page(env, "《上海证券交易所债券交易规则》暂缓实施条款", "有关条款暂缓实施。", kind="document")
+    statements, _, _ = page(env, "企业会计准则第30号——财务报表列报",
+                            "套期按照《企业会计准则第24号——套期会计》列报，《企业会计准则第24号——套期会计》另有规定的除外；"
+                            "另见《不在库中的规定》。", kind="document")
+    unquoted, _, _ = page(env, "交易规则说明", "上海证券交易所债券交易规则另行规定。", kind="document")
+    revision, _, _ = page(env, "关于修订发布《非上市公司股权估值指引》的通知", "现予发布。", kind="document")
+    result = graph(env)
+    mentions = {(e["source"], e["target"]): e["mention_count"] for e in result["edges"] if e["type"] == "MENTIONS"}
+    # A quoted title or alias in the title or the text links; an unquoted name or a title shared by two documents does not.
+    assert mentions == {(deferral, rule): 1, (statements, hedging): 2, (guideline, law_page): 1}
+    linked = {node for pair in mentions for node in pair}
+    assert linked.isdisjoint({unquoted, revision, *twins})

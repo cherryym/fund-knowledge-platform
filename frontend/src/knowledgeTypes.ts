@@ -69,7 +69,9 @@ export type WikiNode = {
 };
 export type WikiEdge = {
   id: string; source: string; target: string; type: string;
-  origin: "citation" | "relation" | "wikilink" | "semantic"; state: string;
+  origin: "citation" | "relation" | "wikilink" | "semantic" | "mention"; state: string;
+  /** Unlinked mentions only: how often the source page's text names the target page. */
+  mention_count?: number;
 } & WikiVerification;
 export type WikiGraphData = {
   nodes: WikiNode[]; edges: WikiEdge[]; truncated: boolean; total_visible_nodes: number; matched_visible_nodes?: number;
@@ -145,7 +147,7 @@ export const wikiTypeLabels: Record<string, string> = {
 export const wikiRelationLabels: Record<string, string> = {
   WIKI_LINK: "双链", CITES: "引用", EXPLAINS: "解释", APPLIES_TO: "适用于", REQUIRES: "要求",
   EXCEPTION_OF: "例外", DEPENDS_ON: "依赖", SUPERSEDES: "替代", RULE: "规范依据",
-  FACT: "业务事实", CASE: "案例", CALCULATION: "计算依据", INTERNAL_OPINION: "内部意见",
+  FACT: "业务事实", CASE: "案例", CALCULATION: "计算依据", INTERNAL_OPINION: "内部意见", MENTIONS: "提及",
 };
 export const wikiRelationDescriptions = {
   EXPLAINS: "起点解释终点的含义或机制。",
@@ -153,6 +155,7 @@ export const wikiRelationDescriptions = {
   REQUIRES: "起点要求终点所指的前提或事项。",
   EXCEPTION_OF: "起点是终点的一种例外情形。",
   DEPENDS_ON: "起点的成立或执行依赖终点。",
+  MENTIONS: "起点正文提到终点的标题或别名（来源文件须在标题或正文中用书名号引用）；按文字自动识别，用于导航，不是已核验的业务关系。",
 } as const;
 
 export function wikiRelationTitle(type: string, verification?: string, precision?: WikiVerification["citation_precision"]): string {

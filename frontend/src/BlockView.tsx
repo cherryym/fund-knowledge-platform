@@ -35,14 +35,33 @@ export function blockText(block: Block) {
     block.data.text ?? block.data.expression_text ?? block.data.caption,
   );
 }
+/** One entry per cited source version, in first-cited order: a paragraph citing whole sections can carry hundreds of
+ * source blocks from a handful of documents. Opens the first cited block of each document. */
+export function citationGroups(citations: Block["citations"]) {
+  const groups = new Map<string, { version_id: string; block_id: string; purposes: string[]; count: number }>();
+  for (const citation of citations) {
+    const group = groups.get(citation.version_id);
+    if (!group) {
+      groups.set(citation.version_id, { version_id: citation.version_id, block_id: citation.block_id,
+        purposes: [citation.purpose], count: 1 });
+    } else {
+      group.count += 1;
+      if (!group.purposes.includes(citation.purpose)) group.purposes.push(citation.purpose);
+    }
+  }
+  return [...groups.values()];
+}
 export const BlockView = memo(function BlockView({
   block,
   highlighted = false,
   compact = false,
+  sourceNames,
 }: {
   block: Block;
   highlighted?: boolean;
   compact?: boolean;
+  /** Source titles by version id, where the caller already holds the page's readable sources. */
+  sourceNames?: Readonly<Record<string, string>>;
 }) {
   const app = useApp();
   const wikiLinkTask = useTask();
@@ -148,15 +167,17 @@ export const BlockView = memo(function BlockView({
       )}
       {block.citations.length > 0 && (
         <div className="citation-links">
-          {block.citations.map((c, i) => (
+          {citationGroups(block.citations).map((group, i) => (
             <button
               type="button"
-              key={i}
+              key={group.version_id}
               className="citation-chip"
-              onClick={() => app.openVersion(c.version_id, c.block_id)}
+              onClick={() => app.openVersion(group.version_id, group.block_id)}
             >
               <Link size={13} />
-              来源 {i + 1} · {purposeLabels[c.purpose]}
+              {sourceNames?.[group.version_id] ? `《${sourceNames[group.version_id]}》` : `来源 ${i + 1}`}
+              {" · "}{group.purposes.map((purpose) => purposeLabels[purpose] ?? purpose).join("、")}
+              {group.count > 1 && ` · ${group.count}段`}
             </button>
           ))}
         </div>

@@ -194,17 +194,21 @@ def visible_edges(db, user, pages):
             config = policy.config
             if config.get("space_id") != sid:
                 continue
+            # Only proposals whose endpoints are both still the visible versions can be shown; a build whose pages
+            # have all moved on to newer versions is passed over before its (costly) snapshot checks.
+            current = [proposal for proposal in config.get("proposals", [])
+                       if all(s["resource_id"] in pages and pages[s["resource_id"]]["version"].id == s["version_id"]
+                              for s in proposal["endpoints"])]
+            if not current:
+                continue
             try:
                 check_source_snapshots(db, user, config["source_snapshot"])
                 check_references(db, user, config.get("reference_snapshot", []))
             except (svc.APIError, wiki.WikiBuildError, KeyError):
                 continue
-            for proposal in config.get("proposals", []):
+            for proposal in current:
                 a, b = proposal["endpoints"]
-                if a["resource_id"] not in pages or b["resource_id"] not in pages:
-                    continue
-                if any(pages[s["resource_id"]]["version"].id != s["version_id"]
-                       or pages[s["resource_id"]]["resource"].access_epoch != s["access_epoch"]
+                if any(pages[s["resource_id"]]["resource"].access_epoch != s["access_epoch"]
                        or wiki._checked_hash(db, pages[s["resource_id"]]["version"]) != s["content_sha256"]
                        for s in (a, b)):
                     continue

@@ -439,6 +439,20 @@ def test_endpoint_changes_hide_semantic_edge(env, provider, endpoint, change):
     assert policy(env, jid) == frozen
 
 
+def test_a_build_whose_endpoints_have_newer_versions_is_passed_over_before_its_snapshot_checks(env, provider, monkeypatch):
+    from fund_kb import wiki_semantics
+    _source, refs, _jid, _ = relation_build(env, provider)
+    checked = []
+    real = wiki_semantics.check_references
+    monkeypatch.setattr(wiki_semantics, "check_references", lambda *a, **k: checked.append(1) or real(*a, **k))
+    assert len(semantic_edges(env)) == 1 and checked  # a current build is still checked and shown
+    with env.db.begin() as db:  # one endpoint gets a newer published version (its draft went to review first)
+        db.get(m.ResourceVersion, refs[0][1]).state = "IN_REVIEW"
+    page(env, "独立估值参数", text="新版本正文。", resource_id=refs[0][0])
+    checked.clear()
+    assert semantic_edges(env) == [] and checked == []
+
+
 @pytest.mark.parametrize("endpoint", [0, 1])
 @pytest.mark.parametrize("change", ["body", "acl"])
 def test_generated_endpoint_snapshot_is_checked_without_reference_context(env, provider, endpoint, change):

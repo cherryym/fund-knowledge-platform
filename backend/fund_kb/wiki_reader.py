@@ -120,7 +120,7 @@ UNIVERSAL_SYNTHESIS_INSTRUCTION = """请综合本轮完整已读的Wiki与原文
 # Reasoning core V1: the universal reading/citation contract plus a library map
 # before planning, dimension decomposition, precedence reasoning and explicit
 # principle-based derivation. Still no question/document allowlists.
-REASONING_PROMPT_VERSION = "wiki-rag-reasoning-core-v1.10-20261002"
+REASONING_PROMPT_VERSION = "wiki-rag-reasoning-core-v1.11-20261006"
 # Reasoning answers handle only the structural review items that bear on this answer, in
 # business terms, instead of enumerating every listed item.
 _REVIEW_DATA_RULE = "逐项处理数据列出的日期/模式、价格口径和分录疑点，说明已解决与未解决的范围；"
@@ -132,7 +132,7 @@ REASONING_SYSTEM = UNIVERSAL_SYSTEM.replace(_REVIEW_DATA_RULE, (
 按问题实际需要拆解维度：资产与工具、业务事件、时点与业务日期、分类与计量、价格来源与估值技术、会计核算、产品与适用主体、估值治理与披露。只展开相关维度；未提供的事实列为条件分支，不臆测。
 比较来源的层级、发布主体、施行/废止日期、版本和适用主体。同一事项有多份来源时，按上位规定优先、现行规定优先于已被废止或替代的规定、专门规定优先于一般规定、公募基金专门规定优先于其他主体标准来判断，并说明理由；业务日期早于新规施行时适用当时有效的规定。库地图中的“预抽”信息只是线索，据以判断效力前须读到对应原文（如施行或废止条款）；“已确认”来源治理事实可直接作为效力判断的前提。
 有专门规定时以其为直接依据。没有专门规定或规定未覆盖本题情形时，回到上位原则推导（如金融工具分类与计量、公允价值计量与层次、估值技术选择、估值一致性与谨慎性、会计确认与计量），写明“推导”及其前提和适用限制，并指出应由估值委员会、托管人或专业人员确认的事项。
-以估值技术确定公允价值时（缺乏活跃市场报价、没有第三方估值价格、自建模型或对报价作重大调整），说明公允价值层次：按对整体计量重要的最低层次输入值确定，使用重要的不可观察输入值的通常属于第三层次，并说明对复核与披露的影响。
+以估值技术确定公允价值时（缺乏活跃市场报价、没有第三方估值价格、自建模型或对报价作重大调整），说明公允价值层次：按对整体计量重要的最低层次输入值确定，使用重要的不可观察输入值的通常属于第三层次，并说明对复核与披露的影响。直接采用未经调整的活跃市场报价、交易所收盘价或结算价、基金公布的份额净值估值时，不写公允价值层次段落。
 区分施行/生效日、过渡期或“至某日实施完毕”的实施期限、失效与废止：“自发布之日起至某日实施完毕”是完成实施的期限，届满后规定继续有效；判断失效或被替代须有明确的废止、失效或替代依据。
 效力字段为UNKNOWN只表示本库尚未登记核验结果，不等于失效或存疑；原文施行条款、发布公告或已确认的替代事实表明其为现行规定时，应据此作为现行依据，不要仅因UNKNOWN把现行规定列为缺口；只在用户需要判断效力或存在新旧冲突时简要说明本库效力字段尚未核验，不在每个答复中复述。
 估值服务机构（如中债、中证、上海清算所、外汇交易中心）的方法说明解释其价格如何编制，是价格来源的依据，不是对基金估值的规范性要求；以其他主体（如证券公司、私募）为对象的规定，对公募基金只能作参考并说明差异。
@@ -154,7 +154,7 @@ REASONING_SYNTHESIS_INSTRUCTION = UNIVERSAL_SYNTHESIS_INSTRUCTION + """
 说明所采用依据的层级与效力判断；没有直接规定的部分写明是推导及其前提；本库仍缺的资料用 GAP 行列出，用户未提供的事实写成条件分支或追问。
 篇幅与问题复杂度相称：有直接规定的问题以结论、依据、适用条件和必要处理步骤为主，不铺陈与本题无关的科目表、背景或重复内容；多条规定综合或需要推导的问题再按维度展开。
 面向用户的正文用资料标题称呼来源，不写W编号（W编号只用于READ等阅读命令）；每个关键主张后仍须用[E编号]标注支持它的原文，E编号不可省略。专题页是整理后的导航，结论须引用它所指向的原文。效力与施行日期只在影响本题结论时简短说明，不要每题复述废止公告或施行日期等背景。
-正文只写业务内容，不复述阅读或程序核对过程（如本轮、新增材料、本次提供的正文、所提供条款、当前材料未提供、阅读提要、已读范围、依赖未定位、结构检查条数）；依据不足时直接写明哪项规定或事实尚需核对。
+正文只写业务内容，不复述阅读或程序核对过程（如本轮、新增材料、本次提供的正文、所提供条款、当前材料未提供、阅读提要、已读范围、依赖未定位、结构检查条数），也不写资料在本库的状态（如图像转录、转录待复核、草稿、待核验、效力字段UNKNOWN）；依据不足时直接写明哪项规定或事实尚需核对，需要提醒核对原件时只在结尾用一句话统一说明。
 会计分录：原则明确时先给出可执行的标准分录（科目、借贷方向、金额口径、时点），原文分录有疑点的另起一句说明，不要因疑点而不给分录。
 如确需补读，本次只输出若干行 READ、READ_SECTION 或 SEARCH 命令（命令词后接编号、章节号或检索语句），不写其他说明，程序读取后会请你继续作答；否则直接给出完整答复。"""
 
@@ -412,6 +412,16 @@ _CASE_MATERIAL = re.compile(r"基金合同|产品合同|资产管理合同|托�
 
 def _title_key(text):
     return re.sub(r"[\s《》〈〉“”\"'（）()【】\[\]、，,。.:：；;—\-－·]", "", text).casefold()
+
+
+def library_catalog_instruction(titles):
+    """The library's source titles for the reasoning synthesis, so that a GAP is checked against what the library holds
+    (the library map is shown to the planner only). Titles only: not evidence and nothing to cite."""
+    titles = sorted({t.strip() for t in titles if t and t.strip()})
+    if not titles:
+        return ""
+    return ("\n库内来源目录（仅标题，只用于判断资料是否在库内，不是依据，不能引用）：" + "；".join(titles)
+            + "\n列GAP前先对照本目录：目录中已有的资料不列为GAP；结论需要它时写READ补读，或在正文注明需核对该库内资料。")
 
 
 def sort_gaps(gaps, library_titles):

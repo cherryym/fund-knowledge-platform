@@ -60,6 +60,7 @@ from .wiki_reader import (
     full_read_requests,
     gap_requests,
     index_lines,
+    library_catalog_instruction,
     move_gap_lines,
     display_title,
     name_page_ids,
@@ -1194,6 +1195,8 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
         prefix = intro + "\n本次已核对的完整Wiki/原文小节：\n"
         instruction = "\n" + (REASONING_SYNTHESIS_INSTRUCTION if reasoning else UNIVERSAL_SYNTHESIS_INSTRUCTION
                               if universal else ADAPTIVE_SYNTHESIS_INSTRUCTION if adaptive else SYNTHESIS_INSTRUCTION)
+        if reasoning:
+            instruction += library_catalog_instruction(page["title"] for page in pages.values() if page["kind"] == "document")
         if context_report and context_report["gap_count"] and reasoning:
             instruction += ("\n原文中有部分显式交叉引用未能精确定位；结论依赖这些引用时，在该结论处用业务语言注明需核对，"
                             "不报告数量，也不得宣称这些依赖已核验。")

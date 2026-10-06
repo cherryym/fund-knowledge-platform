@@ -67,6 +67,8 @@ def test_planner_sees_library_map_reads_planned_source_and_records_gaps(env, mon
                     "GAP 估值机构曲线编制说明｜核对价格口径\nGAP 产品合同估值条款｜确认合同是否另有约定")
         assert "ALPHA_RULE" in calls[-1] and "WIKI_NOTE" in calls[-1]
         assert "说明所采用依据的层级与效力判断" in calls[-1]
+        catalog = calls[-1].split("库内来源目录", 1)[1]  # GAPs are checked against the held titles
+        assert "某品种估值指引（2024年修订版）" in catalog and "列GAP前先对照本目录" in catalog
         ids = list(dict.fromkeys(re.findall(r"\[(E\d+)\]", calls[-1])))
         return ("## 结论\n\n按现行版本采用第三方估值价格。" + "".join(f"[{i}]" for i in ids)
                 + "\n\n**GAP** 某品种估值指引2025年修订版｜核对是否调整估值方法\nGAP 托管协议复核约定｜确认托管人复核分工")

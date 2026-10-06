@@ -46,7 +46,7 @@ EXPECTED_READ_ONLY_OPERATIONS = frozenset({
     "listSourceAuthority", "getSourceAuthority", "listSourceAuthoritySuggestions",
     "listCapabilities", "getCapabilityStarter", "getCapability", "getCapabilityVersion",
     "exportCapabilitySkill", "listCapabilityRuns", "getCapabilityRun", "getCapabilityRunNext",
-    "getCapabilityRunSources", "listAgentAccess",
+    "getCapabilityRunSources", "listAgentAccess", "listCoverageGaps", "getLibraryMap",
 })
 
 # These real-HTTP fixtures exercise the shared read dispatcher under a writer

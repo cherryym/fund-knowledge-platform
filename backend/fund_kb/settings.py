@@ -124,8 +124,11 @@ class Settings(BaseSettings):
     answer_planning_max_output_tokens: int = Field(default=4096, ge=256, le=131072)
     answer_max_output_tokens: int = Field(default=8192, ge=256, le=131072)
     answer_engine: Literal["wiki_reader", "structured"] = "wiki_reader"
-    wiki_query_strategy: Literal["interactive", "adaptive", "universal"] = "interactive"
+    wiki_query_strategy: Literal["interactive", "adaptive", "universal", "reasoning"] = "interactive"
     wiki_query_target_seconds: float = Field(default=20, gt=0, le=600)
+    # Reasoning strategy only: effort sent for synthesis where the connection has
+    # an attested/supported value (Codex verified pairs, OpenAI API); else provider default.
+    wiki_synthesis_reasoning_effort: Literal["low", "medium", "high"] | None = "high"
     # No application wall-clock/read deadline for interactive Wiki reasoning.
     # Provider context/output capacities still exist; cancellation stays active.
     wiki_answer_max_output_tokens: int = Field(default=16384, ge=256, le=131072)

@@ -5,9 +5,11 @@ HTTP token forwarding. A private offline-probe profile is required to enable it.
 """
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import queue
+import re
 import threading
 import time
 from pathlib import Path
@@ -85,6 +87,23 @@ CONFIGURABLE_INSTRUCTION_CONTRACT = {
 }
 CONFIGURABLE_INSTRUCTION_CONTRACT_SHA256 = hashlib.sha256(json.dumps(
     CONFIGURABLE_INSTRUCTION_CONTRACT, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+LARGE_CONTEXT_PROFILE_VERSION = 4
+# v4 keeps every v3 field and only enlarges the request budget. Its profile must
+# carry offline probes that sent a request above the v3 semantic cap through the
+# pinned binary; v2/v3 profiles keep their own frozen 64 KiB contract.
+LARGE_CONTEXT_INSTRUCTION_CONTRACT = {
+    **CONFIGURABLE_INSTRUCTION_CONTRACT, "routing_version": LARGE_CONTEXT_PROFILE_VERSION,
+    "budget": {**INSTRUCTION_CONTRACT["budget"], "semantic_cap_bytes": 196608, "ipc_cap_bytes": 1048576},
+}
+LARGE_CONTEXT_INSTRUCTION_CONTRACT_SHA256 = hashlib.sha256(json.dumps(
+    LARGE_CONTEXT_INSTRUCTION_CONTRACT, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+CONFIGURABLE_PROFILE_VERSIONS = frozenset({CONFIGURABLE_PROFILE_VERSION, LARGE_CONTEXT_PROFILE_VERSION})
+
+
+def contract_budget(version):
+    """(semantic cap, per-RPC IPC cap) in bytes of a profile version's frozen contract."""
+    contract = LARGE_CONTEXT_INSTRUCTION_CONTRACT if version == LARGE_CONTEXT_PROFILE_VERSION else INSTRUCTION_CONTRACT
+    return contract["budget"]["semantic_cap_bytes"], contract["budget"]["ipc_cap_bytes"]
 
 
 def _validate_reasoning_effort(effort):
@@ -152,16 +171,18 @@ def text_request_sizes(thread, turn):
     return sizes
 
 
-def check_text_request_budget(thread, turn, max_request_bytes=65536, max_rpc_bytes=262144):
-    """64 KiB semantic UTF-8 content; independently cap each IPC at 256 KiB.
+def check_text_request_budget(thread, turn, max_request_bytes=65536, max_rpc_bytes=262144, *, caps=(65536, 262144)):
+    """Semantic UTF-8 content within the contract cap (64 KiB; 192 KiB for v4);
+    independently cap each IPC line (256 KiB; 1 MiB for v4). caps defaults to
+    the frozen v2/v3 contract.
 
     The returned IPC sum is diagnostic only. It is never compared with the
     semantic limit. No content is shortened to meet either limit.
     """
     sizes = text_request_sizes(thread, turn)
-    if sizes["semantic_utf8_bytes"] > min(max_request_bytes, 65536):
+    if sizes["semantic_utf8_bytes"] > min(max_request_bytes, caps[0]):
         raise ProviderError("PROVIDER_REQUEST_TOO_LARGE")
-    if max(sizes["thread_rpc_bytes"], sizes["turn_rpc_bytes"]) > min(max_rpc_bytes, 262144):
+    if max(sizes["thread_rpc_bytes"], sizes["turn_rpc_bytes"]) > min(max_rpc_bytes, caps[1]):
         raise ProviderError("CODEX_RPC_TOO_LARGE")
     return sizes["rpc_total_bytes"]
 
@@ -187,7 +208,8 @@ def text_snapshot(db, user, policy, model_id, settings, space_id=None):
         "provider_id": "chatgpt-codex", "kind": "subscription", "protocol": "codex_app_server", "base_url": "",
         "model_id": model_id, "brand": "openai", "credential_mode": "chatgpt_oauth",
         "allow_document_transfer": policy.config.get("allow_document_transfer", False),
-        "max_request_bytes": min(settings.provider_max_request_bytes, 65536),
+        "max_request_bytes": min(settings.provider_max_request_bytes,
+                                 getattr(engine, "budget_caps", contract_budget(PROFILE_VERSION))[0]),
         "max_response_bytes": min(settings.provider_max_response_bytes, 65536)}
     public = dict(snapshot)
     if "reasoning_effort" in policy.config:
@@ -207,6 +229,23 @@ def text_snapshot(db, user, policy, model_id, settings, space_id=None):
             authorize_model_snapshot(fresh, principal, public, settings)
     snapshot["_authority_check"], snapshot["_codex_engine"] = guard, engine
     return snapshot
+
+
+_ERROR_CATEGORY = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,63}")
+
+
+def _error_category(value):
+    """The service's category for a reported error, for the inference trace: an enum name and an HTTP status at
+    most, never the message text."""
+    error = value.get("error") if isinstance(value.get("error"), dict) else {}
+    info = error.get("codexErrorInfo", error.get("codex_error_info"))
+    name, status = info, None
+    if isinstance(info, dict) and len(info) == 1:
+        (name, detail), = info.items()
+        status = detail.get("httpStatusCode", detail.get("http_status_code")) if isinstance(detail, dict) else None
+    category = (name if isinstance(name, str) and _ERROR_CATEGORY.fullmatch(name)
+                else "unspecified" if info is None else "other")
+    return {"category": category, **({"http_status": status} if type(status) is int and 100 <= status <= 599 else {})}
 
 
 class TextStdioTransport(AuthStdioTransport):
@@ -301,6 +340,7 @@ class CodexTextEngine:
     # engine is enabled only by the complete profile verification below.
     profile_version = PROFILE_VERSION
     default_reasoning_effort = None
+    budget_caps = contract_budget(PROFILE_VERSION)
 
     def __init__(self, bridge, profile_path, *, transport_factory=TextStdioTransport,
                  max_waiting=4, queue_wait_seconds=30, reasoning_effort=None):
@@ -310,7 +350,8 @@ class CodexTextEngine:
         profile = json.loads(_read_private(path, 1048576))
         version = profile.get("profile_version")
         contracts = {PROFILE_VERSION: INSTRUCTION_CONTRACT_SHA256,
-                     CONFIGURABLE_PROFILE_VERSION: CONFIGURABLE_INSTRUCTION_CONTRACT_SHA256}
+                     CONFIGURABLE_PROFILE_VERSION: CONFIGURABLE_INSTRUCTION_CONTRACT_SHA256,
+                     LARGE_CONTEXT_PROFILE_VERSION: LARGE_CONTEXT_INSTRUCTION_CONTRACT_SHA256}
         if type(version) is not int or version not in contracts \
                 or profile.get("instruction_contract_sha256") != contracts[version] \
                 or profile.get("policy_sha256") != POLICY_SHA256 \
@@ -342,9 +383,14 @@ class CodexTextEngine:
             if probe.get("attack") and ("unsupported" not in probe.get("startup_errors", "")
                     or probe["attack"] not in probe.get("startup_errors", "")):
                 raise ProviderError("CODEX_TEXT_PROFILE_UNVERIFIED")
+        self.budget_caps = contract_budget(version)
+        if version == LARGE_CONTEXT_PROFILE_VERSION and not all(
+                self._proves_budget(probe.get("request_sizes")) for probe in probes if probe.get("attack") is None):
+            raise ProviderError("CODEX_TEXT_PROFILE_UNVERIFIED")
         self.profile_version = version
         self._reasoning_models = {model["slug"]: model for model in models}
-        self._verified_reasoning = self._verify_reasoning_probes(probes) if version == CONFIGURABLE_PROFILE_VERSION else frozenset()
+        self._verified_reasoning = (self._verify_reasoning_probes(probes) if version in CONFIGURABLE_PROFILE_VERSIONS
+                                    else frozenset())
         self.default_reasoning_effort = _validate_reasoning_effort(reasoning_effort)
         # A configured default must be admissible for every model this engine
         # exposes. Per-model provider/request options are checked per call.
@@ -352,6 +398,26 @@ class CodexTextEngine:
             self.reasoning_configuration({"model_id": model})
         self.slot = threading.BoundedSemaphore(1)
         self.admission = BoundedAdmission(self.slot, max_waiting=max_waiting, max_wait_seconds=queue_wait_seconds)
+
+    def _proves_budget(self, sizes):
+        """A larger contract counts only where a probe's request exceeded the v2/v3 semantic cap yet stayed within
+        this contract's semantic and per-RPC caps (the recorded sizes of the request actually sent)."""
+        if not isinstance(sizes, dict) or any(type(sizes.get(key)) is not int for key in (
+                "semantic_utf8_bytes", "thread_rpc_bytes", "turn_rpc_bytes")):
+            return False
+        semantic_cap, ipc_cap = self.budget_caps
+        return (contract_budget(CONFIGURABLE_PROFILE_VERSION)[0] < sizes["semantic_utf8_bytes"] <= semantic_cap
+                and max(sizes["thread_rpc_bytes"], sizes["turn_rpc_bytes"]) <= ipc_cap)
+
+    def _transport_config(self):
+        """The bridge configuration, with RPC lines widened to the contract's cap for a larger contract (the request
+        and its echoed user item travel on single lines)."""
+        config = self.bridge.config
+        if self.budget_caps[1] <= config.max_rpc_bytes:
+            return config
+        if dataclasses.is_dataclass(config):
+            return dataclasses.replace(config, max_rpc_bytes=self.budget_caps[1])
+        return type(config)(**{**vars(config), "max_rpc_bytes": self.budget_caps[1]})
 
     def _verify_reasoning_probes(self, probes):
         """Attest each model/effort independently, including omission vs 'none'.
@@ -391,6 +457,10 @@ class CodexTextEngine:
         except (KeyError, TypeError, ValueError, ProviderError):
             raise ProviderError("CODEX_REASONING_PROFILE_UNVERIFIED") from None
         return frozenset(matrix)
+
+    def supports_reasoning(self, model, effort):
+        """True only for an attested model/effort pair of a configurable profile."""
+        return (model, effort) in getattr(self, "_verified_reasoning", frozenset())
 
     def reasoning_configuration(self, snapshot, reasoning_effort=None):
         """Resolve a request override, provider default, or pinned model default.
@@ -468,17 +538,19 @@ class CodexTextEngine:
         if model not in self.models:
             raise ProviderError("CODEX_MODEL_NOT_VERIFIED")
         raw = json.dumps(messages, ensure_ascii=False)
-        if len(raw.encode()) > min(snapshot.get("max_request_bytes", 65536), 65536):
+        if len(raw.encode()) > min(snapshot.get("max_request_bytes", 65536), self.budget_caps[0]):
             raise ProviderError("PROVIDER_REQUEST_TOO_LARGE")
         # Reject large instructions before identity materialization. Recompute
         # against the real cwd and server ID below; never truncate any channel.
         thread_params, turn_params = configured_text_request_params(messages, model, "", reasoning_effort=reasoning_effort)
-        budget = min(snapshot.get("max_request_bytes", 65536), 65536)
-        check_text_request_budget(thread_params, turn_params, budget, self.bridge.config.max_rpc_bytes)
+        budget = min(snapshot.get("max_request_bytes", 65536), self.budget_caps[0])
+        check_text_request_budget(thread_params, turn_params, budget, self._transport_config().max_rpc_bytes,
+                                  caps=self.budget_caps)
 
     def _complete_active(self, snapshot, messages, *, max_tokens, json_mode, request_budget, trace, reasoning_effort=None):
         model = snapshot["model_id"]
-        budget = min(snapshot.get("max_request_bytes", 65536), 65536)
+        budget = min(snapshot.get("max_request_bytes", 65536), self.budget_caps[0])
+        transport_config = self._transport_config()
         output_limit = min(snapshot.get("max_response_bytes", 65536), max_tokens * 16, 65536)
         home, rpc = None, None
         error = None
@@ -512,11 +584,12 @@ class CodexTextEngine:
             _write_private(home / "models.json", self.catalog)
             thread_params, turn_params = configured_text_request_params(messages, model, home / "workspace",
                                                                         reasoning_effort=reasoning_effort)
-            check_text_request_budget(thread_params, turn_params, budget, self.bridge.config.max_rpc_bytes)
+            check_text_request_budget(thread_params, turn_params, budget, transport_config.max_rpc_bytes,
+                                      caps=self.budget_caps)
             request_budget.check()
             trace.enter("startup_initialize")
             options = {"public_text": True} if preview and getattr(self.transport_factory, "PUBLIC_TEXT_PREVIEW", False) else {}
-            rpc = self.transport_factory(self.bridge.config, home, **options)
+            rpc = self.transport_factory(transport_config, home, **options)
             request_budget.check()
             trace.enter("account_read")
             account = rpc.call("account/read", {"refreshToken": False}).get("account")
@@ -529,7 +602,8 @@ class CodexTextEngine:
             thread_id = started["thread"]["id"]
             request_budget.check()
             turn_params["threadId"] = thread_id
-            check_text_request_budget(thread_params, turn_params, budget, self.bridge.config.max_rpc_bytes)
+            check_text_request_budget(thread_params, turn_params, budget, transport_config.max_rpc_bytes,
+                                      caps=self.budget_caps)
             # Admission may wait. Revalidate business sources after that wait,
             # immediately before sending the user/source payload, not per token.
             before_send = snapshot.get("_before_send_check")
@@ -636,6 +710,7 @@ class CodexTextEngine:
                 elif method == "error":
                     if preview:
                         preview.revoke()
+                    trace.upstream_error = _error_category(value)
                     if not value.get("willRetry", False):
                         raise ProviderError("CODEX_MODEL_REQUEST_FAILED")
                 elif method in {"model/safetyBuffering/updated", "model/verification", "model/rerouted"}:

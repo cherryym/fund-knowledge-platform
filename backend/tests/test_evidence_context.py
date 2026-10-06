@@ -111,3 +111,17 @@ def test_shared_dependency_never_boosts_unrelated_root_and_each_source_is_scored
     # A different question or model identity must not reuse prior scores.
     _, report = order_context_groups("另一问题", pages, set(pages), [], vector, cache)
     assert report["scored_sources"] == 4
+
+
+def test_unresolved_reference_list_can_be_capped_with_priority_pages_first():
+    from fund_kb.evidence_context import context_instructions
+    report = {"references": [
+        {"source_page_id": "W3", "text": "《丙办法》第三条", "status": "not_located"},
+        {"source_page_id": "W1", "text": "《甲办法》第一条", "status": "not_located"},
+        {"source_page_id": "W2", "text": "《乙办法》第二条", "status": "resolved"},
+        {"source_page_id": "W2", "text": "《乙办法》第九条", "status": "not_in_authorized_catalog"}]}
+    full = context_instructions(report)
+    assert "《丙办法》第三条" in full and "另有" not in full
+    capped = context_instructions(report, limit=2, order=["W1", "W2", "W3"])
+    assert "《甲办法》第一条" in capped and "《乙办法》第九条" in capped and "《丙办法》第三条" not in capped
+    assert "另有1处显式引用未精确定位" in capped and "《乙办法》第二条" not in capped

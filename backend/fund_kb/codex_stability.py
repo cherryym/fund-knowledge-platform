@@ -165,6 +165,7 @@ class InferenceTrace:
         self.events = self.server_retry_events = 0
         self.cleanup_codes = []
         self.error_phase = None
+        self.upstream_error = None  # the service's error category (enum/status only), when it reported one
 
     def enter(self, phase):
         now = self.clock()
@@ -192,6 +193,8 @@ class InferenceTrace:
             "first_event_ms": self.first_event_ms, "first_output_ms": self.first_output_ms,
             "server_retry_events": self.server_retry_events, "cleanup_codes": self.cleanup_codes,
         }
+        if self.upstream_error:
+            record["upstream_error"] = self.upstream_error
         # Diagnostics must never replace the primary failure or retain its text.
         try:
             LOGGER.info("codex_inference %s", json.dumps(record, separators=(",", ":")))

@@ -192,3 +192,46 @@ def test_sources_scope_does_not_authorize_general_document_read_or_other_operati
     for path in paths:
         assert bearer(api, token, "GET", path).status_code == 403
     assert bearer(api, token, "POST", "/resources", {"space_id": SPACE, "kind": "template", "name": "越权编辑"}).status_code == 403
+
+
+def test_knowledge_read_scope_reads_map_and_versions_only_inside_token_space(api):
+    resource = api.resource(name="合成Agent可读知识")
+    version = api.draft(resource)
+    api.edit(version, text="AGENT_READABLE：核对估值价格来源。")
+    library = api.call("POST", "/libraries", {"name": "合成另一个个人库", "kind": "personal"})
+    other = library.json()["id"]
+    foreign = api.call("POST", "/resources", {"space_id": other, "kind": "knowledge", "name": "他库知识"}).json()
+    foreign_version = api.draft(foreign)
+    token = issue(api, scopes=["knowledge:read"])["token"]
+    mapped = bearer(api, token, "GET", "/library-map?space_id=" + SPACE)
+    assert mapped.status_code == 200, mapped.text
+    body = mapped.json()
+    assert "库地图" in body["text"] and body["stats"]["body_blocks_loaded"] == 0
+    assert all(set(p) >= {"page_id", "version_id", "title", "kind"} for p in body["pages"])
+    read = bearer(api, token, "GET", "/versions/" + version.json()["id"])
+    assert read.status_code == 200 and "AGENT_READABLE" in read.text
+    assert bearer(api, token, "GET", "/library-map?space_id=" + other).status_code == 404
+    assert bearer(api, token, "GET", "/versions/" + foreign_version.json()["id"]).status_code == 404
+    assert bearer(api, token, "GET", "/coverage-gaps?space_id=" + SPACE).status_code == 200
+    capability_only = issue(api, scopes=["capabilities:read"])["token"]
+    denied = bearer(api, capability_only, "GET", "/library-map?space_id=" + SPACE)
+    assert denied.status_code == 403 and denied.json()["code"] == "AGENT_SCOPE_REQUIRED"
+
+
+def test_consult_scope_creates_owner_threads_in_token_space_only(api):
+    token = issue(api, scopes=["consult:write"])["token"]
+    thread = bearer(api, token, "POST", "/threads", {"space_id": SPACE, "title": "Agent发起的合成咨询"})
+    assert thread.status_code == 201, thread.text
+    run = bearer(api, token, "POST", f"/threads/{thread.json()['id']}/runs",
+                 {"question": "如何核对价格来源？", "mode": "answer", "context": {}, "answer_scope": "reference"})
+    assert run.status_code == 202, run.text
+    assert bearer(api, token, "GET", "/runs/" + run.json()["id"]).status_code == 200
+    # The owner sees the Agent-created thread in the normal history.
+    assert thread.json()["id"] in api.call("GET", "/threads").text
+    library = api.call("POST", "/libraries", {"name": "合成另一个个人库", "kind": "personal"}).json()["id"]
+    assert bearer(api, token, "POST", "/threads", {"space_id": library, "title": "跨库"}).status_code == 404
+    own_other = api.call("POST", "/threads", {"space_id": library, "title": "网页在他库创建"}).json()
+    assert bearer(api, token, "POST", f"/threads/{own_other['id']}/runs",
+                  {"question": "跨库提问", "mode": "answer", "context": {}}).status_code == 404
+    knowledge_only = issue(api, scopes=["knowledge:read"])["token"]
+    assert bearer(api, knowledge_only, "POST", "/threads", {"space_id": SPACE, "title": "无权限"}).status_code == 403

@@ -45,7 +45,7 @@ class LocalRetrievalProfile(BaseModel):
     reranker_instruction: str = Field(default="", max_length=1000)
     reranker_max_tokens: int = Field(default=1024, ge=64, le=32768)
     reranker_batch_size: int = Field(default=8, ge=1, le=128)
-    wiki_query_strategy: Literal["interactive", "adaptive", "universal"] = "interactive"
+    wiki_query_strategy: Literal["interactive", "adaptive", "universal", "reasoning"] = "interactive"
     wiki_query_target_seconds: float = Field(default=20, gt=0, le=600)
 
     @model_validator(mode="after")

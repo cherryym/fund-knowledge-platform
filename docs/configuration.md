@@ -39,7 +39,8 @@
 - `FKB_LLM_PROVIDER=http`允许配置生成模型；`evidence`只表示摘录/无生成能力，不等于模型已调用。
 - `FKB_LLM_BASE_URL` / `FKB_LLM_MODEL` / `FKB_LLM_API_KEY`为显式旧式服务配置；用户级连接是多用户主要入口。
 - `FKB_ANSWER_ENGINE=wiki_reader`为Markdown阅读/综合链；`structured`保留旧式结构化兼容。
-- `FKB_WIKI_QUERY_STRATEGY=universal`采用公开查证计划+混合发现；`interactive`/`adaptive`是其他明确策略，不应把历史说明当当前选项。
+- `FKB_WIKI_QUERY_STRATEGY=universal`采用公开查证计划+混合发现；`reasoning`（推理核心）在规划前提供只含元数据的库地图，并按来源层级与效力综合推理（见[架构](architecture.md)）；`interactive`/`adaptive`是其他明确策略，不应把历史说明当当前选项。
+- `FKB_WIKI_SYNTHESIS_REASONING_EFFORT`（默认`high`）：仅`reasoning`策略使用，且只在该连接已验证支持该推理强度时发送；否则使用服务商默认，不冒称已生效。
 - `FKB_WIKI_ANSWER_MAX_OUTPUT_TOKENS`控制请求给服务商的输出容量（默认16384），不是强制字数模板；真实上下文和结束行为依服务商。
 - `FKB_WIKI_QUERY_TARGET_SECONDS=20`是目标/遥测值，**不是20秒自动截止或保证**。Wiki综合请求不设应用总思考/读取截止，仍可取消并接受连接失败/服务商限制。
 

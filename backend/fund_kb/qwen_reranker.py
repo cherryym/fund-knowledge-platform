@@ -8,6 +8,7 @@ import threading
 import time
 from pathlib import Path
 
+from .device_guard import gpu_section
 from .local_encoders import LocalEncoderError, _positive_setting, _texts, _TokenizationMemo, verify_model_file
 from .qwen_reranker_spec import DEFAULT_RERANK_INSTRUCTION, QWEN_RERANKER_SPEC
 
@@ -179,7 +180,8 @@ class QwenReranker(_TokenizationMemo):
         model = AutoModelForCausalLM.from_pretrained(str(self.path), revision=self.revision, local_files_only=True,
             trust_remote_code=False, token=False, weights_only=True, use_safetensors=True,
             dtype=getattr(torch, self.dtype), attn_implementation="sdpa")
-        model.eval().to(self.device)
+        with gpu_section(self.device):
+            model.eval().to(self.device)
         if model.config.model_type != "qwen3" or any(
             p.device.type != self.device or p.dtype != getattr(torch, self.dtype)
             for p in model.parameters() if p.is_floating_point()
@@ -201,7 +203,7 @@ class QwenReranker(_TokenizationMemo):
                 or head.weight.device.type != self.device
                 or head.weight.dtype != getattr(torch, self.dtype)):
             raise LocalEncoderError("QWEN_UNSUPPORTED_RERANK_HEAD")
-        with torch.inference_mode():
+        with gpu_section(self.device), torch.inference_mode():
             indices = torch.tensor(LABEL_TOKEN_IDS, dtype=torch.long, device=head.weight.device)
             self._label_weight = head.weight.detach().index_select(0, indices).contiguous()
 
@@ -244,7 +246,7 @@ class QwenReranker(_TokenizationMemo):
         for i, row in enumerate(rows):
             inputs[i, width - len(row):] = torch.tensor(row, dtype=torch.long)
             masks[i, width - len(row):] = 1
-        with torch.inference_mode():
+        with gpu_section(self.device), torch.inference_mode():
             values = self._label_logits(inputs.to(self.device), masks.to(self.device))
             if tuple(values.shape) != (len(rows), 2):
                 raise LocalEncoderError("QWEN_RERANK_INVALID_OUTPUT")
@@ -331,6 +333,7 @@ class QwenReranker(_TokenizationMemo):
             self.projected_output_columns = 0
             self._model = self._tokenizer = None
             if self._torch is not None and self.device == "mps":
-                self._torch.mps.empty_cache()
+                with gpu_section("mps"):
+                    self._torch.mps.empty_cache()
             self._torch = self.device = None
             self.verified_files = {}

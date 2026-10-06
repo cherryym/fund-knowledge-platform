@@ -15,7 +15,8 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 TOOLS = {"list_capabilities", "get_capability", "start_workflow", "get_next_steps", "report_step",
-    "read_bound_sources", "get_workflow"}
+    "read_bound_sources", "get_workflow", "get_library_map", "search_knowledge", "read_version", "list_coverage_gaps",
+    "create_consultation", "ask_question", "get_answer"}
 phase = "initialize"
 
 

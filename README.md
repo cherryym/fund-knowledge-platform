@@ -166,7 +166,7 @@ docs/                    中文架构、部署、配置、使用、安全和验�
 | [架构设计](docs/architecture.md) | 数据边界、版本、引用、查询与任务生命周期 |
 | [检索配置](docs/retrieval.md) | Wiki-only、Qwen/BGE/BM25、指纹、索引重建与切换 |
 | [模型接入](docs/model-providers.md) | API/网关/本地/Codex接入及安全边界 |
-| [Agent接入](docs/agent-connector-v1.md) | 七工具、凭据scope、幂等、人工检查 |
+| [Agent接入](docs/agent-connector-v1.md) | 十四个MCP工具（能力指导、知识读取、本人咨询）、凭据scope、幂等、人工检查 |
 | [测试与验收](docs/testing.md) | 本地、CI、测试分类及未覆盖范围 |
 | [已知限制](docs/limitations.md) | 性能、引用质量、金融准确性与生产缺口 |
 | [安全政策](SECURITY.md) | 报告漏洞、保护敏感资料 |

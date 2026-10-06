@@ -55,7 +55,7 @@ READ_ONLY_OPERATIONS = frozenset({
     "listSourceAuthority", "getSourceAuthority", "listSourceAuthoritySuggestions",
     "listCapabilities", "getCapabilityStarter", "getCapability", "getCapabilityVersion",
     "exportCapabilitySkill", "listCapabilityRuns", "getCapabilityRun", "getCapabilityRunNext",
-    "getCapabilityRunSources", "listAgentAccess",
+    "getCapabilityRunSources", "listAgentAccess", "listCoverageGaps", "getLibraryMap",
 })
 
 
@@ -260,7 +260,7 @@ def create_app(settings: Settings | None = None):
     baseline_operations = {spec["operationId"] for path in document["paths"].values()
         for method, spec in path.items() if method in {"get", "post", "put", "patch", "delete"}}
     extension_modules = []
-    for name in ("api_models", "api_wiki", "api_libraries", "api_retention", "api_documents", "api_oauth", "api_local_wiki", "api_admin_review", "api_wiki_reader", "api_wiki_maintenance", "api_retrieval", "api_source_authority", "api_capabilities", "api_agent_access"):
+    for name in ("api_models", "api_wiki", "api_libraries", "api_retention", "api_documents", "api_oauth", "api_local_wiki", "api_admin_review", "api_wiki_reader", "api_wiki_maintenance", "api_retrieval", "api_source_authority", "api_capabilities", "api_agent_access", "api_coverage", "api_library_map"):
         try:
             module = importlib.import_module(f"fund_kb.{name}")
         except ModuleNotFoundError as exc:
@@ -273,6 +273,16 @@ def create_app(settings: Settings | None = None):
         document["components"]["schemas"].update(module.SCHEMAS)
         document["components"].setdefault("securitySchemes", {}).update(getattr(module, "SECURITY_SCHEMES", {}))
         extension_modules.append(module)
+    from .agent_access import AGENT_OPERATIONS
+    # Document Bearer access from the one allowlist (capability routes already carry it).
+    for path_spec in document["paths"].values():
+        for method, spec in path_spec.items():
+            if method in {"get", "post", "put", "patch", "delete"} and spec.get("operationId") in AGENT_OPERATIONS:
+                security = [dict(item) for item in spec.get("security") or [{"cookieAuth": []}]]
+                if {"agentBearer": []} not in security:
+                    security.append({"agentBearer": []})
+                spec["security"] = security
+                spec["x-agent-scope"] = AGENT_OPERATIONS[spec["operationId"]]
 
     @asynccontextmanager
     async def lifespan(app):

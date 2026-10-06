@@ -14,6 +14,8 @@ import warnings
 from contextlib import contextmanager
 from pathlib import Path
 
+from .device_guard import gpu_section
+
 # Public BAAI repository metadata checked 2026-09-11. Small files use their
 # Git blob IDs; LFS files use the repository's SHA256, NOT a post-download TOFU.
 MODEL_SPECS = {
@@ -268,10 +270,12 @@ class _LocalEncoder(_TokenizationMemo):
         message = str(exc).lower()
         if not any(word in message for word in ("mps", "metal")):
             return False
-        self._model.to("cpu")
+        with gpu_section("mps"):
+            self._model.to("cpu")
         self.device = "cpu"
         self.fallback_reason = "MPS_OUT_OF_MEMORY" if "out of memory" in message else "MPS_OPERATION_FAILED"
-        self._torch.mps.empty_cache()
+        with gpu_section("mps"):
+            self._torch.mps.empty_cache()
         warnings.warn(f"LOCAL_ENCODER_CPU_FALLBACK:{self.fallback_reason}", RuntimeWarning, stacklevel=3)
         return True
 
@@ -297,7 +301,8 @@ class _LocalEncoder(_TokenizationMemo):
             raise LocalEncoderError("LOCAL_MODEL_OUTPUT_CONFIGURATION_MISMATCH")
         self._model.eval()
         try:
-            self._model.to(self.device)
+            with gpu_section(self.device):
+                self._model.to(self.device)
         except (RuntimeError, NotImplementedError) as exc:
             if not self._fallback(exc):
                 self._model = None
@@ -325,7 +330,7 @@ class _LocalEncoder(_TokenizationMemo):
                 raise LocalEncoderError("LOCAL_MODEL_INPUT_ALIGNMENT_FAILED")
         for attempt in range(2):
             try:
-                with self._torch.inference_mode():
+                with gpu_section(self.device), self._torch.inference_mode():
                     output = self._model(**{k: v.to(self.device) for k, v in padded.items()}, return_dict=True)
                     values = output.last_hidden_state[:, 0, :] if self.role == "embedding" else output.logits
                     # Move before returning so the full hidden state is released between batches.
@@ -347,7 +352,8 @@ class _LocalEncoder(_TokenizationMemo):
             self._model = None
             self._tokenizer = None
             if self._torch is not None and self.device == "mps":
-                self._torch.mps.empty_cache()
+                with gpu_section("mps"):
+                    self._torch.mps.empty_cache()
             self._torch = None
             self.device = None
             self.fallback_reason = None

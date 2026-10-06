@@ -329,6 +329,21 @@ def test_trace_measures_stages_and_does_not_log_input_output_or_identity(monkeyp
     assert harness.trace.count("turn/start") == 1, "server willRetry must not trigger adapter resend"
 
 
+@pytest.mark.parametrize("info,expected", [
+    ({"httpConnectionFailed": {"httpStatusCode": 503}}, {"category": "httpConnectionFailed", "http_status": 503}),
+    ("usageLimitExceeded", {"category": "usageLimitExceeded"}),
+    (CANARY + " 请于15:00后重试", {"category": "other"}),
+    (None, {"category": "unspecified"}),
+])
+def test_trace_keeps_the_service_error_category_never_its_message(monkeypatch, caplog, info, expected):
+    caplog.set_level("INFO", logger="fund_kb.codex_stability")
+    error = {"message": CANARY, **({"codexErrorInfo": info} if info is not None else {})}
+    harness = EngineHarness(monkeypatch, [event("error", willRetry=False, error=error)])
+    with pytest.raises(ProviderError, match="^CODEX_MODEL_REQUEST_FAILED$"):
+        call_engine(harness)
+    assert records(caplog)[-1]["upstream_error"] == expected and CANARY not in caplog.text
+
+
 def test_arbitrary_exception_and_code_are_sanitized_in_trace(monkeypatch, caplog):
     caplog.set_level("INFO", logger="fund_kb.codex_stability")
     harness = EngineHarness(monkeypatch, terminal_events())

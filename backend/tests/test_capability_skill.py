@@ -62,15 +62,18 @@ def test_export_rejects_unsafe_identity_instead_of_generating_filesystem_path():
         skill_package(data)
 
 
-def test_api_contract_only_documents_bearer_on_allowed_operations():
+def test_api_contract_only_documents_bearer_on_allowed_operations(api):
     from fund_kb.agent_access import AGENT_OPERATIONS
     from fund_kb.api_capabilities import PATHS, SECURITY_SCHEMES
     assert SECURITY_SCHEMES["agentBearer"]["scheme"] == "bearer"
-    operations = [spec for path in PATHS.values() for spec in path.values()]
-    allowed = {spec["operationId"] for spec in operations if {"agentBearer": []} in spec["security"]}
+    for spec in (spec for path in PATHS.values() for spec in path.values()):
+        assert spec["security"][0].get("cookieAuth") == []
+    document = api.app.openapi()
+    operations = [spec for path in document["paths"].values() for method, spec in path.items()
+                  if method in {"get", "post", "put", "patch", "delete"}]
+    allowed = {spec["operationId"] for spec in operations if {"agentBearer": []} in (spec.get("security") or [])}
     assert allowed == set(AGENT_OPERATIONS)
     for spec in operations:
-        assert spec["security"][0].get("cookieAuth") == []
         if spec["operationId"] in allowed:
             assert spec["x-agent-scope"] == AGENT_OPERATIONS[spec["operationId"]]
 

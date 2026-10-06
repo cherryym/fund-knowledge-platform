@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   ArrowClockwise, ArrowLeft, ArrowRight, BookOpen, CaretDown, CaretRight, FileText,
   FolderSimple, Graph, Link, MagnifyingGlass, PencilSimple, Plus, Sparkle, Tag, Trash, X,
@@ -265,7 +265,7 @@ export function GraphQuery({ focusId, category, search, onOpenNode, onFocusChang
           <button type="button" onClick={graph.reload}>重新读取完整图谱</button></p>}
       <div className="wiki-graph-relation-help">
         <span className="wiki-proposed-badge">模型提出的语义关系待核验</span>
-        <details><summary>关系类型说明</summary><p>按起点 → 终点理解；关系类型和证据条数不代表关系已经核验。双链表示页面链接，引用表示来源指向。</p>
+        <details><summary>关系类型说明</summary><p>按起点 → 终点理解；关系类型和证据条数不代表关系已经核验。双链表示页面链接，引用表示来源指向，提及表示正文出现了另一页的标题或别名；来源文件只认标题或正文中用书名号《》引用的完整名称。</p>
           <dl>{Object.entries(wikiRelationDescriptions).map(([type, description]) => <div key={type}>
             <dt>{wikiRelationLabels[type]} <code>{type}</code></dt><dd>{description}</dd></div>)}</dl>
         </details>
@@ -287,9 +287,11 @@ export function GraphQuery({ focusId, category, search, onOpenNode, onFocusChang
   </div>;
 }
 
-function WikiConnections({ id, open, resolve, initialData }: {
+function WikiConnections({ id, open, resolve, initialData, onSources }: {
   id: string; open: (link: WikiLink) => void; resolve: (title: string) => void;
   initialData?: WikiLinksData;
+  /** Reports the page's readable sources so the reader can title its citation chips without another request. */
+  onSources?: (pageId: string, sources: WikiLink[]) => void;
 }) {
   const app = useApp();
   const consumed = useRef<WikiLinksData | undefined>(undefined);
@@ -303,6 +305,7 @@ function WikiConnections({ id, open, resolve, initialData }: {
   }, [id, app.space.id, app.refresh, initialData]);
   const links = {...remote, data: remote.data ?? (remote.loading ? initialData : undefined),
     loading: remote.loading && !initialData};
+  useEffect(() => { if (links.data) onSources?.(id, links.data.sources); }, [links.data, id, onSources]);
   const visibleLinks = links.data ? [...links.data.outgoing, ...links.data.incoming, ...links.data.sources] : [];
   const hasBibliography = visibleLinks.some((link) => link.citation_precision === "DOCUMENT");
   return <aside className="wiki-connections" aria-label="当前知识页的链接与来源">
@@ -344,6 +347,10 @@ function WikiReader({ selected, back, canBack, open, openNode, resolve, initialD
   const resolver = useRef(resolve);
   resolver.current = resolve;
   const readingApp = useMemo(() => ({ ...app, openWikiTitle: (title: string) => resolver.current(title) }), [app]);
+  const [pageSources, setPageSources] = useState<{ pageId: string; sources: WikiLink[] }>();
+  const reportSources = useCallback((pageId: string, sources: WikiLink[]) => setPageSources({ pageId, sources }), []);
+  const sourceNames = useMemo(() => pageSources?.pageId === selected.id ? Object.fromEntries(pageSources.sources
+    .flatMap((source) => source.version_id ? [[source.version_id, source.name]] : [])) : undefined, [pageSources, selected.id]);
   const consumed = useRef<WikiWorkspaceData["reader"]>(undefined);
   const validInitial = initialData?.resource.id === selected.id && initialData.version.resource_id === selected.id
     && initialData.version.id === selected.version_id ? initialData : undefined;
@@ -392,10 +399,12 @@ function WikiReader({ selected, back, canBack, open, openNode, resolve, initialD
         <div className="wiki-reading-body">
           <AppContext.Provider value={readingApp}>
             <DocumentCanvas title={loaded.data.version.title} blocks={loaded.data.version.blocks} editable={false}
-              renderBlock={(block, highlighted) => <BlockView block={block} highlighted={highlighted} compact />} />
+              renderBlock={(block, highlighted) => <BlockView block={block} highlighted={highlighted} compact
+                sourceNames={sourceNames} />} />
           </AppContext.Provider>
         </div> : <Empty title="当前没有可读的知识版本" detail="可在版本详情中查看权限允许的草稿、复核进度与发布状态。" />}
-      <WikiConnections id={selected.id} open={open} resolve={resolve} initialData={loaded.data.links} />
+      <WikiConnections id={selected.id} open={open} resolve={resolve} initialData={loaded.data.links}
+        onSources={reportSources} />
       {assignCategory && <WikiAssignCategoryDialog resource={loaded.data.resource} close={() => setAssignCategory(false)}
         saved={() => { loaded.reload(); app.bump(); app.notify("知识归类已更新。"); }} />}
     </>}

@@ -19,7 +19,7 @@ from . import services as svc
 
 POLICY_PREFIX = "agent-access:v1:"
 TOKEN_PREFIX = "fkb_agent_"
-SCOPES = frozenset({"capabilities:read", "runs:write", "sources:read"})
+SCOPES = frozenset({"capabilities:read", "runs:write", "sources:read", "knowledge:read", "consult:write"})
 # This is an operation allowlist, never a URL-prefix or GET-wide exemption.
 # Resource/owner/source authorization remains mandatory inside the handlers.
 AGENT_OPERATIONS = {
@@ -33,8 +33,19 @@ AGENT_OPERATIONS = {
     "reportCapabilityStep": "runs:write",
     "cancelCapabilityRun": "runs:write",
     "getCapabilityRunSources": "sources:read",
+    # Knowledge tools: the owner's current ACL inside the token's space only.
+    "getLibraryMap": "knowledge:read",
+    "searchHybridKnowledge": "knowledge:read",
+    "getVersion": "knowledge:read",
+    "listCoverageGaps": "knowledge:read",
+    # Consultation with the owner's own model connection; runs appear in the owner's history.
+    "createThread": "consult:write",
+    "askOrContinue": "consult:write",
+    "getRun": "consult:write",
 }
-WRITE_OPERATIONS = frozenset({"createCapabilityRun", "reportCapabilityStep", "cancelCapabilityRun"})
+WRITE_OPERATIONS = frozenset({"createCapabilityRun", "reportCapabilityStep", "cancelCapabilityRun",
+                              "createThread", "askOrContinue"})
+READ_POST_OPERATIONS = frozenset({"searchHybridKnowledge"})
 _TOKEN = re.compile(r"fkb_agent_([0-9a-f]{32})\.([A-Za-z0-9_-]{43})", re.ASCII)
 _CONFIG_KEYS = frozenset({"schema_version", "owner_id", "request_id", "request_sha256", "name", "space_id",
     "scopes", "expires_at", "revoked_at", "created_at", "token_sha256"})
@@ -129,7 +140,8 @@ def authenticate_agent(request, db, operation):
     if not match:
         svc.fail(401, "AGENT_ACCESS_INVALID", "Agent访问凭据无效或已失效")
     required_scope = AGENT_OPERATIONS.get(operation)
-    if required_scope is None or request.method != ("POST" if operation in WRITE_OPERATIONS else "GET"):
+    if required_scope is None or request.method != (
+            "POST" if operation in WRITE_OPERATIONS | READ_POST_OPERATIONS else "GET"):
         svc.fail(403, "AGENT_OPERATION_FORBIDDEN", "Agent凭据不允许调用此接口")
     # Column projection prevents a previously loaded ORM record from restoring
     # revoked scopes or credentials. No plaintext is retained on request.state.
@@ -160,8 +172,10 @@ def authorize_agent_space(request, space_id):
     Cookie calls are unchanged. The business handler still checks resource ACL,
     exact bound source versions/hashes, and run ownership, including on replay.
     """
-    access = getattr(request.state, "agent_access", None)
-    if access is None and not request.headers.getlist("authorization"):
+    access = getattr(getattr(request, "state", None), "agent_access", None)
+    headers = getattr(request, "headers", None)
+    # No header container means no Bearer credential (internal/replay contexts).
+    if access is None and (headers is None or not headers.getlist("authorization")):
         return
     if not isinstance(access, dict):
         svc.fail(401, "AGENT_ACCESS_INVALID", "Agent访问凭据无效或已失效")

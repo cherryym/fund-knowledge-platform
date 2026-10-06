@@ -5,18 +5,18 @@ from . import services as svc
 
 
 def propose(db, user, settings, space_id, resource_id, page, selected, snapshots, job_id, compilation_config, batch):
-    from .wiki import _members
-    from .wiki_compilation import step_markdown, page_metadata
+    from .wiki_compilation import evidence_records, evidence_section, page_metadata, step_markdown
     from .wiki_maintenance import propose_compiled_revision
 
     blocks = []
     notice = "模型生成修订候选，尚未核验。人工接受只创建新草稿；不改动旧版或自动发布。"
     values = [{"markdown": notice, "evidence_ids": []}, *page["blocks"]]
-    used = {eid for block in page["blocks"] for eid in block["evidence_ids"]}
+    used = {evidence_section(eid) for block in page["blocks"] for eid in block["evidence_ids"]}
     if page.get("links"):
-        values.append({"markdown": "相关知识：" + "、".join(f"[[{title}]]" for title in page["links"]), "evidence_ids": sorted(used)})
+        # Navigation to related pages; it states nothing a source must support.
+        values.append({"markdown": "相关知识：" + "、".join(f"[[{title}]]" for title in page["links"]), "evidence_ids": []})
     for ordinal, block in enumerate(values):
-        records = [row for eid in block["evidence_ids"] for row in _members(selected[eid])]
+        records = [row for eid in block["evidence_ids"] for row in evidence_records(selected, eid)]
         citations = {(row["version_id"], row["block_id"]): {"version_id": row["version_id"],
             "block_id": row["block_id"], "purpose": "FACT"} for row in records}
         text = block["markdown"]

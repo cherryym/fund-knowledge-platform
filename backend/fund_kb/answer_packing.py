@@ -11,12 +11,14 @@ def fits_context(system, body, connection, *, default_capacity=1048576):
     messages = [{"role": "system", "content": system}, {"role": "user", "content": body}]
     capacity = int(connection.get("max_request_bytes", default_capacity))
     if connection.get("protocol") == "codex_app_server":
-        from .codex_text import check_text_request_budget, text_request_params
+        from .codex_text import PROFILE_VERSION, check_text_request_budget, contract_budget, text_request_params
+        # The verified profile's contract decides the caps (64 KiB; 192 KiB for a v4 large-context profile).
+        caps = getattr(connection.get("_codex_engine"), "budget_caps", contract_budget(PROFILE_VERSION))
         if len(json.dumps(messages, ensure_ascii=False).encode()) > capacity:
             return False
         thread, turn = text_request_params(messages, connection.get("model_id", ""), "")
         try:
-            check_text_request_budget(thread, turn, capacity)
+            check_text_request_budget(thread, turn, capacity, caps[1], caps=caps)
             return True
         except ProviderError as exc:
             if exc.code not in {"PROVIDER_REQUEST_TOO_LARGE", "CODEX_RPC_TOO_LARGE"}:

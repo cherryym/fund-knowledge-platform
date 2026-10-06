@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "ontology_version": "valuation-accounting-v1-20261001",
+  "domain": "公募基金估值与核算",
+  "note": "概念体系只用于拆解问题和组织查证方向，不是法规、效力或业务结论；具体处理必须以实际读取的原文为依据。",
+  "dimensions": [
+    {"id": "asset", "name": "资产与工具", "check": "品种细分、交易场所、是否含权/可转换、是否流通受限、境内外"},
+    {"id": "event", "name": "业务事件", "check": "处于买入、持有、权益/信用/交易状态事件、到期、卖出或交割的哪一阶段"},
+    {"id": "timepoint", "name": "时点与业务日期", "check": "交易日、估值日、登记日、除权除息日、行权/兑付/交割日；历史业务日期适用当时有效规则"},
+    {"id": "measurement", "name": "分类与计量", "check": "金融资产分类、初始/后续计量属性、公允价值层次、减值"},
+    {"id": "pricing", "name": "价格来源与估值技术", "check": "活跃市场报价是否可得且有代表性；第三方估值、估值技术、估值调整及其前提"},
+    {"id": "accounting", "name": "会计核算", "check": "确认时点、科目、金额口径（净价/全价、成本/估值增值、利息、费用、税费）与分录方向"},
+    {"id": "product", "name": "产品与适用主体", "check": "公募/私募/证券公司/资管产品；货币基金、ETF、FOF、QDII、REITs、侧袋等特殊规定"},
+    {"id": "governance", "name": "估值治理与披露", "check": "估值委员会、托管人复核、一致性、偏离阈值、净值差错处理、公告与审计意见"}
+  ],
+  "concepts": [
+    {"id": "stock", "dimension": "asset", "name": "股票", "synonyms": ["A股", "上市股票", "股权投资"], "checks": ["交易场所", "是否停牌或流通受限", "活跃市场收盘价是否可得"]},
+    {"id": "hk_connect", "dimension": "asset", "name": "港股通股票", "synonyms": ["港股通", "港股"], "checks": ["汇率折算", "交易日历差异", "资金清算安排"]},
+    {"id": "restricted_stock", "dimension": "asset", "name": "流通受限股票", "synonyms": ["限售股", "非公开发行股票", "首发限售", "战略配售", "流动性折扣", "AAP"], "checks": ["是否属于指引适用范围", "限售期剩余时长", "流动性折扣模型参数"]},
+    {"id": "new_share", "dimension": "asset", "name": "新股与新发行未上市证券", "synonyms": ["新股申购", "中签", "网下配售", "未上市"], "checks": ["未上市期间估值", "锁定期安排"]},
+    {"id": "bond", "dimension": "asset", "name": "债券", "synonyms": ["利率债", "信用债", "国债", "地方债", "金融债", "公司债", "企业债", "中票", "短融", "固收", "固定收益品种"], "checks": ["交易市场（交易所/银行间）", "第三方估值价格与报价口径", "净价/全价与应计利息"]},
+    {"id": "embedded_option_bond", "dimension": "asset", "name": "含权债券", "synonyms": ["含回售权", "含赎回权", "调息权", "永续债", "看长估值", "看短估值"], "checks": ["行权状态", "行权价格与现金流", "估值机构推荐口径"]},
+    {"id": "convertible", "dimension": "asset", "name": "可转债与可交换债", "synonyms": ["可转债", "可交换债", "转股", "换股"], "checks": ["转股/换股期", "估值方法", "转股后成本与收益结转"]},
+    {"id": "ncd", "dimension": "asset", "name": "同业存单", "synonyms": ["NCD"], "checks": ["估值价格来源", "专项核算估值指引"]},
+    {"id": "abs", "dimension": "asset", "name": "资产支持证券", "synonyms": ["ABS", "RMBS", "优先级", "次级"], "checks": ["分层与现金流", "估值机构方法"]},
+    {"id": "fund_unit", "dimension": "asset", "name": "基金投资（FOF持有基金）", "synonyms": ["FOF", "基金份额", "ETF", "LOF", "货币市场基金", "联接基金"], "checks": ["上市/非上市", "估值日净值是否披露", "货币基金收益结转"]},
+    {"id": "futures", "dimension": "asset", "name": "期货", "synonyms": ["股指期货", "国债期货", "商品期货"], "checks": ["结算价", "每日无负债结算与保证金", "交割安排"]},
+    {"id": "options", "dimension": "asset", "name": "期权", "synonyms": ["股票期权", "ETF期权", "外汇期权"], "checks": ["结算价/不活跃合约价格", "行权与指派"]},
+    {"id": "swap", "dimension": "asset", "name": "利率互换等场外衍生品", "synonyms": ["利率互换", "IRS", "互换"], "checks": ["估值曲线", "估值报告内容"]},
+    {"id": "credit_derivative", "dimension": "asset", "name": "信用衍生品", "synonyms": ["CRMW", "CDS", "信用风险缓释工具"], "checks": ["估值方法", "与标的债券的关系"]},
+    {"id": "repo", "dimension": "asset", "name": "回购", "synonyms": ["质押式回购", "买断式回购", "逆回购", "正回购"], "checks": ["利息计提", "到期结算"]},
+    {"id": "deposit", "dimension": "asset", "name": "银行存款", "synonyms": ["协议存款", "定期存款", "活期存款"], "checks": ["利息计提", "提前支取"]},
+    {"id": "gold", "dimension": "asset", "name": "黄金及贵金属", "synonyms": ["黄金现货", "黄金ETF", "上海黄金交易所"], "checks": ["估值价格", "专项核算估值指引"]},
+    {"id": "unlisted_equity", "dimension": "asset", "name": "非上市股权", "synonyms": ["私募股权", "未上市公司股权"], "checks": ["估值方法选择（市场法/收益法/成本法）", "估值指引适用主体"]},
+    {"id": "reits", "dimension": "asset", "name": "公募REITs", "synonyms": ["REITs", "基础设施基金"], "checks": ["二级市场价格", "非活跃市场估值方法"]},
+    {"id": "securities_lending", "dimension": "asset", "name": "证券出借与债券借贷", "synonyms": ["转融通", "证券出借", "债券借贷"], "checks": ["出借期间估值与收益", "费用确认时点"]},
+
+    {"id": "purchase", "dimension": "event", "name": "买入与初始确认", "synonyms": ["买入", "购入", "认购", "申购", "取得"], "checks": ["确认时点", "初始计量与交易费用"]},
+    {"id": "daily_valuation", "dimension": "event", "name": "持有期间日常估值", "synonyms": ["估值", "估值日", "公允价值", "市值"], "checks": ["价格来源层次", "估值增值与损益"]},
+    {"id": "suspension", "dimension": "event", "name": "停牌与交易暂停", "synonyms": ["停牌", "暂停交易", "长期停牌", "复牌"], "checks": ["停牌原因与期间", "最近交易日价格是否仍有代表性", "估值方法与重大影响", "复牌后的处理"]},
+    {"id": "delisting", "dimension": "event", "name": "退市与风险警示", "synonyms": ["退市", "退市整理", "风险警示", "ST"], "checks": ["退市整理期价格", "退市后估值"]},
+    {"id": "lockup_release", "dimension": "event", "name": "限售与解禁", "synonyms": ["解禁", "锁定期", "限售期"], "checks": ["解禁日前后估值口径切换"]},
+    {"id": "corporate_action", "dimension": "event", "name": "权益事件", "synonyms": ["分红", "派息", "送股", "转增", "配股", "除权", "除息"], "checks": ["除权除息日", "应收股利/红股确认", "税费"]},
+    {"id": "put_call", "dimension": "event", "name": "回售、赎回与行权", "synonyms": ["回售", "发行人赎回", "提前赎回", "行权", "调息"], "checks": ["行权申报/确认状态", "登记日至收款日期间估值", "行权价与估值价区分"]},
+    {"id": "conversion", "dimension": "event", "name": "转股与换股", "synonyms": ["转股", "换股"], "checks": ["转股日", "成本结转与投资收益"]},
+    {"id": "credit_event", "dimension": "event", "name": "违约与信用风险事件", "synonyms": ["违约", "展期", "信用风险", "评级下调", "减值"], "checks": ["估值价格调整", "应计利息是否继续计提", "回收率假设"]},
+    {"id": "maturity", "dimension": "event", "name": "到期兑付", "synonyms": ["到期", "兑付", "部分兑付", "还本付息"], "checks": ["兑付资金到账", "利息与本金结转"]},
+    {"id": "delivery", "dimension": "event", "name": "交割", "synonyms": ["实物交割", "现金交割", "交割"], "checks": ["交割各日期", "交割期间标的资产估值与核算"]},
+    {"id": "margin_settlement", "dimension": "event", "name": "每日无负债结算与保证金", "synonyms": ["保证金", "无负债结算", "结算准备金"], "checks": ["当日盈亏结转", "保证金核算"]},
+    {"id": "no_quote", "dimension": "event", "name": "无活跃市场报价或价格异常", "synonyms": ["无报价", "没有报价", "非活跃市场", "无活跃市场", "价格异常", "剧烈变动"], "checks": ["是否存在活跃市场", "可观察输入值", "估值技术选择"]},
+    {"id": "method_change", "dimension": "event", "name": "估值方法变更与估值调整", "synonyms": ["估值调整", "估值方法变更", "变更估值方法"], "checks": ["调整依据与程序", "披露要求"]},
+    {"id": "nav_error", "dimension": "event", "name": "估值偏差与净值差错", "synonyms": ["净值差错", "估值错误", "偏离度", "差错"], "checks": ["偏差幅度与阈值", "更正与赔偿", "公告"]},
+
+    {"id": "day_t", "dimension": "timepoint", "name": "交易日与估值日", "synonyms": ["T日", "估值日", "交易日"], "checks": ["估值时点价格"]},
+    {"id": "record_date", "dimension": "timepoint", "name": "登记日与除权除息日", "synonyms": ["登记日", "股权登记日", "除权日", "除息日"], "checks": ["权益确认时点"]},
+    {"id": "business_date", "dimension": "timepoint", "name": "业务日期与规则有效期", "synonyms": ["当时", "历史", "某年", "生效", "废止"], "checks": ["该日期有效的规则版本"]},
+
+    {"id": "classification", "dimension": "measurement", "name": "金融资产分类", "synonyms": ["以公允价值计量且其变动计入当期损益", "FVTPL", "FVOCI", "摊余成本", "SPPI"], "checks": ["业务模式", "合同现金流特征"]},
+    {"id": "fair_value_hierarchy", "dimension": "measurement", "name": "公允价值层次", "synonyms": ["第一层次", "第二层次", "第三层次", "输入值", "公允价值计量"], "checks": ["输入值可观察性", "层次判断"]},
+    {"id": "amortized_cost", "dimension": "measurement", "name": "摊余成本与实际利率法", "synonyms": ["摊余成本", "实际利率", "影子定价"], "checks": ["适用产品", "偏离度监测"]},
+    {"id": "ecl", "dimension": "measurement", "name": "预期信用损失", "synonyms": ["ECL", "减值准备"], "checks": ["适用分类", "计量参数"]},
+
+    {"id": "active_quote", "dimension": "pricing", "name": "活跃市场报价", "synonyms": ["收盘价", "结算价", "市价", "活跃市场"], "checks": ["是否活跃、是否有代表性"]},
+    {"id": "third_party", "dimension": "pricing", "name": "第三方估值机构价格", "synonyms": ["中债估值", "中证估值", "上海清算所估值", "推荐估值", "估值全价", "估值净价"], "checks": ["机构选择一致性", "推荐口径", "价格异常时的处理"]},
+    {"id": "valuation_technique", "dimension": "pricing", "name": "估值技术", "synonyms": ["市场法", "收益法", "成本法", "指数收益法", "现金流折现", "估值模型"], "checks": ["可观察输入值优先", "参数来源", "一致性"]},
+
+    {"id": "entries", "dimension": "accounting", "name": "会计分录与科目", "synonyms": ["分录", "凭证", "入账", "记账", "科目", "核算"], "checks": ["借贷方向", "金额口径", "确认时点"]},
+    {"id": "transaction_cost", "dimension": "accounting", "name": "交易费用", "synonyms": ["手续费", "佣金", "交易费用", "经手费"], "checks": ["计入成本还是当期损益", "确认时点"]},
+    {"id": "interest", "dimension": "accounting", "name": "应计利息与利息收入", "synonyms": ["应计利息", "应收利息", "利息收入", "票面利息"], "checks": ["计提方法", "停止计提条件"]},
+    {"id": "pnl", "dimension": "accounting", "name": "投资收益与公允价值变动损益", "synonyms": ["投资收益", "公允价值变动", "估值增值", "估值减值", "已实现", "未实现"], "checks": ["结转时点"]},
+    {"id": "fees", "dimension": "accounting", "name": "基金费用计提", "synonyms": ["管理费", "托管费", "销售服务费", "费用计提"], "checks": ["计提基数与费率", "计提频率"]},
+    {"id": "tax", "dimension": "accounting", "name": "税费", "synonyms": ["增值税", "附加税", "印花税", "所得税"], "checks": ["计税依据", "计提与缴纳时点"]},
+
+    {"id": "public_fund", "dimension": "product", "name": "公开募集证券投资基金", "synonyms": ["公募基金", "证券投资基金"], "checks": ["公募专门规定优先"]},
+    {"id": "money_market_fund", "dimension": "product", "name": "货币市场基金", "synonyms": ["货币基金"], "checks": ["摊余成本法与偏离度"]},
+    {"id": "other_entity", "dimension": "product", "name": "其他主体（证券公司、私募、资管产品）", "synonyms": ["证券公司", "私募", "资管产品"], "checks": ["他主体标准不直接套用于公募基金"]},
+    {"id": "side_pocket", "dimension": "product", "name": "侧袋机制", "synonyms": ["侧袋"], "checks": ["启用条件", "侧袋账户估值与披露"]},
+
+    {"id": "valuation_committee", "dimension": "governance", "name": "估值委员会与估值政策", "synonyms": ["估值委员会", "估值政策", "估值程序"], "checks": ["决策程序", "一致性"]},
+    {"id": "custodian_review", "dimension": "governance", "name": "托管人复核", "synonyms": ["托管人", "复核", "协商"], "checks": ["异议处理"]},
+    {"id": "disclosure", "dimension": "governance", "name": "信息披露", "synonyms": ["披露", "临时公告", "定期报告"], "checks": ["公告时点与内容"]}
+  ],
+  "legacy_router": {
+    "note": "无模型兜底路径（evidence_first）原有的关键词路由表，原样迁出，行为不变。",
+    "assets": {
+      "股票": ["股票", "股权", "A股", "港股", "限售股"],
+      "债券": ["债券", "可转债", "同业存单", "固收"],
+      "基金": ["FOF", "基金份额", "ETF", "基金分红"],
+      "衍生品": ["期权", "期货", "衍生品", "互换"]
+    },
+    "events": {
+      "trading_suspension": ["停牌", "暂停交易"],
+      "bond_put": ["回售"],
+      "restricted_stock": ["流通受限", "限售", "流动性折扣", "AAP"],
+      "delisting": ["退市"],
+      "quote_disruption": ["无报价", "没有报价", "非活跃市场", "无活跃市场"]
+    },
+    "special_terms": ["流通受限", "限售", "停牌", "退市", "AAP", "港股通", "流动性折扣", "SPPI"],
+    "special_scopes": ["可转债", "可交换债", "流通受限", "港股通", "期权", "期货", "货币市场基金", "证券公司", "私募"]
+  }
+}

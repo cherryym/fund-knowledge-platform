@@ -64,3 +64,13 @@ def test_many_eids_unicode_and_long_lines_are_losslessly_packed(capacity):
 def test_label_that_cannot_fit_with_body_fails_instead_of_spinning():
     with pytest.raises(ProviderError, match="PROVIDER_CONTEXT_CAPACITY_REQUIRED"):
         pack_text("[E999]\n正文", "", "", lambda s: len(s) <= 7)
+
+
+def test_codex_capacity_follows_the_verified_profile_contract():
+    from types import SimpleNamespace
+    body = "完整条款和上下文。" * 5000  # ~135 KB: above the 64 KiB contract, within the v4 192 KiB one
+    legacy = {"protocol": "codex_app_server", "model_id": "synthetic", "max_request_bytes": 196608}
+    large = {**legacy, "_codex_engine": SimpleNamespace(budget_caps=(196608, 1048576))}
+    assert not fits_context("合成系统约定", body, legacy)
+    assert fits_context("合成系统约定", body, large)
+    assert not fits_context("合成系统约定", body * 2, large)

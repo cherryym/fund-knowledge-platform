@@ -13,6 +13,9 @@
 .wiki-maint-list button { width: 100%; display: flex; align-items: flex-start; flex-direction: column; gap: 8px; text-align: left;
   white-space: normal; padding: 16px; background: #fff; border: 1px solid var(--line, #e2e7ef); border-radius: 10px; }
 .wiki-maint-list .selected { border-color: #4877d8; background: #f6f9ff; }
+/* Read-only gap items reuse the list card look without being buttons. */
+.wiki-maint-list .wiki-maint-gap { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px;
+  border: 1px solid var(--line, #e2e7ef); border-radius: 10px; background: #fff; }
 .wiki-maint-list strong, .wiki-maint-list small { overflow-wrap: anywhere; }
 .wiki-maint-list span, .wiki-maint-list small, .wiki-maint-state { font-size: .875rem; }
 .wiki-maint-source-change { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

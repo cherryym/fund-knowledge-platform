@@ -165,7 +165,9 @@ def versions(ctx):
 
 
 def get_version(ctx):
+    from .agent_access import authorize_agent_space
     v = version_access(ctx.db, ctx.user, ctx.id)
+    authorize_agent_space(getattr(ctx, "request", None), ctx.db.get(m.Resource, v.resource_id).space_id)
     return tagged(version_dict(ctx.db, v), v)
 
 

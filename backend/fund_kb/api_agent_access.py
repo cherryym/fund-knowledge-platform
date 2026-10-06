@@ -9,7 +9,7 @@ from . import services as svc
 
 UUID = {"type": "string", "format": "uuid"}
 TIMESTAMP = {"type": "string", "format": "date-time"}
-SCOPE_LIST = {"type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": True,
+SCOPE_LIST = {"type": "array", "minItems": 1, "maxItems": len(access.SCOPES), "uniqueItems": True,
     "items": {"type": "string", "enum": sorted(access.SCOPES)}}
 SCHEMAS = {
     "AgentAccessMetadata": {"type": "object", "additionalProperties": False,

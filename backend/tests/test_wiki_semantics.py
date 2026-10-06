@@ -380,6 +380,19 @@ def test_relation_only_preserves_existing_content_and_replay_is_idempotent(env, 
     assert content_snapshot(env) == before
 
 
+def test_relation_rerun_against_changed_reference_nodes_is_new_work(env, provider):
+    source, refs, _, _ = relation_build(env, provider)
+    unchanged = finish(env, queue(env, build_input(env, [source], mode="relations", references=refs)))
+    assert provider.calls == 1 and unchanged["model"]["called"] is False
+    assert unchanged["coverage"]["status"] == "NO_NEW_CONTENT"
+    change_record(env, refs[1], "epoch")
+    assert semantic_edges(env) == []
+    rerun = finish(env, queue(env, build_input(env, [source], mode="relations", references=refs)))
+    assert provider.calls == 2 and rerun["semantic_relations_created"] == 1
+    edge, = semantic_edges(env)
+    assert (edge["source"], edge["target"]) == (refs[0][0], refs[1][0])
+
+
 def test_relation_only_rejects_model_attempt_to_create_pages(env, provider):
     source = draft_source(env)
     refs = [page(env, "参考甲"), page(env, "参考乙")]
@@ -424,6 +437,20 @@ def test_endpoint_changes_hide_semantic_edge(env, provider, endpoint, change):
     if change in {"body", "epoch"}:
         assert env.call("GET", f"/versions/{refs[endpoint][1]}").status_code == 200
     assert policy(env, jid) == frozen
+
+
+def test_a_build_whose_endpoints_have_newer_versions_is_passed_over_before_its_snapshot_checks(env, provider, monkeypatch):
+    from fund_kb import wiki_semantics
+    _source, refs, _jid, _ = relation_build(env, provider)
+    checked = []
+    real = wiki_semantics.check_references
+    monkeypatch.setattr(wiki_semantics, "check_references", lambda *a, **k: checked.append(1) or real(*a, **k))
+    assert len(semantic_edges(env)) == 1 and checked  # a current build is still checked and shown
+    with env.db.begin() as db:  # one endpoint gets a newer published version (its draft went to review first)
+        db.get(m.ResourceVersion, refs[0][1]).state = "IN_REVIEW"
+    page(env, "独立估值参数", text="新版本正文。", resource_id=refs[0][0])
+    checked.clear()
+    assert semantic_edges(env) == [] and checked == []
 
 
 @pytest.mark.parametrize("endpoint", [0, 1])

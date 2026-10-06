@@ -137,7 +137,7 @@ def test_exact_61_operations_and_unconfigured_oidc(api):
     core = {f"fund_kb.api_{name}" for name in ("models", "wiki", "libraries", "retention", "documents")}
     assert core <= extensions <= core | {"fund_kb.api_oauth", "fund_kb.api_local_wiki", "fund_kb.api_admin_review",
         "fund_kb.api_wiki_reader", "fund_kb.api_wiki_maintenance", "fund_kb.api_retrieval", "fund_kb.api_source_authority",
-        "fund_kb.api_capabilities", "fund_kb.api_agent_access"}
+        "fund_kb.api_capabilities", "fund_kb.api_agent_access", "fund_kb.api_coverage", "fund_kb.api_library_map"}
     assert len(actual) == 61 + sum(len(module.HANDLERS) for module in api.app.state.extension_modules)
     assert api.call("GET", "/health").status_code == 200
     assert api.call("GET", "/auth/login").json()["code"] == "OIDC_NOT_CONFIGURED"

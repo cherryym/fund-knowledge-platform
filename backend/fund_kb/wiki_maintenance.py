@@ -618,6 +618,8 @@ def propose_compiled_revision(ctx, resource_id, candidate, source_snapshots, *, 
     if not isinstance(candidate, dict) or set(candidate) - {"title", "blocks", "knowledge_type", "applicability", "required_facts"}:
         svc.fail(422, "INVALID_COMPILED_CANDIDATE", "候选稿须为完整原生内容块，不接受未解析模型输出")
     title = _label(candidate.get("title"))
+    if _normal(title) == _normal(base.title):
+        title = base.title  # the same entry keeps its own spelling; NFKC is for matching names only
     blocks = candidate.get("blocks")
     if not isinstance(blocks, list) or not blocks or not isinstance(source_snapshots, list) or not source_snapshots:
         svc.fail(422, "INVALID_COMPILED_CANDIDATE", "候选稿须提供完整正文及冻结来源")

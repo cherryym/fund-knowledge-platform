@@ -269,7 +269,7 @@ test("build request freezes explicit sources/model and enforces transfer consent
     model_selection: { connection_id: "connection", model_id: "model" }, max_pages: 4, consent: true });
   for (const value of [0, 13, 1.5, Number.NaN]) assert.throws(() => wiki.buildRequest("space", [SOURCE], model, value, true));
   assert.throws(() => wiki.buildRequest("space", [], model, 4, true));
-  assert.throws(() => wiki.buildRequest("space", Array.from({ length: 9 }, (_, i) => String(i)), model, 4, true));
+  assert.throws(() => wiki.buildRequest("space", Array.from({ length: wiki.WIKI_SOURCE_LIMIT + 1 }, (_, i) => String(i)), model, 4, true));
   assert.throws(() => wiki.buildRequest("space", [SOURCE], undefined, 4, true));
   assert.throws(() => wiki.buildRequest("space", [SOURCE], { ...model, configured: false }, 4, true));
   assert.throws(() => wiki.buildRequest("space", [SOURCE], { ...model, allow_document_transfer: false }, 4, true));
@@ -630,7 +630,7 @@ test("graph coverage distinguishes drawn, authorized total and matches, includin
   assert.match(document.querySelector('.wiki-graph-query > .wiki-truncated').textContent, /未显示不代表不存在/);
   assert.equal(document.querySelectorAll('[data-star-node]').length, 205);
   assert.match(document.body.textContent, /模型提出的语义关系待核验/);
-  assert.equal(document.querySelectorAll('.wiki-graph-relation-help dt').length, 5);
+  assert.equal(document.querySelectorAll('.wiki-graph-relation-help dt').length, 6);
 });
 test("a complete 591-node graph retains every node and all 1182 edges with no truncation warning", async () => {
   const nodes = Array.from({ length: 591 }, (_, i) => node(`complete-${i}`));

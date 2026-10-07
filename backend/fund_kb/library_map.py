@@ -16,7 +16,7 @@ from .ontology import load as load_ontology
 from .ontology import outline_text
 from .source_metadata import TIER_ORDER
 
-MAP_VERSION = "library-map-v2-20261001"
+MAP_VERSION = "library-map-v3-20261007"
 LEVELS = ("full", "sources", "compact")
 _KINDS = {"rule": "规则", "term": "术语", "sop": "SOP", "scenario": "场景", "faq": "问答", "topic": "专题",
           "atomic_rule": "规则", "framework": "框架"}
@@ -39,6 +39,8 @@ def _source_line(page, entry, by_version, level):
     if entry and level != "compact":
         if entry.get("issuer"):
             parts.append("发布：" + entry["issuer"]["value"])
+        if entry.get("own_document_number"):
+            parts.append("文号：" + entry["own_document_number"])
         effective = _effective(entry)
         if effective:
             parts.append(effective)
@@ -60,6 +62,8 @@ def _source_line(page, entry, by_version, level):
     if entry:
         links = entry.get("links", {})
         for key, label in (("abolished_by", "预抽：被{}声明废止"), ("abolishes", "预抽：声明废止{}"),
+                           ("partially_abolished_by", "预抽：部分条款被{}声明废止或停止执行"),
+                           ("partially_abolishes", "预抽：声明废止或停止执行{}的部分条款"),
                            ("newer_versions", "预抽：有更新版本{}"), ("older_versions", "预抽：旧版本{}"),
                            ("published_by", "预抽：由{}发布")):
             targets = [by_version[vid] for vid in links.get(key, []) if vid in by_version]

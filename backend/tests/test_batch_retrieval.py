@@ -217,3 +217,26 @@ def test_lookup_pool_caps_cross_encoder_pairs_per_query_only(env):
     _, full = search_catalog_batch(env.owner, env.space, ["事项0", "后续事项"], pages=pages, vector=vector,
         session_factory=env.db, inference_schedule="serial_equivalent")
     assert min(seen) > 2 and full["query_document_pairs"] == sum(seen)
+
+
+def test_prefetched_question_is_reused_and_only_the_other_queries_are_searched(env):
+    from fund_kb.batch_retrieval import search_catalog_batch
+    _, _, vector, pages = setup(env)
+    queries = ["事项0", "事项1", "后续事项"]
+    full = batch(env, vector, pages, queries)
+    results, receipt = search_catalog_batch(env.owner, env.space, ["事项0"], pages=pages, vector=vector,
+                                            session_factory=env.db)
+    vector.calls["dense_batches"].clear()
+    vector.calls["rerank_batches"].clear()
+    reused = batch(env, vector, pages, queries, prefetched={"事项0": (results[0], receipt)})
+    assert vector.calls["dense_batches"] == [["事项1", "后续事项"]]
+    assert [q for q, _ in vector.calls["rerank_batches"][0]] == ["事项1", "后续事项"]
+    assert [(u["unit_id"], u["query_rank"], u["matched_queries"]) for u in reused["units"]] == \
+        [(u["unit_id"], u["query_rank"], u["matched_queries"]) for u in full["units"]]
+    assert [h["page_id"] for h in reused["hits"]] == [h["page_id"] for h in full["hits"]]
+    execution = reused["batch_execution"]
+    assert execution["query_count"] == 3 and execution["prefetched"]["query_count"] == 1
+    assert execution["query_document_pairs"] == full["batch_execution"]["query_document_pairs"]
+    # A prefetched query the plan no longer contains is ignored; nothing is prefetched -> unchanged receipt.
+    alone = batch(env, vector, pages, ["事项1"], prefetched={"事项0": (results[0], receipt)})
+    assert "prefetched" not in alone["batch_execution"] and alone["batch_execution"]["query_count"] == 1

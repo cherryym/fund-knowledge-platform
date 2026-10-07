@@ -10,7 +10,7 @@ import copy
 import json
 import re
 
-SPEC_VERSION = "wiki-compilation/1.2"
+SPEC_VERSION = "wiki-compilation/1.3"
 TYPES = ("topic", "atomic_rule", "scenario", "sop")
 
 # Length is an output budget, NOT a prose-length requirement. A small complete
@@ -21,11 +21,11 @@ _SPECS = {
         "knowledge_type": None, "tokens_per_page": 8192, "max_output_tokens": 32768,
         "max_source_utf8_bytes": 96000, "max_input_utf8_bytes": 128000,
         "sections": [
-            ("scope", "专题与适用范围", "对象、主体、业务日期、边界；缺失条件明确待核验。"),
+            ("scope", "专题与适用范围", "对象、主体、业务日期、边界；缺失条件写明需补充的具体事实。"),
             ("overview", "核心概念与全景", "关键定义及主题内部关系；区分来源事实与归纳解释。"),
             ("rule_map", "规则与方法体系", "规则分类、方法、输入输出、各自条件和来源；关联具体规则页。"),
             ("exceptions", "例外与冲突", "例外、冲突口径、旧版与新版差异；不推定法律优先级。"),
-            ("sources_and_gaps", "来源、核对与缺口", "书目定位、未覆盖子主题及需补充原件；列出未核验事项。"),
+            ("sources_and_gaps", "来源、核对与缺口", "书目定位、未覆盖子主题及需补充原件；列出尚缺的原文或规定。"),
         ],
     },
     "atomic_rule": {
@@ -119,8 +119,11 @@ def instruction(config):
     sections = "；".join(f"{key}（{label}）：{description}" for key, label, description in spec["sections"])
     content = (f"本次编译类型为{kind}（{spec['label']}），规范{SPEC_VERSION}。{spec['purpose']}"
         f"完整结构要求：{sections}。不统一限制正文字数或段落数，不能为满足页数或输出预算删减适用条件、例外和核对步骤。"
-        "max_pages只是上限；优先生成较少但完整的页面，不能生成半页后冒充完整。来源不足明确写未说明/待核验，禁止编造填充。"
-        "仅覆盖本次输入窗口；目录和未送入正文不等于已经阅读，未覆盖知识和缺失来源写入gaps。")
+        "max_pages只是上限；优先生成较少但完整的页面，不能生成半页后冒充完整。来源不足时写明缺少哪份原文或哪项规定，禁止编造填充。"
+        "仅覆盖本次输入窗口；目录和未送入正文不等于已经阅读，未覆盖知识和缺失来源写入gaps。"
+        "输入中的review_notice只是平台对来源的管理信息（资料分类、审核状态、效力字段、归档标注），只用于识别历史版本、"
+        "征求意见稿等材料性质；不要写进标题或正文，不写“法律状态未知”“效力状态待核验”“转录件待业务复核”“图像校对转录”"
+        "“未完成正式审核”之类说明，页面与来源状态由平台另行显示。正文中的施行、废止与新旧替代只依据来源原文自身的条款。")
     if config["compilation_contract"] == "typed":
         content += ("每个block用section标注所属结构，support_status为SUPPORTED/GAP/NOT_APPLICABLE；所有必需结构都要有正文。"
             "每段保留本批evidence_ids，正文使用可读Markdown标题；缺口段也只关联其所核对的来源，不把该关联当作实质支撑。"

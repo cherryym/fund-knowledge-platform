@@ -8,7 +8,9 @@ from .retrieval_observation import observation_summary
 
 
 def search_many_catalog(db, user, space_id, queries, *, pages, vector=None, scope="reference",
-                        context=None, limit=24, checkpoint=None, session_factory=None):
+                        context=None, limit=24, checkpoint=None, session_factory=None, prefetched=None):
+    """`prefetched` maps a query to the (result, receipt) the same batch search already returned for it (the
+    question, searched while the planner was answering); only the other queries are searched here."""
     normalized = list(dict.fromkeys(q.strip() for q in queries if isinstance(q, str) and q.strip()))
     if (normalized and vector is not None
             and getattr(vector.settings, "retrieval_strategy", None) == "unit_rerank"
@@ -16,13 +18,36 @@ def search_many_catalog(db, user, space_id, queries, *, pages, vector=None, scop
             and callable(getattr(vector, "rerank_many", None))):
         from .batch_retrieval import search_catalog_batch
         started = time.monotonic()
-        results, batch = search_catalog_batch(user, space_id, normalized, pages=pages, vector=vector,
-            scope=scope, context=context, limit=limit, checkpoint=checkpoint, session_factory=session_factory)
+        early = {q: value for q, value in (prefetched or {}).items() if q in normalized}
+        rest = [q for q in normalized if q not in early]
+        by_query, batch = {q: result for q, (result, _) in early.items()}, None
+        if rest:
+            results, batch = search_catalog_batch(user, space_id, rest, pages=pages, vector=vector,
+                scope=scope, context=context, limit=limit, checkpoint=checkpoint, session_factory=session_factory)
+            by_query.update(zip(rest, results, strict=True))
+        batch = _with_prefetched(batch, [receipt for _, receipt in early.values()])
+        results = [by_query[q] for q in normalized]
         merged = _merge_results(normalized, results, pages, scope, started)
         merged["candidate_preview_stats"]["source_blocks_checked"] = batch.get("shared_candidate_blocks_checked", 0)
         return {**merged, "batch_execution": batch}
     return search_many_catalog_serial(db, user, space_id, queries, pages=pages, vector=vector,
         scope=scope, context=context, limit=limit, checkpoint=checkpoint, session_factory=session_factory)
+
+
+def _with_prefetched(batch, early):
+    """One receipt for the planned searches: counts include the prefetched queries, whose time overlapped the
+    planning model call and is reported apart, never added to this search's wall time."""
+    if not early:
+        return batch
+    keys = ("query_count", "query_document_pairs", "shared_candidate_blocks_checked")
+    prefetched = {key: sum(receipt.get(key, 0) for receipt in early) for key in keys}
+    prefetched.update(timing_ms=round(sum(receipt.get("timing_ms", 0.0) for receipt in early), 3),
+                      overlapped_with="model_planning")
+    combined = dict(batch) if batch else {**early[0], **{key: 0 for key in keys}, "timing_ms": 0.0, "phases_ms": {}}
+    for key in keys:
+        combined[key] = combined.get(key, 0) + prefetched[key]
+    combined["prefetched"] = prefetched
+    return combined
 
 
 def search_many_catalog_serial(db, user, space_id, queries, *, pages, vector=None, scope="reference",

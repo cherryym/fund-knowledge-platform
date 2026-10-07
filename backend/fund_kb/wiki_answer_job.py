@@ -451,6 +451,35 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
             current.model_snapshot = {**current.model_snapshot, "planning_cache": metadata,
                 "planning_reused": cached_plan is not None, "planning_model_invoked": False}
 
+    def start_question_prefetch():
+        """The question is always the first planned search. Search it while the planning model answers, with the
+        same batch function and inputs the planned search uses; that search reuses the result, and any failure here
+        only means the question is searched there as usual."""
+        vector = dispatcher.vector_index
+        query = (clean_search_queries([question]) or [None])[0]
+        if (not query or settings.retrieval_mode != "hybrid" or vector is None
+                or getattr(vector.settings, "retrieval_strategy", None) != "unit_rerank"
+                or not callable(getattr(vector, "search_many", None))
+                or not callable(getattr(vector, "rerank_many", None))):
+            return None
+        from concurrent.futures import ThreadPoolExecutor
+
+        from .batch_retrieval import search_catalog_batch
+        user_id = authority()
+
+        def run():
+            started = time.monotonic()
+            results, receipt = search_catalog_batch(user_id, space_id, [query], pages=pages, scope=scope,
+                context=context, vector=vector, limit=settings.hybrid_candidate_limit, checkpoint=authority,
+                session_factory=dispatcher.read_session_factory)
+            return query, results[0], receipt, time.monotonic() - started
+        pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="fkb-question-prefetch")
+        try:
+            return pool.submit(run)
+        finally:
+            pool.shutdown(wait=False)  # the worker exits after this one search
+
+    question_prefetch = None
     if cached_plan is not None:
         plan = cached_plan
     elif adaptive and not universal:
@@ -462,6 +491,7 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
         planning_instruction = (REASONING_PLANNING_INSTRUCTION if reasoning else
                                 UNIVERSAL_PLANNING_INSTRUCTION if universal else PLANNING_INSTRUCTION)
         map_text = "\n" + library["text"] if library else ""
+        question_prefetch = start_question_prefetch() if reasoning else None
         preliminary, planning_finish = complete(planning_instruction + map_text +
             f"\n问题：{question}\n用户背景：{json.dumps(context, ensure_ascii=False)}", "planning")
         planning_complete = planning_finish == "stop"
@@ -681,10 +711,18 @@ def _run_wiki_answer(dispatcher, job_id, attempt, *, timings=None):
                 user_id = authority()
                 if universal:
                     from .universal_retrieval import search_many_catalog
+                    prefetched = {}
+                    if question_prefetch is not None:
+                        try:
+                            query, early, receipt, seconds = question_prefetch.result()
+                            prefetched = {query: (early, receipt)}
+                            timings.add("retrieval_prefetch_overlapped", seconds)
+                        except Exception:  # noqa: BLE001 - the question is searched again below with the rest
+                            prefetched = {}
                     result = search_many_catalog(db, user_id, space_id, plan.get("search_queries") or [question],
                         pages=pages, scope=scope, context=context, vector=dispatcher.vector_index,
                         limit=settings.hybrid_candidate_limit, checkpoint=authority,
-                        session_factory=dispatcher.read_session_factory)
+                        session_factory=dispatcher.read_session_factory, prefetched=prefetched)
                 else:
                     result = search_catalog(db, user_id, space_id, question, pages=pages, scope=scope,
                         context=context, vector=dispatcher.vector_index, limit=settings.hybrid_candidate_limit)

@@ -156,6 +156,9 @@ def test_joint_titles_tiers_and_issuer_names():
                    [("b1", "正文")])["tier"] == "证监会/人民银行规章及规范性文件"
     assert extract("本地估值作业SOP笔记：估值服务商数据接收校验", "内部", [("b1", "正文")])["tier"] == "实务手册与案例"
     assert extract("上交所债券估值与收益率曲线服务说明", "估值", [("b1", "正文")])["tier"] == "估值服务机构方法与数据说明"
+    # MOF accounting rules are also titled "…会计处理的规定" / "…会计处理暂行规定".
+    assert extract("永续债相关会计处理的规定", "会计", [("b1", "附件")])["tier"] == "会计准则及财政部会计规定"
+    assert extract("碳排放权交易有关会计处理暂行规定", "会计", [("b1", "正文")])["tier"] == "会计准则及财政部会计规定"
 
 
 def test_partial_container_and_excepted_abolition_and_declared_publication():

@@ -280,7 +280,7 @@ def _tier(title, category, issuer):
         return "法律", "title"
     if name in {"财政部", "国家税务总局"} and re.search(r"税|营业税改征", title):
         return "财税规范性文件", "issuer"
-    if re.search(r"企业会计准则|会计处理规定|金融工具准则|会计准则", _TITLE.sub("", title)) and name in (None, "财政部"):
+    if re.search(r"企业会计准则|会计处理(?:的|暂行)?规定|金融工具准则|会计准则", _TITLE.sub("", title)) and name in (None, "财政部"):
         return "会计准则及财政部会计规定", "title"
     if re.search(r"质量分析报告|质量检验|质量投诉", title):
         return "估值服务质量报告", "title"

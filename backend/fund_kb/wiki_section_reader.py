@@ -52,7 +52,10 @@ def read_scoped_pages(db, user, space_id, pages, requested, *, context=None, sco
             continue
         existing = {row["block_id"]: row for row in page.get("records", [])}
         if page["kind"] == "knowledge" or pid in full_pages and not context_completion:
-            chosen, chosen_sections = rows, []
+            # A knowledge page's warning block is the platform's creation-time notice ("模型生成修订候选，尚未核验",
+            # "本地迁移待核验…"), not page knowledge; the page's state is in its header. It is neither read nor cited.
+            chosen = [row for row in rows if page["kind"] != "knowledge" or row.get("block_type") != "warning"]
+            chosen_sections = []
         else:
             blocks = [{"block_id": row["block_id"], "ordinal": row["ordinal"],
                 "block_type": row.get("block_type", "paragraph"), "data": row.get("data", {}),

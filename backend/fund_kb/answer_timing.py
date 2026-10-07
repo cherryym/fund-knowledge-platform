@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 PHASES = frozenset({"model_planning", "model_synthesis", "model_wiki_index", "model_wiki_notes",
     "local_model_preparation", "catalog_and_policy", "retrieval_and_navigation", "source_reading",
-    "context_reranking"})
+    "context_reranking", "retrieval_prefetch_overlapped"})
 
 
 class AnswerTimings:

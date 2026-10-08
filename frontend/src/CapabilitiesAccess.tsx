@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { apiUrl, ApiError, get, query } from "./api";
+import { randomId } from "./randomId";
 import { ErrorBox, Field, Loading, Notice, useApp, useLoad } from "./ui";
 import { isAccessError, pathId, revision, stringList, useCapabilitiesTask, validDate } from "./CapabilitiesShared";
 
@@ -124,7 +125,7 @@ function CredentialCreation({ deny, close, inspect, created }: { deny: () => voi
     if (!ready || attempt.current) return;
     attempt.current = true; const controller = new AbortController(); request.current = controller;
     setBusy(true); setError(undefined);
-    const body = { request_id: crypto.randomUUID(), name: name.trim(), space_id: app.space.id, scopes: [...selectedScopes], expires_at: expiresAt };
+    const body = { request_id: randomId(), name: name.trim(), space_id: app.space.id, scopes: [...selectedScopes], expires_at: expiresAt };
     try {
       // Deliberately bypass api(): credential creation uses request_id, not the generic
       // Idempotency-Key path, and no server error body is retained or rendered.

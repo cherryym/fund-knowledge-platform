@@ -366,7 +366,7 @@ test("credential revocation uses metadata ETag and normal idempotency without mu
 });
 test("credential source code has no console or persistent token storage path", () => {
   const text = readFileSync(resolve(sourceDir, "CapabilitiesAccess.tsx"), "utf8"); assert.doesNotMatch(text, /console\.|localStorage|sessionStorage/);
-  assert.match(text, /request_id: crypto.randomUUID/); assert.match(text, /response.status !== 201/);
+  assert.match(text, /request_id: randomId\(\)/); assert.match(text, /response.status !== 201/);
 });
 test("late capability data cannot populate another space or resurrect an editor", async () => {
   const pending = deferred(); stub("GET", "/capability-versions/cap-v1", () => pending.promise); await mount(); await click(button("查看能力"));

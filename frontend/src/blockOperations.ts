@@ -1,4 +1,5 @@
 import type { Block } from "./types";
+import { randomId } from "./randomId";
 
 export const blockNames: Record<Block["block_type"], string> = {
   heading: "标题",
@@ -27,7 +28,7 @@ export function createBlock(type: Block["block_type"]): Block {
                 ? { version_id: "", caption: "" }
                 : { text: "" };
   return {
-    block_id: crypto.randomUUID(),
+    block_id: randomId(),
     ordinal: 0,
     block_type: type,
     data,

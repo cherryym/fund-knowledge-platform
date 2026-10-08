@@ -1,6 +1,7 @@
 import type { Me, Page, Part, Upload, Job } from "./types";
 import { clearDocumentSessionCache } from "./documentSessionCache";
 import { clearWikiSessionCache } from "./wikiSessionCache";
+import { randomId } from "./randomId";
 
 export class ApiError extends Error {
   constructor(
@@ -19,15 +20,6 @@ const downloadNames = new Map<string, string>();
 const inflightKeys = new Map<string, string>();
 const base = "/api/v1";
 export const apiUrl = (path: string) => `${base}${path}`;
-function newIdempotencyKey(): string {
-  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  // getRandomValues also works on controlled HTTP origins where randomUUID is unavailable.
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
 export function clearSession() {
   clearDocumentSessionCache();
   clearWikiSessionCache();
@@ -73,7 +65,7 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const operation = `${method}:${path}:${options.body instanceof Blob ? options.body.size : JSON.stringify(options.body)}`;
   if (isWrite) {
     const key =
-      options.key ?? inflightKeys.get(operation) ?? newIdempotencyKey();
+      options.key ?? inflightKeys.get(operation) ?? randomId();
     inflightKeys.set(operation, key);
     headers.set("Idempotency-Key", key);
   }

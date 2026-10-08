@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, get, query } from "./api";
 import { VersionBlockPicker } from "./Pickers";
+import { randomId } from "./randomId";
 import type { Resource, Version } from "./types";
 import { ErrorBox, Field, Loading, Notice, readable, useApp, useLoad } from "./ui";
 import "./source-authority-panel.css";
@@ -134,7 +135,7 @@ function useAuthorityAction(onPermissionFailure: () => void) {
     const write = async <T,>(path: string, body: unknown, revision?: number) => {
       controller.signal.throwIfAborted();
       const signature = JSON.stringify([path, body, revision]);
-      if (retry.current?.signature !== signature) retry.current = { signature, key: crypto.randomUUID() };
+      if (retry.current?.signature !== signature) retry.current = { signature, key: randomId() };
       try {
         const value = await api<T>(path, { method: "POST", body, revision, signal: controller.signal, key: retry.current.key });
         retry.current = null;

@@ -1,7 +1,8 @@
 import test, { afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { build, transform } from "esbuild";
+import { build } from "esbuild";
+import { fileURLToPath } from "node:url";
 const source = await readFile(new URL("./api.ts", import.meta.url), "utf8");
 const bundle = await build({stdin:{contents:source,loader:"ts",resolveDir:process.cwd()+"/src"},
   bundle:true,write:false,format:"esm",platform:"browser"});
@@ -10,11 +11,11 @@ const client = await import(
   `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
 );
 async function loadTypescriptModule(filename) {
-  const input = await readFile(new URL(filename, import.meta.url), "utf8");
-  const compiled = await transform(input, { loader: "ts", format: "esm" });
+  const compiled = await build({ entryPoints: [fileURLToPath(new URL(filename, import.meta.url))], bundle: true,
+    write: false, format: "esm", platform: "browser" });
   return import(
     "data:text/javascript;base64," +
-      Buffer.from(compiled.code).toString("base64")
+      Buffer.from(compiled.outputFiles[0].text).toString("base64")
   );
 }
 const queue = await loadTypescriptModule("./uploadQueue.ts");
@@ -222,6 +223,21 @@ test("aborted upload never seals the session", async () => {
     (error) => error.name === "AbortError",
   );
   assert.equal(sealed, false);
+});
+test("HTTP deployment without randomUUID can still queue uploads, and no source calls randomUUID directly", async () => {
+  const random = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+  Object.defineProperty(globalThis, "crypto", { configurable: true, value: { getRandomValues: random } });
+  const result = queue.mergeUploadSelection([], [new File(["a"], "a.pdf"), new File(["b"], "b.pdf")], false);
+  assert.equal(new Set(result.items.map((item) => item.id)).size, 2);
+  assert.ok(result.items.every((item) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(item.id)));
+  const { readdir } = await import("node:fs/promises");
+  const sourceDir = new URL("./", import.meta.url);
+  const direct = [];
+  for (const name of await readdir(sourceDir)) {
+    if (!/\.tsx?$/.test(name) || name === "randomId.ts") continue;
+    if (/crypto\.randomUUID/.test(await readFile(new URL(name, sourceDir), "utf8"))) direct.push(name);
+  }
+  assert.deepEqual(direct, []);
 });
 test("batch selection retains every file including PNG and JPG in input order", () => {
   const files = ["a.pdf", "b.PNG", "c.jpg", "d.jpeg"].map(

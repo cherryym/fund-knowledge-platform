@@ -1,4 +1,5 @@
 import type { Job, Upload } from "./types";
+import { randomId } from "./randomId";
 export const uploadAccept =
   ".pdf,.docx,.xlsx,.txt,.md,.markdown,.html,.htm,.png,.jpg,.jpeg";
 export type UploadPhase =
@@ -81,7 +82,7 @@ export function mergeUploadSelection(
       throw new Error("已有替换文件在队列中，请先移除或取消原上传。");
     const error = validateUploadFile(file);
     next.push({
-      id: crypto.randomUUID(),
+      id: randomId(),
       filename: file.name,
       size: file.size,
       lastModified: file.lastModified,
@@ -119,7 +120,7 @@ export function restoreUploadQueue(raw: string | null): UploadItem[] {
         const item = row as unknown as UploadItem;
         return {
           ...item,
-          id: typeof item.id === "string" ? item.id : crypto.randomUUID(),
+          id: typeof item.id === "string" ? item.id : randomId(),
           file: undefined,
           phase:
             item.job || item.phase === "uploaded" ? "uploaded" : "waiting-file",

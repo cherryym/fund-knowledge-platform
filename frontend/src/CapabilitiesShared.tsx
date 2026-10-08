@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "./api";
+import { randomId } from "./randomId";
 import { Field } from "./ui";
 
 export type CapabilityField = { key: string; label: string; type: "string" | "number" | "integer" | "boolean" | "date" | "json"; required: boolean; description: string };
@@ -138,7 +139,7 @@ export function useCapabilitiesTask(deny: () => void, failed?: (error: unknown) 
     const write = async <T,>(path: string, body: unknown, version?: number, method: "POST" | "PUT" = "POST") => {
       current.signal.throwIfAborted();
       const signature = JSON.stringify([path, body, version, method]);
-      if (operation.current?.signature !== signature) operation.current = { signature, key: crypto.randomUUID() };
+      if (operation.current?.signature !== signature) operation.current = { signature, key: randomId() };
       try {
         const result = await api<T>(path, { method, body, revision: version, key: operation.current.key, signal: current.signal });
         operation.current = undefined; return result;
